@@ -1,8 +1,6 @@
 #summary Information for developers
 #labels Phase-Implementation
 
-= Information for Developers =
-
 == Required Components ==
 
  * [http://developer.android.com/sdk/index.html The Android SDK]
