@@ -1,0 +1,22 @@
+#summary Information for developers
+#labels Phase-Implementation
+
+= Information for Developers =
+
+== Required Components ==
+
+ * [http://developer.android.com/sdk/index.html The Android SDK]
+ * [http://www.eclipse.org/downloads/ Eclipse 3.5 (Galileo)]
+ * [http://developer.android.com/sdk/eclipse-adt.html Android Development Tools (ADT) for Eclipse]
+ * A Subversion client. If you're on Windows, try [http://tortoisesvn.net/downloads TortoiseSVN].
+
+
+== Getting Started ==
+
+ * Install the above components according to their respective instructions.
+ * Make sure you install the SDK Platform Android 2.0 package in the Android SDK Manager.
+ * Create an Android 2.0 virtual device in the Android SDK Manager.
+ * [http://code.google.com/p/growlforandroid/source/checkout Check out] the source code.
+  The main code is in `trunk/GrowlForAndroid/` so check this folder out into your Eclipse workspace. On Windows, your workspace folder will by default be `%USERPROFILE%\workspace`.
+ * Upon checking out the code, start up Eclipse. If the `GrowlForAndroid` project doesn't appear in the Package Explorer, choose *File -> Refresh* to update your workspace.
+ * You should now be able to run the application on the virtual device by clicking the Debug button in Eclipse and choosing to run the project as an Android Application.
