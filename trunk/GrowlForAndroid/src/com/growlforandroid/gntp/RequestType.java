@@ -5,7 +5,9 @@ import java.util.EnumSet;
 public enum RequestType {
 	Register ("REGISTER"),
 	Notify ("NOTIFY"),
-	Subscribe ("SUBSCRIBE");
+	Subscribe ("SUBSCRIBE"),
+	
+	Ignore (null);
 
 	public final String MessageType;
 	
@@ -19,8 +21,13 @@ public enum RequestType {
 	
 	public static RequestType fromString(String messageType) {
 		for (RequestType type : EnumSet.allOf(RequestType.class)) {
-			if (type.MessageType.equals(messageType))
-				return type;
+			if (type.MessageType == null) {
+				if (messageType == null)
+					return type;
+			} else {
+				if (type.MessageType.equals(messageType))
+					return type;
+			}
 		}
 		return null;
 	}

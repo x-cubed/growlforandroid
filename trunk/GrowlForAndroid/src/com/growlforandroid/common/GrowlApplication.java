@@ -7,20 +7,25 @@ import java.util.*;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 
+/**
+ * Represents a client application that provides Growl notifications
+ * 
+ * @author Carey Bishop
+ *
+ */
 public class GrowlApplication {
-	private static int _lastId = 0;
-	
 	public final int ID;
 	private final IGrowlRegistry _registry;
-	private final Map<String, NotificationType> _notificationTypes = new HashMap<String, NotificationType>();
 	
 	public final String Name;
+	public Boolean Enabled;
 	public URL IconUrl;
 	
-	public GrowlApplication(IGrowlRegistry registry, String name, URL icon) {
-		ID = _lastId++;
+	public GrowlApplication(IGrowlRegistry registry, int id, String name, Boolean enabled, URL icon) {
+		ID = id;
 		_registry = registry; 
 		Name = name;
+		Enabled = enabled;
 		IconUrl = icon;
 	}
 	
@@ -30,22 +35,20 @@ public class GrowlApplication {
 
 	// Registers a new notification type, or updates an existing one with the same type name
 	public NotificationType registerNotificationType(String typeName, String displayName, boolean enabled, URL iconUrl) {
-		NotificationType oldType = _notificationTypes.get(typeName);
+		NotificationType oldType = _registry.getNotificationType(this, typeName);
 		if (oldType != null) {
 			Log.i("Application.registerNotificationType", "Application \"" + Name + "\" is re-registering notification type \"" + typeName + "\"");
 			oldType.setDisplayName(displayName);
-			oldType.setEnabled(enabled);
+			// Enabled value shouldn't change, as this is a user option
 			oldType.setIconUrl(iconUrl);
 			return oldType;
 		} else {
 			Log.i("Application.registerNotificationType", "Application \"" + Name + "\" is registering notification type \"" + typeName + "\"");
-			NotificationType newType = new NotificationType(this, typeName, displayName, enabled, iconUrl);
-			_notificationTypes.put(typeName, newType);
-			return newType;
+			return _registry.registerNotificationType(this, typeName, displayName, enabled, iconUrl);
 		}
 	}
 	
 	public NotificationType getNotificationType(String typeName) {
-		return _notificationTypes.get(typeName);
+		return _registry.getNotificationType(this, typeName);
 	}
 }
