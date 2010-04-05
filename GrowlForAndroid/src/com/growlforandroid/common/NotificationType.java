@@ -4,13 +4,15 @@ import java.net.URL;
 
 
 public class NotificationType {
+	public final int ID;
 	public final GrowlApplication Application;
 	public final String TypeName;
 	private String _displayName;
 	private boolean _enabled;
 	private URL _iconUrl;
 	
-	public NotificationType(GrowlApplication application, String typeName, String displayName, boolean enabled, URL iconUrl) {
+	public NotificationType(int id, GrowlApplication application, String typeName, String displayName, boolean enabled, URL iconUrl) {
+		ID = id;
 		Application = application;
 		TypeName = typeName;
 		_displayName = displayName;

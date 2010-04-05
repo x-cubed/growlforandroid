@@ -7,6 +7,7 @@ import java.nio.channels.SocketChannel;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
 
@@ -28,6 +29,7 @@ public class ChannelReader {
 	public ChannelReader(SocketChannel channel, Charset charset) throws CharacterCodingException {
 		_channel = channel;
 		_decoder = charset.newDecoder();
+		_decoder.onMalformedInput(CodingErrorAction.IGNORE);
 		
 		_buffer = ByteBuffer.allocateDirect(CAPACITY);
 	}

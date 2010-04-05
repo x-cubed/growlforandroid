@@ -87,6 +87,11 @@ public class GntpListenerThread extends Thread {
 								doSubscribe();
 								break;
 							
+							case Ignore:
+								// Notification hash is invalid, silently ignore this notification
+								Log.w("GntpListenerThread.run", "Ignoring notification with invalid hash");
+								break;
+								
 							default:
 								throw new GntpException(GntpError.InvalidRequest, "Unexpected message type");
 						}
@@ -211,12 +216,12 @@ public class GntpListenerThread extends Thread {
 		// GNTP/<version> <messagetype> <encryptionAlgorithmID>[:<ivValue>][ <keyHashAlgorithmID>:<keyHash>.<salt>]
 		String[] component = inputLine.split(Constants.FIELD_DELIMITER);
 		if ((component.length < 3) || (component.length > 4))
-			throw new GntpException(GntpError.InvalidRequest);
+			throw new GntpException(GntpError.InvalidRequest, "Expected 3 or 4 fields, found " + component.length + " fields");
 		
 		// Verify protocol and version are supported
 		String[] protocolAndVersion = component[0].split("/");
 		if (protocolAndVersion.length != 2)
-			throw new GntpException(GntpError.InvalidRequest);
+			throw new GntpException(GntpError.InvalidRequest, "Expected GNTP/1.0 protocol header");
 		if (!protocolAndVersion[0].equals(Constants.SUPPORTED_PROTOCOL))
 			throw new GntpException(GntpError.UnknownProtocol);
 		if (!protocolAndVersion[1].equals(Constants.SUPPORTED_PROTOCOL_VERSION))
@@ -244,11 +249,22 @@ public class GntpListenerThread extends Thread {
 			if (algoAndHash.length != 2)
 				throw new GntpException(GntpError.NotAuthorized, "Unable to parse hash");
 			
-			String[] hashAndSalt = algoAndHash[1].split(".");
-			if (hashAndSalt.length != 2)
-				throw new GntpException(GntpError.NotAuthorized, "Unable to parse hash");
+			String algorithmName = algoAndHash[0];
+			HashAlgorithm algorithm = HashAlgorithm.fromString(algorithmName);
+			if (algorithm == null)
+				throw new GntpException(GntpError.InvalidRequest, "Unsupported hash type: " + algoAndHash[0]);
 			
-			// TODO: Validate hash
+			String hashDotSalt = algoAndHash[1];
+			int dot = hashDotSalt.indexOf('.');
+			if ((dot < 1) || (dot == hashDotSalt.length() - 1))
+				throw new GntpException(GntpError.NotAuthorized, "Unable to parse hash");
+			String hash = hashDotSalt.substring(0, dot);
+			String salt = hashDotSalt.substring(dot + 1);
+			
+			// Validate the hash
+			if (!_registry.isValidHash(algorithm, hash, salt)) {
+				_requestType = RequestType.Ignore;
+			}
 		}
 		
 		return RequestState.ReadingRequestHeaders;
