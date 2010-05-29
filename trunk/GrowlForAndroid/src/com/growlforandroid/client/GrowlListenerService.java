@@ -19,9 +19,11 @@ import com.growlforandroid.gntp.HashAlgorithm;
 
 import android.app.*;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.os.*;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -30,6 +32,10 @@ public class GrowlListenerService
 	implements IGrowlRegistry {
 	
 	private static final int GNTP_PORT = 23053;
+	
+	private static final int LED_COLOUR = 0xffffff00;
+	private static final int LED_OFF_MS = 100;
+	private static final int LED_ON_MS = 900;
 	
 	private final Map<String, GrowlApplication> _applications = new HashMap<String, GrowlApplication>();
 	
@@ -238,6 +244,9 @@ public class GrowlListenerService
 
         // Set the info for the views that show in the notification panel.
         String statusBarTitle = app.Name + ": " + title;
+        notification.ledARGB = LED_COLOUR;
+        notification.ledOffMS = LED_OFF_MS;
+        notification.ledOnMS = LED_ON_MS;
         notification.flags = Notification.FLAG_AUTO_CANCEL | Notification.FLAG_SHOW_LIGHTS;
         notification.setLatestEventInfo(this, statusBarTitle, text, contentIntent);
 
@@ -276,6 +285,11 @@ public class GrowlListenerService
 		byte[] hashBytes = Utility.hexStringToByteArray(hash);
 		byte[] saltBytes = Utility.hexStringToByteArray(salt);
 		return isValidHash(algorithm, hashBytes, saltBytes);
+	}
+	
+	public boolean requiresPassword() {
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		return prefs.getBoolean("security_require_passwords", true);
 	}
 	
 	public boolean isValidHash(HashAlgorithm algorithm, byte[] hash, byte[] salt) {
