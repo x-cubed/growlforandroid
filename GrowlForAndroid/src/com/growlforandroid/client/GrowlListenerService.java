@@ -37,14 +37,14 @@ public class GrowlListenerService
 	private static final int LED_OFF_MS = 100;
 	private static final int LED_ON_MS = 900;
 	
+	private static Database _database;
+	private static GrowlResources _resources;
+	
 	private final Map<String, GrowlApplication> _applications = new HashMap<String, GrowlApplication>();
 	
     private NotificationManager _notifyMgr;
     private ServerSocketChannel _serverChannel;
     private SocketAcceptor _socketAcceptor;
-    
-    private Database _database;
-    private GrowlResources _resources;
     
     /**
      * Class for clients to access.  Because we know this service always
@@ -56,15 +56,22 @@ public class GrowlListenerService
             return GrowlListenerService.this;
         }
     }
-    
+       
     @Override
     public void onCreate() {
-    	_notifyMgr = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+    	if (_database == null) {
+    		_database = new Database(this.getApplicationContext());
+    		_resources = new GrowlResources();
 
-    	// Register a protocol handler for x-growl-resource:// URLs
-    	_resources = new GrowlResources();
-    	URL.setURLStreamHandlerFactory(_resources);
+    		// Register a protocol handler for x-growl-resource:// URLs
+    		try {
+    			URL.setURLStreamHandlerFactory(_resources);
+    		} catch (Throwable t) {
+    			Log.e("GrowlListenerService.onCreate", "Failed to register protocol handler: " + t);
+    		}
+    	}
     	
+    	_notifyMgr = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
     	
         // Display a notification about us starting.  We put an icon in the status bar.
         showNotification();
@@ -80,7 +87,6 @@ public class GrowlListenerService
         
         try {
             // Open the database
-            _database = new Database(this.getApplicationContext());
             loadApplicationsFromDatabase();
         	
         	// Start listening on GNTP_PORT, on all interfaces
@@ -177,6 +183,7 @@ public class GrowlListenerService
 
     private void loadApplicationsFromDatabase() {
     	int count = 0;
+    	_applications.clear();
     	Cursor apps = _database.getAllApplications();
     	if (apps == null)
     		return;
