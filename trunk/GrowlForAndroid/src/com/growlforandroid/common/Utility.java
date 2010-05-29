@@ -27,13 +27,24 @@ public final class Utility {
 	}
 
 	public static String getHexStringFromByteArray(byte[] raw) {
+		return getHexStringFromByteArray(raw, 0, raw.length);
+	}
+
+	public static String getHexStringFromByteArray(byte[] raw, int offset) {
+		return getHexStringFromByteArray(raw, offset, raw.length - offset);
+	}
+
+	
+	public static String getHexStringFromByteArray(byte[] raw, int offset, int length) {
 		if (raw == null) {
 			return null;
 		}
 		final StringBuilder hex = new StringBuilder(2 * raw.length);
-		for (final byte b : raw) {
-			hex.append(HEXES.charAt((b & 0xF0) >> 4)).append(
-					HEXES.charAt((b & 0x0F)));
+		for (int i = 0; i < length; i++) {
+			byte b = raw[offset + i];
+			char h1 = HEXES.charAt((b & 0xF0) >> 4);
+			char h2 = HEXES.charAt((b & 0x0F));
+			hex.append(h1).append(h2);
 		}
 		return hex.toString();
 	}

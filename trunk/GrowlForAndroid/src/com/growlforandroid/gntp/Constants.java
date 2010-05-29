@@ -23,6 +23,9 @@ public final class Constants {
 	public static final String HEADER_NOTIFICATION_TEXT = "Notification-Text";
 	public static final String HEADER_NOTIFICATION_ENABLED = "Notification-Enabled";
 	
+	public static final String HEADER_RESOURCE_IDENTIFIER = "Identifier";
+	public static final String HEADER_RESOURCE_LENGTH = "Length";
+	
 	public static final String HEADER_ERROR_CODE = "Error-Code";
 	public static final String HEADER_ERROR_DESCRIPTION = "Error-Description";
 	
@@ -31,4 +34,7 @@ public final class Constants {
 	public static final String HEADER_ORIGIN_PLATFORM_VERSION = "Origin-Platform-Version";
 	public static final String HEADER_ORIGIN_SOFTWARE_NAME = "Origin-Software-Name";
 	public static final String HEADER_ORIGIN_SOFTWARE_VERSION = "Origin-Software-Version";
+	
+	public static final String RESOURCE_URI_PROTOCOL = "x-growl-resource";
+	public static final String RESOURCE_URI_PREFIX = RESOURCE_URI_PROTOCOL + "://";
 }

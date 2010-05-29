@@ -5,13 +5,13 @@ import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.channels.ServerSocketChannel;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 import com.growlforandroid.client.R;
 import com.growlforandroid.common.Database;
 import com.growlforandroid.common.GrowlApplication;
+import com.growlforandroid.common.GrowlResource;
+import com.growlforandroid.common.GrowlResources;
 import com.growlforandroid.common.IGrowlRegistry;
 import com.growlforandroid.common.NotificationType;
 import com.growlforandroid.common.Utility;
@@ -38,6 +38,7 @@ public class GrowlListenerService
     private SocketAcceptor _socketAcceptor;
     
     private Database _database;
+    private GrowlResources _resources;
     
     /**
      * Class for clients to access.  Because we know this service always
@@ -53,6 +54,11 @@ public class GrowlListenerService
     @Override
     public void onCreate() {
     	_notifyMgr = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+
+    	// Register a protocol handler for x-growl-resource:// URLs
+    	_resources = new GrowlResources();
+    	URL.setURLStreamHandlerFactory(_resources);
+    	
     	
         // Display a notification about us starting.  We put an icon in the status bar.
         showNotification();
@@ -79,7 +85,6 @@ public class GrowlListenerService
 			_socketAcceptor = new SocketAcceptor(this, _serverChannel);
 			_socketAcceptor.start();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
         
@@ -160,6 +165,9 @@ public class GrowlListenerService
 		return null;
 	}
 
+	public void registerResource(GrowlResource resource) {
+		_resources.put(resource);
+	}
 
     private void loadApplicationsFromDatabase() {
     	int count = 0;
@@ -178,7 +186,7 @@ public class GrowlListenerService
 	    	} while (apps.moveToNext());
 	    	apps.close();
     	}
-    	Log.e("loadApplicationsFromDatabase", "Loaded " + count + " applications from the database");
+    	Log.i("loadApplicationsFromDatabase", "Loaded " + count + " applications from the database");
 	}
 
 	private GrowlApplication loadApplication(Cursor cursor) throws MalformedURLException {
