@@ -279,9 +279,7 @@ public class GrowlListenerService
 	}
 	
 	public boolean isValidHash(HashAlgorithm algorithm, byte[] hash, byte[] salt) {
-		// TODO: Populate this with a user-defined list of passwords
-		String[] passwords = new String[] { "password" };
-		
+		String[] passwords = _database.getAllPasswords();
 		for(String password : passwords) {
 			byte[] validHash = algorithm.calculateHash(password, salt);
 			boolean isValid = Utility.compareArrays(validHash, hash);

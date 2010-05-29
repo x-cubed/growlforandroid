@@ -5,4 +5,14 @@
 
 <string name="service_label">Growl for Android Listener</string><string name="service_started">Growl for Android started</string>
 <string name="service_stopped">Growl for Android stopped</string>
+<string name="add_password_dialog_name">Name</string>
+<string name="add_password_dialog_password">Password</string>
+<string name="add_password_dialog_title">Add Password</string>
+<string name="add_password_dialog_ok">Add</string>
+<string name="add_password_dialog_cancel">Cancel</string>
+<string name="passwords_title">Passwords</string>
+<string name="passwords_add_password">Add Password</string>
+
+<string-array name="passwords_item_menu"><item>Delete</item>
+</string-array>
 </resources>
