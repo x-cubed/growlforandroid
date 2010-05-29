@@ -2,78 +2,188 @@ package com.growlforandroid.common;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.channels.SocketChannel;
-import java.nio.charset.CharacterCodingException;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CodingErrorAction;
-import java.nio.charset.IllegalCharsetNameException;
-import java.nio.charset.UnsupportedCharsetException;
 
 import android.util.Log;
 
+/**
+ * Reads byte and UTF-8 character data from a channel
+ * @author Carey Bishop
+  */
 public class ChannelReader {
 	private static final int CAPACITY = 1024;
 	
-	private final CharsetDecoder _decoder;
+	private static final byte UTF8_MULTI_START = (byte) 0x80;
+	private static final byte UTF8_MULTI_MASK = (byte) 0xC0;
+	
+	private static final byte UTF8_MULTI_START_2 = (byte) 0xC0;
+	private static final byte UTF8_MULTI_START_2_MASK = (byte) 0xE0;
+	
+	private static final byte UTF8_MULTI_START_3 = (byte) 0xE0;
+	private static final byte UTF8_MULTI_START_3_MASK = (byte) 0xF0;
+	
+	private static final byte UTF8_MULTI_START_4 = (byte) 0xF0;
+	private static final byte UTF8_MULTI_START_4_MASK = (byte) 0xF8;
 	
 	private final SocketChannel _channel;
 	private final ByteBuffer _buffer;
-	private CharBuffer _charBuffer;
-	
-	public ChannelReader(SocketChannel channel, String charsetName) throws IllegalCharsetNameException, UnsupportedCharsetException, CharacterCodingException { 
-		this(channel, Charset.forName(charsetName));
-	}
-	
-	public ChannelReader(SocketChannel channel, Charset charset) throws CharacterCodingException {
+	private int _availableBytes = 0;
+
+	public ChannelReader(SocketChannel channel) {
 		_channel = channel;
-		_decoder = charset.newDecoder();
-		_decoder.onMalformedInput(CodingErrorAction.IGNORE);
-		
 		_buffer = ByteBuffer.allocateDirect(CAPACITY);
 	}
 	
+	/**
+	 * Fills the byte buffer with any available data from the channel
+	 * and updates _availableBytes
+	 * @throws IOException
+	 */
 	private void fillBuffer() throws IOException {
 		_buffer.rewind();
-		_channel.read(_buffer);
+		Log.i("ChannelReader.fillBuffer", "Filling the buffer...");
+		while (_availableBytes == 0) {
+			_availableBytes =_channel.read(_buffer);
+		}
+		Log.i("ChannelReader.fillBuffer", "Read " + _availableBytes + " bytes into the buffer");
 		_buffer.rewind();
-		
-		_charBuffer = _decoder.decode(_buffer);
-		_charBuffer.rewind();
-		Log.i("ChannelReader.fillBuffer", "Read " + _buffer.limit() + " bytes into buffer");
 	}
 	
-	public char readChar() throws IOException {
-		if (_charBuffer == null) {
-			Log.i("ChannelReader.readChar", "Filling the buffer for the first time");
-			fillBuffer();
-		} else if (_charBuffer.limit() <= _charBuffer.position()) {
-			Log.i("ChannelReader.readChar", "Position " + _charBuffer.position() + ", limit " + _charBuffer.limit() + ", so we need to fill the buffer");
+	/**
+	 * Reads an array of bytes from the channel
+	 * @param length	The number of bytes to be read
+	 * @return A new array of byte data
+	 * @throws IOException
+	 */
+	public byte[] readBytes(int length) throws IOException {
+		byte[] data = new byte[length];
+		for(int i=0; i < data.length; i++) {
+			data[i] = readByte();
+		}
+		return data;
+	}
+	
+	/**
+	 * Reads a single byte from the channel
+	 * @return
+	 * @throws IOException
+	 */
+	public byte readByte() throws IOException {
+		if (_availableBytes == 0) {
 			fillBuffer();
 		}
-		char result = _charBuffer.get();
+		byte data = _buffer.get();
+		_availableBytes--;
+		return data;
+	}
+	
+	/**
+	 * Reads a byte from the channel and checks that it is a valid UTF-8 suffix byte
+	 * @return
+	 * @throws IOException
+	 */
+	private byte readUTF8MultiByte() throws IOException {
+		byte data = readByte();
+		if ((data & UTF8_MULTI_MASK) != UTF8_MULTI_START) {
+			throw new IOException("Invalid UTF-8 data");
+		}
+		return data;
+	}
+	
+	/**
+	 * Reads a single UTF-8 character from the channel
+	 * @return
+	 * @throws IOException
+	 */
+	public char readChar() throws IOException {
+		byte data = readByte();
+		if ((data & UTF8_MULTI_START) == UTF8_MULTI_START) {
+			if ((data & UTF8_MULTI_START_2_MASK) == UTF8_MULTI_START_2) {
+				return readTwoByteChar(data);
+			} else if ((data & UTF8_MULTI_START_3_MASK) == UTF8_MULTI_START_3) {
+				return readThreeByteChar(data);
+			} else if ((data & UTF8_MULTI_START_4_MASK) == UTF8_MULTI_START_4) {
+				return readFourByteChar(data);
+			}
+			throw new IOException("Invalid UTF-8 data");
+			
+		} else {
+			return (char)data;
+		}
+	}
+	
+	/**
+	 * Reads a two-byte UTF-8 character from the channel
+	 * @param firstByte		The contents of the first byte of the character byte sequence
+	 * @return
+	 * @throws IOException
+	 */
+	private char readTwoByteChar(byte firstByte) throws IOException {
+		byte secondByte = readUTF8MultiByte();
+		int data = ((firstByte & 0x1C) << 8) | (secondByte & 0x3F);
+		return (char)data;
+	}
+	
+	/**
+	 * Reads a three-byte UTF-8 character from the channel
+	 * @param firstByte		The contents of the first byte of the character byte sequence
+	 * @return
+	 * @throws IOException
+	 */
+	private char readThreeByteChar(byte firstByte) throws IOException {
+		byte secondByte = readUTF8MultiByte();
+		byte thirdByte = readUTF8MultiByte();
+		int data =
+			((firstByte & 0x0F) << 12) |
+			((secondByte & 0x3F) << 6) |
+			(thirdByte & 0x3F);
+		return (char)data;
+	}
+	
+	/**
+	 * Reads a four-byte UTF-8 character from the channel
+	 * @param firstByte		The contents of the first byte of the character byte sequence
+	 * @return
+	 * @throws IOException
+	 */
+	private char readFourByteChar(byte firstByte) throws IOException {
+		byte secondByte = readUTF8MultiByte();
+		byte thirdByte = readUTF8MultiByte();
+		byte fourthByte = readUTF8MultiByte();
+		int data =
+			((firstByte & 0x07) << 18) |
+			((secondByte & 0x3F) << 12) |
+			((thirdByte & 0x3F) << 6) |
+			(fourthByte & 0x3F);
+		return (char)data;	
+	}
+	
+	/**
+	 * Reads characters from the channel until delimiter is found.
+	 * The delimiter is included in the output. 
+	 * @param delimiter		The character to stop reading at when found
+	 * @return
+	 * @throws IOException
+	 */
+	private String readCharsUntil(char delimiter) throws IOException {
+		StringBuffer buffer = new StringBuffer(255);
+		char next;
+		do {
+			next = readChar();
+			buffer.append(next);
+		} while (next != delimiter);
+		
+		String result = buffer.toString();
 		return result;
 	}
 	
-	private String readCharsUntil(char delimiter) throws IOException {
-		if (_charBuffer == null) {
-			Log.i("ChannelReader.readCharsUntil", "Filling the buffer for the first time");
-			fillBuffer();
-		}
-		int startPosition = _charBuffer.position();
-		while (_charBuffer.get() != delimiter);
-		int endPosition = _charBuffer.position();
-
-		// Start position and end position for subSequence are relative, so we need to move to the start of the buffer
-		_charBuffer.rewind();
-		String line = _charBuffer.subSequence(startPosition, endPosition).toString();
-		_charBuffer.position(endPosition);
-		
-		//Log.i("ChannelReader.readCharsUntil", "Read \"" + line + "\" from " + startPosition + " to " + endPosition);
-		return line;
-	}
-	
+	/**
+	 * Reads characters from the channel until delimiter is found.
+	 * The delimiter is included in the output.
+	 * @param delimiter		The string that delimits the end of the data
+	 * @return
+	 * @throws IOException
+	 */
 	public String readCharsUntil(String delimiter) throws IOException {
 		String line = "";
 		

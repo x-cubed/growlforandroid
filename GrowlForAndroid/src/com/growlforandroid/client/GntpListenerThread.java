@@ -22,10 +22,13 @@ public class GntpListenerThread extends Thread {
 	private RequestType _requestType;
 	private EncryptionType _encryptionType;
 	private String _initVector = "";
-	private Map<String, String> _requestHeaders = new HashMap<String, String>();
 	
+	private Map<String, String> _requestHeaders = new HashMap<String, String>();
+	private Map<String, GrowlResource> _resources = new HashMap<String, GrowlResource>();
+	private GrowlResource _currentResource;
 	private int _notificationsCount = 0;
 	private int _notificationIndex = 0;
+	private int _resourceIndex = 0;
 	private Map<Integer, Map<String, String>> _notificationsHeaders = new HashMap<Integer, Map<String, String>>();
 	
 	public GntpListenerThread(IGrowlRegistry registry, SocketChannel channel)
@@ -35,7 +38,7 @@ public class GntpListenerThread extends Thread {
 		_registry = registry;
 		
 		_channel = channel;
-		_socketReader = new ChannelReader(_channel, Constants.CHARSET);
+		_socketReader = new ChannelReader(_channel);
 		_socketWriter = new ChannelWriter(_channel, Constants.CHARSET);
 		
 		_socket = channel.socket();
@@ -66,6 +69,15 @@ public class GntpListenerThread extends Thread {
 							_currentState = parseRequestHeader(inputLine);
 							break;
 							
+						case ReadingResourceHeaders:
+							// Parse the x-growl-resource header rows
+							_currentState = parseResourceHeader(inputLine);
+							if (_currentState == RequestState.ReadingResourceData) {
+								_currentState = readResourceData();
+							}
+							
+							break;
+							
 						case ReadingNotificationHeaders:
 							// Parse notification type header rows: Notification-Name: New Mail
 							_currentState = parseNotificationHeader(inputLine);
@@ -74,6 +86,8 @@ public class GntpListenerThread extends Thread {
 					
 					// Are we ready to reply?
 					if (_currentState == RequestState.EndOfRequest) {
+						registerResources();
+						
 						switch (_requestType) {
 							case Register:
 								doRegister();
@@ -135,8 +149,12 @@ public class GntpListenerThread extends Thread {
 				// Prepare to read the headers for each notification type
 				_notificationsCount = Integer.valueOf(_requestHeaders.get(Constants.HEADER_NOTIFICATIONS_COUNT));
 				return RequestState.ReadingNotificationHeaders;
+			} else if (_resources.size() > 0) {
+				// This request has one or more resources remaining
+				Log.i("GntpListenerThread.parseRequestHeader()", "Reading " + _resources.size() + " resources...");
+				return RequestState.ReadingResourceHeaders;
 			} else {
-				// This request has no notification headers
+				// We're done
 				return RequestState.EndOfRequest;
 			}
 		}
@@ -166,6 +184,54 @@ public class GntpListenerThread extends Thread {
 		return RequestState.ReadingNotificationHeaders;
 	}
 	
+	private RequestState parseResourceHeader(String inputLine) throws GntpException, IOException {
+		if (inputLine.equals("")) {
+			Log.i("GntpListenerThread.parseResourceHeader", "End of resource " + _resourceIndex + " headers");
+			return RequestState.ReadingResourceData;	
+			
+		} else {
+			if (_currentResource == null) {
+				_currentResource = new GrowlResource();
+				Log.i("GntpListenerThread.parseResourceHeader", "Start of resource " + _resourceIndex);
+			}
+			parseHeader(inputLine, _currentResource.Headers);
+		}
+		return RequestState.ReadingResourceHeaders;
+	}
+	
+	private RequestState readResourceData() throws IOException {
+		// Read the bytes directly from the stream
+		int length = _currentResource.getLength();
+		Log.i("GntpListenerThread.readResourceData", "Reading " + length + " bytes of resource data");
+		byte[] data = _socketReader.readBytes(length);
+		
+		// Print the hex data to the debug window
+		final int BLOCK_SIZE = 50;
+		for(int offset = 0; offset < data.length; offset += BLOCK_SIZE) {
+			int remaining = data.length - offset;
+			int blockLength = remaining > BLOCK_SIZE ? BLOCK_SIZE : remaining;
+			Log.i("GntpListenerThread.readResourceData",
+					Utility.getHexStringFromByteArray(data, offset, blockLength));
+		}
+		
+		_resources.put(_currentResource.getIdentifier(), _currentResource);
+		_currentResource = null;
+		
+		_resourceIndex ++;
+		if (_resourceIndex >= _resources.size()) {
+			Log.i("GntpListenerThread.readResourceData", "End of resources");
+			return RequestState.EndOfRequest;
+		}
+		
+		return RequestState.ReadingResourceHeaders;
+	}
+	
+	private void registerResources() {
+		for(GrowlResource resource : _resources.values()) {
+			_registry.registerResource(resource);
+		}
+	}
+		
 	private void doSubscribe() throws GntpException, MalformedURLException {
 		throw new GntpException(GntpError.InternalServerError);
 	}
@@ -270,7 +336,7 @@ public class GntpListenerThread extends Thread {
 		return RequestState.ReadingRequestHeaders;
 	}
 
-	private void parseHeader(String inputLine, Map<String, String> headers) throws GntpException {	
+	private String parseHeader(String inputLine, Map<String, String> headers) throws GntpException {	
 		String[] keyAndValue = inputLine.split(":", 2);
 		if (keyAndValue.length != 2)
 			throw new GntpException(GntpError.InvalidRequest, "Unable to parse header: " + inputLine);
@@ -278,12 +344,22 @@ public class GntpListenerThread extends Thread {
 		String key = keyAndValue[0];
 		String value = keyAndValue[1].trim();
 		headers.put(key, value);
+		
+		if (value.startsWith(Constants.RESOURCE_URI_PREFIX)) {
+			String identifier = value.substring(Constants.RESOURCE_URI_PREFIX.length());
+			Log.i("GntpListenerThread.parseHeader()", "Header " + key + " has a binary resource " + identifier + " for its value");
+			_resources.put(identifier, null);
+		}
+		
+		return key;
 	}
 	
 	private enum RequestState {
 		Connected,
 		ReadingRequestHeaders,
 		ReadingNotificationHeaders,
+		ReadingResourceHeaders,
+		ReadingResourceData,
 		EndOfRequest,
 		ResponseSent
 	}
