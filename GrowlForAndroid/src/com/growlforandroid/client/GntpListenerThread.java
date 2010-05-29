@@ -9,6 +9,7 @@ import java.util.*;
 import com.growlforandroid.common.*;
 import com.growlforandroid.gntp.*;
 
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 public class GntpListenerThread extends Thread {
@@ -331,6 +332,10 @@ public class GntpListenerThread extends Thread {
 			if (!_registry.isValidHash(algorithm, hash, salt)) {
 				_requestType = RequestType.Ignore;
 			}
+		} else if (_registry.requiresPassword()) {
+			// The application didn't supply a password hash, but the registry requires one
+			Log.w("GntpListenerThread.parseRequestLine()", "Passwords are required, but this notification did not have one. Ignoring");
+			_requestType = RequestType.Ignore;
 		}
 		
 		return RequestState.ReadingRequestHeaders;

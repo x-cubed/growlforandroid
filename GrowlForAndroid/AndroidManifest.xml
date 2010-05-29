@@ -15,6 +15,7 @@
     <service android:name="GrowlListenerService"></service>
 <activity android:name="Applications"></activity>
 <activity android:name="Passwords"></activity>
+<activity android:name="Preferences"></activity>
 </application>
     <uses-sdk android:minSdkVersion="5" />
 

@@ -15,4 +15,17 @@
 
 <string-array name="passwords_item_menu"><item>Delete</item>
 </string-array>
+<string name="preferences_general_title">Growl Options</string>
+<string name="preferences_general_auto_start">Start automatically</string>
+<string name="preferences_general_auto_start_summary">Start Growl when this device is powered on</string>
+<string name="preferences_listen_title">Listen for notifications from</string>
+<string name="preferences_listen_gntp">Growl for Windows</string>
+<string name="preferences_listen_gntp_summary">GNTP</string>
+<string name="preferences_listen_growl_udp">Growl UDP</string>
+<string name="preferences_listen_growl_udp_summary">UDP</string>
+<string name="preferences_security_title">Security</string><string name="preferences_security_require_passwords">Require passwords</string><string name="preferences_security_require_passwords_summary">Applications must provide passwords in all messages</string><string name="preferences_security_passwords">Password Manager</string>
+<string name="preferences_security_passwords_summary">Manage allowed application passwords</string>
+
+
+
 </resources>

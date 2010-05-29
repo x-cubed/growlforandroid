@@ -1,9 +1,9 @@
 package com.growlforandroid.client;
 
-
 import android.app.*;
 import android.content.*;
 import android.os.*;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -26,6 +26,10 @@ public class MainActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        // Load the default preferences
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+        
         setContentView(R.layout.main);
 
         // List the recent notifications
@@ -65,7 +69,7 @@ public class MainActivity extends Activity {
     		return true;
     		
     	} else if (item == _mniSettings) {
-    		startActivity(new Intent(this, Passwords.class));
+    		startActivity(new Intent(this, Preferences.class));
     		return true;
     		
     	} else {
