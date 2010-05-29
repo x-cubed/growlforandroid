@@ -5,7 +5,6 @@ import com.growlforandroid.common.Database;
 import android.app.ListActivity;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.widget.ArrayAdapter;
 import android.widget.SimpleCursorAdapter;
 
 public class Applications extends ListActivity {

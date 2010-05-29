@@ -64,6 +64,10 @@ public class MainActivity extends Activity {
     		startActivity(new Intent(this, Applications.class));
     		return true;
     		
+    	} else if (item == _mniSettings) {
+    		startActivity(new Intent(this, Passwords.class));
+    		return true;
+    		
     	} else {
     		Log.e("MainActivity.onOptionsItemSelected", "Unknown menu item: " + item.getTitle());
     		return false;
