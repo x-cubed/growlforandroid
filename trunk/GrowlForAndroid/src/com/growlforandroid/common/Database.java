@@ -14,6 +14,7 @@ import android.util.Log;
 public class Database {
 	public static final String KEY_ROWID = "_id";
 	public static final String KEY_APP_ID = "app_id";
+	public static final String KEY_TYPE_ID = "type_id";
 	public static final String KEY_NAME = "name";
 	public static final String KEY_DISPLAY_NAME = "display_name";
 	public static final String KEY_ENABLED = "enabled";
@@ -44,30 +45,49 @@ public class Database {
 			Log.d("Database", "Creating new database");
 			db.execSQL("CREATE TABLE applications ("
 					+ "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
-					+ "name TEXT NOT NULL, " + "enabled INTEGER NOT NULL, "
+					+ "name TEXT NOT NULL, "
+					+ "enabled INTEGER NOT NULL, "
 					+ "icon_url TEXT);");
 
 			db.execSQL("CREATE TABLE notification_types ("
 					+ "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
-					+ "app_id INTEGER NOT NULL, " + "name TEXT NOT NULL, "
+					+ "app_id INTEGER NOT NULL, "
+					+ "name TEXT NOT NULL, "
 					+ "display_name TEXT NOT NULL, "
-					+ "enabled INTEGER NOT NULL, " + "icon_url TEXT,"
+					+ "enabled INTEGER NOT NULL, "
+					+ "icon_url TEXT,"
 					+ "FOREIGN KEY(app_id) REFERENCES applications(id));");
 
 			db.execSQL("CREATE TABLE passwords ("
 					+ "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
-					+ "name TEXT NOT NULL, " + "password TEXT);");
+					+ "name TEXT NOT NULL, "
+					+ "password TEXT);");
+			
+			db.execSQL("CREATE TABLE subscriptions ("
+					+ "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+					+ "name TEXT NOT NULL, "
+					+ "address TEXT NOT NULL, "
+					+ "password TEXT);");
+			
+			db.execSQL("CREATE TABLE notification_history ("
+					+ "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+					+ "type_id INTEGER NOT NULL, "
+					+ "title TEXT NOT NULL, "
+					+ "message TEXT NOT NULL, "
+					+ "source TEXT NOT NULL, "
+					+ "FOREIGN KEY(type_id) REFERENCES notification_types(id));");
 		}
 
 		@Override
 		public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-			Log
-					.w("Database", "Upgrading database from version "
+			Log.w("Database", "Upgrading database from version "
 							+ oldVersion + " to " + newVersion
 							+ ", which will destroy all old data");
 			db.execSQL("DROP TABLE IF EXISTS applications;");
 			db.execSQL("DROP TABLE IF EXISTS notification_types;");
 			db.execSQL("DROP TABLE IF EXISTS passwords;");
+			db.execSQL("DROP TABLE IF EXISTS subscriptions;");
+			db.execSQL("DROP TABLE IF EXISTS notification_history;");
 			onCreate(db);
 		}
 	}
@@ -124,8 +144,9 @@ public class Database {
 	}
 
 	public Cursor getAllApplications() {
-		return db.query("applications", new String[] { KEY_ROWID, KEY_NAME,
-				KEY_ENABLED, KEY_ICON_URL }, null, null, null, null, null);
+		return db.query("applications", new String[] {
+				KEY_ROWID, KEY_NAME, KEY_ENABLED, KEY_ICON_URL },
+				null, null, null, null, null);
 	}
 
 	public Cursor getApplication(int id) throws SQLException {
@@ -161,5 +182,11 @@ public class Database {
 		String url = iconUrl == null ? null : iconUrl.toString();
 		initialValues.put(KEY_ICON_URL, url);
 		return (int) db.insert("notification_types", null, initialValues);
+	}
+	
+	public boolean deleteNotificationType(long rowId) {
+		boolean history = db.delete("notification_history", KEY_TYPE_ID + "=" + rowId, null) > 0;
+		boolean type = db.delete("notification_types", KEY_ROWID + "=" + rowId, null) > 0;
+		return history && type;
 	}
 }

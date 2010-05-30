@@ -15,6 +15,7 @@ import com.growlforandroid.common.GrowlResources;
 import com.growlforandroid.common.IGrowlRegistry;
 import com.growlforandroid.common.NotificationType;
 import com.growlforandroid.common.Utility;
+import com.growlforandroid.gntp.Constants;
 import com.growlforandroid.gntp.HashAlgorithm;
 
 import android.app.*;
@@ -287,27 +288,43 @@ public class GrowlListenerService
 		int id = _database.insertNotificationType(application.ID, typeName, displayName, enabled, iconUrl);
 		return new NotificationType(id, application, typeName, displayName, enabled, iconUrl);
 	}
-
-	public boolean isValidHash(HashAlgorithm algorithm, String hash, String salt) {
-		byte[] hashBytes = Utility.hexStringToByteArray(hash);
-		byte[] saltBytes = Utility.hexStringToByteArray(salt);
-		return isValidHash(algorithm, hashBytes, saltBytes);
-	}
 	
 	public boolean requiresPassword() {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		return prefs.getBoolean("security_require_passwords", true);
 	}
+
+
+	public byte[] getMatchingKey(HashAlgorithm algorithm, String hash, String salt) {
+		byte[] hashBytes = Utility.hexStringToByteArray(hash);
+		byte[] saltBytes = Utility.hexStringToByteArray(salt);
+		return getMatchingKey(algorithm, hashBytes, saltBytes);
+	}
 	
-	public boolean isValidHash(HashAlgorithm algorithm, byte[] hash, byte[] salt) {
-		String[] passwords = _database.getAllPasswords();
-		for(String password : passwords) {
-			byte[] validHash = algorithm.calculateHash(password, salt);
-			boolean isValid = Utility.compareArrays(validHash, hash);
-			if (isValid)
-				return true;
+	public byte[] getMatchingKey(HashAlgorithm algorithm, byte[] hash, byte[] salt) {
+		byte[] matchingKey = null;
+		Cursor cursor = _database.getAllPasswordsAndNames();
+		if (cursor.moveToFirst()) {
+			final int nameColumn = cursor.getColumnIndex(Database.KEY_NAME);
+			final int passwordColumn = cursor.getColumnIndex(Database.KEY_PASSWORD);
+			do {
+				String name = cursor.getString(nameColumn);
+				String password = cursor.getString(passwordColumn);
+				Log.i("HashAlgorithm.calculateHash()", "Name:      " + name);
+				Log.i("HashAlgorithm.calculateHash()", "Password:  " + password);
+				byte[] key = algorithm.calculateKey(password, salt);
+				byte[] validHash = algorithm.calculateHash(key);
+				Log.i("HashAlgorithm.calculateHash()", "Hash:      " + Utility.getHexStringFromByteArray(validHash));
+				boolean isValid = Utility.compareArrays(validHash, hash);
+				if (isValid) {
+					Log.i("GrowlListenerService.getMatchingKey()", "Found match: " + name);
+					matchingKey = key;
+					break;
+				}
+			} while (cursor.moveToNext());
 		}
-		return false;
+		cursor.close();
+		return matchingKey;
 	}
 }
 

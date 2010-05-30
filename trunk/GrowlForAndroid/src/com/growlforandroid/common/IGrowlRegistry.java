@@ -19,5 +19,5 @@ public interface IGrowlRegistry {
 	NotificationType getNotificationType(GrowlApplication application,	String typeName);
 	NotificationType registerNotificationType(GrowlApplication application, String typeName, String displayName, boolean enabled, URL iconUrl);
 	boolean requiresPassword();
-	boolean isValidHash(HashAlgorithm algorithm, String hash, String salt);
+	byte[] getMatchingKey(HashAlgorithm algorithm, String hash, String salt);
 }
