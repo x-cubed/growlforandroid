@@ -34,18 +34,20 @@ public enum HashAlgorithm {
 		return Type;
 	}
 	
-	public byte[] calculateHash(String password, byte[] salt) {
+	public byte[] calculateKey(String password, byte[] salt) {
 		ByteBuffer pswdBytes = _charset.encode(password);
+		Log.i("HashAlgorithm.calculateKey()", "Password:  " + Utility.getHexStringFromByteArray(pswdBytes.array(), 0, pswdBytes.limit()));
+		Log.i("HashAlgorithm.calculateKey()", "Salt:      " + Utility.getHexStringFromByteArray(salt));
+		
 		ByteBuffer keyBytes = ByteBuffer.allocate(pswdBytes.limit() + salt.length);
 		keyBytes.put(pswdBytes);
 		keyBytes.put(salt);
-		
+	
 		byte[] keyBasis = keyBytes.array();
-		Log.i("calculateHash", "Key Basis: " + Utility.getHexStringFromByteArray(keyBasis));
-		byte[] key = calculateHash(keyBasis);	
-		byte[] hash = calculateHash(key);
-		Log.i("calculateHash", name() + " Hash: " + Utility.getHexStringFromByteArray(hash));
-		return hash;
+		Log.i("HashAlgorithm.calculateKey()", "Key Basis: " + Utility.getHexStringFromByteArray(keyBasis));
+		byte[] key = calculateHash(keyBasis);
+		Log.i("HashAlgorithm.calculateKey()", "Key:       " + Utility.getHexStringFromByteArray(key));
+		return key;
 	}
 	
 	public byte[] calculateHash(byte[] data) {
@@ -54,6 +56,7 @@ public enum HashAlgorithm {
 		
 		byte[] hash = Digest.digest(data);
 		Digest.reset();
+
 		return hash;
 	}
 	

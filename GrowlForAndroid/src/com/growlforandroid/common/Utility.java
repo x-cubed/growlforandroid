@@ -1,5 +1,7 @@
 package com.growlforandroid.common;
 
+import android.util.Log;
+
 public final class Utility {
 	private static final String HEXES = "0123456789ABCDEF";
 	
@@ -58,5 +60,14 @@ public final class Utility {
 				return false;
 		}
 		return true;
+	}
+
+	public static void logByteArrayAsHex(String tag, byte[] data) {
+		final int BLOCK_SIZE = 50;
+		for(int offset = 0; offset < data.length; offset += BLOCK_SIZE) {
+			int remaining = data.length - offset;
+			int blockLength = remaining > BLOCK_SIZE ? BLOCK_SIZE : remaining;
+			Log.i(tag, getHexStringFromByteArray(data, offset, blockLength));
+		}		
 	}
 }

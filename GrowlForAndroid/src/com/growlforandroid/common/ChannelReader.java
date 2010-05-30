@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
+import com.growlforandroid.gntp.Constants;
+
 import android.util.Log;
 
 /**
@@ -26,8 +28,8 @@ public class ChannelReader {
 	private static final byte UTF8_MULTI_START_4_MASK = (byte) 0xF8;
 	
 	private final SocketChannel _channel;
-	private final ByteBuffer _buffer;
-	private int _availableBytes = 0;
+	protected ByteBuffer _buffer;
+	protected int _availableBytes = 0;
 
 	public ChannelReader(SocketChannel channel) {
 		_channel = channel;
@@ -75,6 +77,36 @@ public class ChannelReader {
 		byte data = _buffer.get();
 		_availableBytes--;
 		return data;
+	}
+	
+	public ByteBuffer readBytesUntil(byte[] delimiter) throws IOException {
+		byte endOfDelimiter = delimiter[delimiter.length - 1];
+		ByteBuffer buffer = ByteBuffer.allocate(CAPACITY);
+		
+		while (true) {
+			// Read a byte into the buffer
+			byte data = readByte();
+			buffer.put(data);
+			
+			// If this byte is the last byte of the delimiter
+			if (data == endOfDelimiter) {
+				// Check to see if the preceding bytes also match the delimiter
+				boolean found = true;
+				int startOfDelimiter = buffer.position() - delimiter.length;
+				for (int i = 0; i < delimiter.length; i++) {
+					data = buffer.get(startOfDelimiter + i);
+					Log.i("ChannelReader.readBytesUntil", "Buffer [" + i + "] = " + data + ", Delimiter [" + i + "] = " + delimiter[i]);
+					if (data != delimiter[i]) {
+						found = false;
+						break;
+					}
+				}
+				
+				if (found) {
+					return buffer;
+				}
+			}
+		}
 	}
 	
 	/**
@@ -193,6 +225,14 @@ public class ChannelReader {
 			line += readCharsUntil(lastChar);
 		}
 
+		return line;
+	}
+	
+	public String readLine() throws IOException {
+		String line = readCharsUntil(Constants.END_OF_LINE);
+		int withoutDelimiter = line.length() - Constants.END_OF_LINE.length();
+		if ((line != null) && (withoutDelimiter >= 0))
+			line = line.substring(0, withoutDelimiter);
 		return line;
 	}
 }

@@ -14,6 +14,7 @@ public class Passwords extends ListActivity {
 	private final int DIALOG_ITEM_MENU = 1;
 	
 	private Database _database;
+	private Cursor _cursor;
 	private MenuItem _mniAddPassword;
 	private long _itemId = -1;
 	
@@ -24,17 +25,28 @@ public class Passwords extends ListActivity {
         
         _database = new Database(this);
         refresh();
-    }
-    
-    private void refresh() {
-        Cursor cursor = _database.getAllPasswordsAndNames();
         
         // Use an existing ListAdapter that will map an array
         // of strings to TextViews
         setListAdapter(new SimpleCursorAdapter(this,
-        		R.layout.password_list_item, cursor,
+        		R.layout.password_list_item, _cursor,
                 new String[] { Database.KEY_NAME, Database.KEY_PASSWORD },
                 new int[] { R.id.lblPasswordName, R.id.lblPasswordText}));
+    }
+    
+    private void refresh() {
+    	if (_cursor == null) {
+    		_cursor = _database.getAllPasswordsAndNames();
+    	} else {
+    		_cursor.requery();
+    	}
+    }
+    
+    protected void finalize() throws Throwable {
+    	if (_cursor != null) {
+    		_cursor.close();
+    	}
+    	super.finalize();
     }
     
     @Override
