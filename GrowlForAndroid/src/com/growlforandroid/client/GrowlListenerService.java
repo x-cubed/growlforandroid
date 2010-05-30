@@ -15,7 +15,6 @@ import com.growlforandroid.common.GrowlResources;
 import com.growlforandroid.common.IGrowlRegistry;
 import com.growlforandroid.common.NotificationType;
 import com.growlforandroid.common.Utility;
-import com.growlforandroid.gntp.Constants;
 import com.growlforandroid.gntp.HashAlgorithm;
 
 import android.app.*;
@@ -80,9 +79,9 @@ public class GrowlListenerService
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.i("onStartCommand", "Received start id " + startId + ": " + intent);
+        Log.i("GrowlListenerService.onStartCommand", "Received start id " + startId + ": " + intent);
         if (_serverChannel != null) {
-        	Log.i("onStartCommand", "Already started");
+        	Log.i("GrowlListenerService.onStartCommand", "Already started");
         	return START_STICKY;
         }
         
@@ -195,12 +194,14 @@ public class GrowlListenerService
 	    		try {
 	    			loadApplication(apps);
 	    		} catch (Exception x) {
-	    			Log.e("loadApplicationsFromDatabase", "Failed to load an application from the database: " + x);
+	    			Log.e("GrowlListenerService.loadApplicationsFromDatabase",
+	    					"Failed to load an application from the database: " + x);
 	    		}
 	    	} while (apps.moveToNext());
 	    	apps.close();
     	}
-    	Log.i("loadApplicationsFromDatabase", "Loaded " + count + " applications from the database");
+    	Log.i("GrowlListenerService.loadApplicationsFromDatabase",
+    			"Loaded " + count + " applications from the database");
 	}
 
 	private GrowlApplication loadApplication(Cursor cursor) throws MalformedURLException {
@@ -213,7 +214,7 @@ public class GrowlListenerService
 		GrowlApplication app = new GrowlApplication(this, id, name, enabled, iconUrl);
 		_applications.put(name, app);
 		
-		Log.i("loadApplication", "Registered existing application \"" + name + "\" with ID = " + id);
+		Log.i("GrowlListenerService.loadApplication", "Registered existing application \"" + name + "\" with ID = " + id);
 		
 		return app;
 	}
@@ -222,14 +223,14 @@ public class GrowlListenerService
 		// Create a new Application and store application in a dictionary
 		GrowlApplication oldApp = _applications.get(name);
 		if (oldApp != null) {
-			Log.i("registerApplication", "Re-registering application \"" + name + "\" with ID = " + oldApp.ID);
+			Log.i("GrowlListenerService.registerApplication", "Re-registering application \"" + name + "\" with ID = " + oldApp.ID);
 			oldApp.IconUrl = iconUrl;
 			return oldApp;
 		} else {
 			Boolean enabled = true;
 			int id = _database.insertApplication(name, enabled, iconUrl);
 			GrowlApplication newApp = new GrowlApplication(this, id, name, enabled, iconUrl);
-			Log.i("registerApplication", "Registered new application \"" + name + "\" with ID = " + newApp.ID);
+			Log.i("GrowlListenerService.registerApplication", "Registered new application \"" + name + "\" with ID = " + newApp.ID);
 			_applications.put(name, newApp);
 			return newApp;
 		}
@@ -242,7 +243,7 @@ public class GrowlListenerService
 	
 	public void displayNotification(NotificationType type, String ID, String title, String text, URL iconUrl) {
 		GrowlApplication app = type.Application;
-		Log.i("displayNotification", "Displaying notification from \"" + app.Name + "\" " +
+		Log.i("GrowlListenerService.displayNotification", "Displaying notification from \"" + app.Name + "\" " +
 				"of type \"" + type.TypeName + "\" with title \"" + title + "\" and text \"" + text + "\"");
 		Notification notification = new Notification(R.drawable.statusbar_enabled, text, System.currentTimeMillis());
 
@@ -310,14 +311,14 @@ public class GrowlListenerService
 			do {
 				String name = cursor.getString(nameColumn);
 				String password = cursor.getString(passwordColumn);
-				Log.i("HashAlgorithm.calculateHash()", "Name:      " + name);
-				Log.i("HashAlgorithm.calculateHash()", "Password:  " + password);
+				// Log.i("GrowlListenerService.getMatchingKey", "Name:      " + name);
+				// Log.i("GrowlListenerService.getMatchingKey", "Password:  " + password);
 				byte[] key = algorithm.calculateKey(password, salt);
 				byte[] validHash = algorithm.calculateHash(key);
-				Log.i("HashAlgorithm.calculateHash()", "Hash:      " + Utility.getHexStringFromByteArray(validHash));
+				// Log.i("GrowlListenerService.getMatchingKey", "Hash:      " + Utility.getHexStringFromByteArray(validHash));
 				boolean isValid = Utility.compareArrays(validHash, hash);
 				if (isValid) {
-					Log.i("GrowlListenerService.getMatchingKey()", "Found match: " + name);
+					Log.i("GrowlListenerService.getMatchingKey", "Found key match: " + name);
 					matchingKey = key;
 					break;
 				}

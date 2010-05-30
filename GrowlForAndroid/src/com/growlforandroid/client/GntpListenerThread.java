@@ -151,7 +151,7 @@ public class GntpListenerThread extends Thread {
 				return RequestState.ReadingNotificationHeaders;
 			} else if (_resources.size() > 0) {
 				// This request has one or more resources remaining
-				Log.i("GntpListenerThread.parseRequestHeader()", "Reading " + _resources.size() + " resources...");
+				Log.i("GntpListenerThread.parseRequestHeader", "Reading " + _resources.size() + " resources...");
 				return RequestState.ReadingResourceHeaders;
 			} else {
 				// We're done
@@ -307,10 +307,10 @@ public class GntpListenerThread extends Thread {
 		_encryptionType = EncryptionType.fromString(encryptionTypeAndIV[0]);
 		if (_encryptionType == null)
 			throw new GntpException(GntpError.InvalidRequest, "Unsupported encryption type: " + _encryptionType);
-		Log.i("GntpListenerThread.parseRequestLine()", "Encryption Type: " + _encryptionType);
+		Log.i("GntpListenerThread.parseRequestLine", "Encryption Type: " + _encryptionType);
 		String ivHex = (encryptionTypeAndIV.length == 2) ? encryptionTypeAndIV[1] : "";
 		_initVector = Utility.hexStringToByteArray(ivHex);
-		Log.i("GntpListenerThread.parseRequestLine()", "IV:  " + Utility.getHexStringFromByteArray(_initVector));
+		Log.i("GntpListenerThread.parseRequestLine", "Encryption IV:   " + ((encryptionTypeAndIV.length == 2) ? ivHex : "(none)"));
 		
 		// Authentication hash
 		if (component.length == 4) {
@@ -334,14 +334,14 @@ public class GntpListenerThread extends Thread {
 			_key = _registry.getMatchingKey(algorithm, hash, salt);
 			if (_key == null) {
 				// We couldn't find a key that matches, ignore this notification
-				Log.i("GntpListenerThread.parseRequestLine()", "Key: (none)");
+				Log.i("GntpListenerThread.parseRequestLine", "Encryption Key:  (none)");
 				_requestType = RequestType.Ignore;
 			} else {
-				Log.i("GntpListenerThread.parseRequestLine()", "Key: " + Utility.getHexStringFromByteArray(_key));
+				Log.i("GntpListenerThread.parseRequestLine", "Encryption Key:  " + Utility.getHexStringFromByteArray(_key));
 			}
 		} else if (_registry.requiresPassword()) {
 			// The application didn't supply a password hash, but the registry requires one
-			Log.w("GntpListenerThread.parseRequestLine()", "Passwords are required, but this notification did not have one. Ignoring");
+			Log.w("GntpListenerThread.parseRequestLine", "Passwords are required, but this notification did not have one. Ignoring");
 			_requestType = RequestType.Ignore;
 		}
 
@@ -361,7 +361,7 @@ public class GntpListenerThread extends Thread {
 		
 		if (value.startsWith(Constants.RESOURCE_URI_PREFIX)) {
 			String identifier = value.substring(Constants.RESOURCE_URI_PREFIX.length());
-			Log.i("GntpListenerThread.parseHeader()", "Header " + key + " has a binary resource " + identifier + " for its value");
+			Log.i("GntpListenerThread.parseHeader", "Header " + key + " has a binary resource " + identifier + " for its value");
 			_resources.put(identifier, null);
 		}
 		

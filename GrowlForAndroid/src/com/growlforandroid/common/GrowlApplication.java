@@ -1,9 +1,6 @@
 package com.growlforandroid.common;
 
 import java.net.URL;
-import java.util.*;
-
-
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 
