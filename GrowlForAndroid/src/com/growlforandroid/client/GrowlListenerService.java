@@ -264,8 +264,9 @@ public class GrowlListenerService
 	}
 
 	public NotificationType getNotificationType(GrowlApplication application, String typeName) {
+		NotificationType type = null;
 		Cursor cursor = _database.getNotificationType(application.ID, typeName);
-		if ((cursor != null) && cursor.moveToFirst()) {
+		if (cursor.moveToFirst()) {
 			int id = cursor.getInt(0);
 			String displayName = cursor.getString(2);
 			boolean enabled = cursor.getInt(3) != 0;
@@ -277,10 +278,10 @@ public class GrowlListenerService
 				e.printStackTrace();
 			}
 			
-			return new NotificationType(id, application, typeName, displayName, enabled, iconUrl);
-		} else {
-			return null;
+			type = new NotificationType(id, application, typeName, displayName, enabled, iconUrl);
 		}
+		cursor.close();
+		return type;
 	}
 
 	public NotificationType registerNotificationType(GrowlApplication application, String typeName, String displayName,	boolean enabled, URL iconUrl) {

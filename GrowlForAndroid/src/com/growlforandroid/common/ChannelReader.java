@@ -95,7 +95,6 @@ public class ChannelReader {
 				int startOfDelimiter = buffer.position() - delimiter.length;
 				for (int i = 0; i < delimiter.length; i++) {
 					data = buffer.get(startOfDelimiter + i);
-					Log.i("ChannelReader.readBytesUntil", "Buffer [" + i + "] = " + data + ", Delimiter [" + i + "] = " + delimiter[i]);
 					if (data != delimiter[i]) {
 						found = false;
 						break;

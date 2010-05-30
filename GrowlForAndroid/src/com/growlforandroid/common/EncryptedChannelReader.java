@@ -14,6 +14,7 @@ import com.growlforandroid.gntp.*;
 public class EncryptedChannelReader
 	extends ChannelReader {
 
+	private static final byte[] END_OF_LINE =  new byte[] { 0x0D, 0x0A };
 	private static final byte[] END_OF_BLOCK = new byte[] { 0x0D, 0x0A, 0x0D, 0x0A };
 
 	public EncryptedChannelReader(SocketChannel channel) {
@@ -67,19 +68,25 @@ public class EncryptedChannelReader
 		Utility.logByteArrayAsHex("EncryptedChannelReader.decryptNextBlock", decrypted);
 		
 		// Grab any remaining data out of the buffer
-		byte[] buffered = new byte[_availableBytes - _buffer.position()];
-		_buffer.get(buffered, 0, buffered.length);
-		Log.i("EncryptedChannelReader.decryptNextBlock", "Buffered data:");
-		Utility.logByteArrayAsHex("EncryptedChannelReader.decryptNextBlock", buffered);
+		Log.i("EncryptedChannelReader.decryptNextBlock", "Old available bytes: " + _availableBytes);
+		byte[] buffered = new byte[_availableBytes];
+		if (_availableBytes != 0) {
+			_buffer.get(buffered, _buffer.position(), buffered.length);
+			Log.i("EncryptedChannelReader.decryptNextBlock", "Buffered data:");
+			Utility.logByteArrayAsHex("EncryptedChannelReader.decryptNextBlock", buffered);
+		}
 
 		// Create a new buffer containing the decrypted data followed by what was left in the old buffer
-		ByteBuffer newBuffer = ByteBuffer.allocate(decrypted.length + buffered.length);
+		ByteBuffer newBuffer = ByteBuffer.allocate(decrypted.length + END_OF_LINE.length + buffered.length);
 		newBuffer.put(decrypted);
+		newBuffer.put(END_OF_LINE);
 		newBuffer.put(buffered);
+		newBuffer.rewind();
 		
 		// Replace the buffer of the underlying ChannelReader so that the other methods work seamlessly
 		_buffer = newBuffer;
 		_availableBytes = newBuffer.capacity();
+		Log.i("EncryptedChannelReader.decryptNextBlock", "New available bytes: " + _availableBytes);
 	}
 	
 	/**
