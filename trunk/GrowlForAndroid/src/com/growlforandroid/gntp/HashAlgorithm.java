@@ -6,10 +6,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.EnumSet;
 
-import android.util.Log;
-
-import com.growlforandroid.common.Utility;
-
 public enum HashAlgorithm {
 	NONE (null),
 	MD5 ("MD5"),
@@ -36,17 +32,17 @@ public enum HashAlgorithm {
 	
 	public byte[] calculateKey(String password, byte[] salt) {
 		ByteBuffer pswdBytes = _charset.encode(password);
-		Log.i("HashAlgorithm.calculateKey()", "Password:  " + Utility.getHexStringFromByteArray(pswdBytes.array(), 0, pswdBytes.limit()));
-		Log.i("HashAlgorithm.calculateKey()", "Salt:      " + Utility.getHexStringFromByteArray(salt));
+		// Log.i("HashAlgorithm.calculateKey", "Password:  " + Utility.getHexStringFromByteArray(pswdBytes.array(), 0, pswdBytes.limit()));
+		// Log.i("HashAlgorithm.calculateKey", "Salt:      " + Utility.getHexStringFromByteArray(salt));
 		
 		ByteBuffer keyBytes = ByteBuffer.allocate(pswdBytes.limit() + salt.length);
 		keyBytes.put(pswdBytes);
 		keyBytes.put(salt);
 	
 		byte[] keyBasis = keyBytes.array();
-		Log.i("HashAlgorithm.calculateKey()", "Key Basis: " + Utility.getHexStringFromByteArray(keyBasis));
+		// Log.i("HashAlgorithm.calculateKey", "Key Basis: " + Utility.getHexStringFromByteArray(keyBasis));
 		byte[] key = calculateHash(keyBasis);
-		Log.i("HashAlgorithm.calculateKey()", "Key:       " + Utility.getHexStringFromByteArray(key));
+		// Log.i("HashAlgorithm.calculateKey", "Key:       " + Utility.getHexStringFromByteArray(key));
 		return key;
 	}
 	
