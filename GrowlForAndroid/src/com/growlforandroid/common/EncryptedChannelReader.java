@@ -71,7 +71,7 @@ public class EncryptedChannelReader
 		Log.i("EncryptedChannelReader.decryptNextBlock", "Old available bytes: " + _availableBytes);
 		byte[] buffered = new byte[_availableBytes];
 		if (_availableBytes != 0) {
-			_buffer.get(buffered, _buffer.position(), buffered.length);
+			_buffer.get(buffered, 0, buffered.length);
 			Log.i("EncryptedChannelReader.decryptNextBlock", "Buffered data:");
 			Utility.logByteArrayAsHex("EncryptedChannelReader.decryptNextBlock", buffered);
 		}
