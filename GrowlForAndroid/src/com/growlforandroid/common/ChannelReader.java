@@ -66,6 +66,17 @@ public class ChannelReader {
 	}
 	
 	/**
+	 * Reads an array of bytes from the channel and discards the result
+	 * @param length	The number of bytes to be skipped
+	 * @throws IOException
+	 */
+	public void skipBytes(int length) throws IOException {
+		for(int i=0; i < length; i++) {
+			readByte();
+		}
+	}
+	
+	/**
 	 * Reads a single byte from the channel
 	 * @return
 	 * @throws IOException

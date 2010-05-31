@@ -13,6 +13,8 @@ import com.growlforandroid.gntp.*;
 import android.util.Log;
 
 public class GntpListenerThread extends Thread {
+	private static final boolean SKIP_LOADING_RESOURCES = true;
+	
 	private final SocketAcceptor _acceptor;
 	private final int _connectionID;
 	private final Socket _socket;
@@ -213,15 +215,22 @@ public class GntpListenerThread extends Thread {
 		
 		// Read the bytes directly from the stream
 		int length = _currentResource.getLength();
-		Log.i("GntpListenerThread.readResourceData[" + _connectionID + "]",
-				"Reading " + length + " bytes of resource data");
-		byte[] data = _socketReader.readAndDecryptBytes(length, _encryptionType, _initVector, _key);
 		
-		// Print the hex data to the debug window
-		Utility.logByteArrayAsHex("GntpListenerThread.readResourceData[" + _connectionID + "]", data);
-		
-		_resources.put(_currentResource.getIdentifier(), _currentResource);
-		_currentResource = null;
+		if (SKIP_LOADING_RESOURCES) {
+			Log.i("GntpListenerThread.readResourceData[" + _connectionID + "]",
+					"Skipping " + length + " bytes of resource data");
+			_socketReader.skipBytes(length);
+			
+		} else {
+			Log.i("GntpListenerThread.readResourceData[" + _connectionID + "]",
+					"Reading " + length + " bytes of resource data");
+			byte[] data = _socketReader.readAndDecryptBytes(length, _encryptionType, _initVector, _key);
+
+			// TODO: Store the data against the current resource
+			
+			_resources.put(_currentResource.getIdentifier(), _currentResource);
+			_currentResource = null;
+		}
 		
 		_resourceIndex ++;
 		if (_resourceIndex >= _resources.size()) {
@@ -234,7 +243,9 @@ public class GntpListenerThread extends Thread {
 	
 	private void registerResources() {
 		for(GrowlResource resource : _resources.values()) {
-			_registry.registerResource(resource);
+			if (resource != null) {
+				_registry.registerResource(resource);
+			}
 		}
 	}
 		

@@ -59,7 +59,6 @@ public class Response {
 		}
 		writeOriginResponseHeaders(channelWriter);
 		channelWriter.write(Constants.END_OF_LINE);
-		channelWriter.flush();
 	}
 
 	private static void writeResponseLine(ChannelWriter out, ResponseType messageType, EncryptionType encryptionType) throws IOException {
