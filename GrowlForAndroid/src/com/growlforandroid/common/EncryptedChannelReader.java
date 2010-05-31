@@ -22,12 +22,15 @@ public class EncryptedChannelReader
 	}
 	
 	private byte[] decrypt(byte[] encrypted, EncryptionType type, byte[] iv, byte[] key)
-		throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException,
-		InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+		throws DecryptionException {
 		
-		Cipher decryptor = type.createDecryptor(iv, key);
-		byte[] decrypted = decryptor.doFinal(encrypted);
-		return decrypted;
+		try {
+			Cipher decryptor = type.createDecryptor(iv, key);
+			byte[] decrypted = decryptor.doFinal(encrypted);
+			return decrypted;
+		} catch (Exception x) {
+			throw new DecryptionException(x);
+		}
 	}
 	
 	/**
@@ -45,39 +48,44 @@ public class EncryptedChannelReader
 	 * @throws BadPaddingException
 	 */
 	public void decryptNextBlock(EncryptionType type, byte[] iv, byte[] key)
-		throws IOException, InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException,
-		InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+		throws IOException, DecryptionException {
 		
-		if ((type == EncryptionType.None) || (iv == null) || (key == null)) {
-			// Nothing to decrypt
+		// If we aren't dealing with encrypted content, we're already decrypted
+		if (type == EncryptionType.None)
 			return;
-		}
+		
+		// If we're missing anything, we should give up now
+		if (iv == null)
+			throw new DecryptionException("Missing initialisation vector");
+		if (key == null)
+			throw new DecryptionException("Missing decryption key");
 		
 		// Read the encrypted data until we find two CRLFs, then strip them from the end of the data
 		ByteBuffer encryptedBuffer = readBytesUntil(END_OF_BLOCK);
 		int encryptedLength = encryptedBuffer.position() - END_OF_BLOCK.length;		
-		Log.i("EncryptedChannelReader.decryptNextBlock", "Encrypted data (" + encryptedLength + " bytes):");
+		Log.i("EncryptedChannelReader.decryptNextBlock", "Encrypted data (" + encryptedLength + " bytes)");
 		encryptedBuffer.rewind();
 		byte[] encrypted = new byte[encryptedLength];
 		encryptedBuffer.get(encrypted, 0, encrypted.length);
-		Utility.logByteArrayAsHex("EncryptedChannelReader.decryptNextBlock", encrypted);
+		// Utility.logByteArrayAsHex("EncryptedChannelReader.decryptNextBlock", encrypted);
 		
 		// Do the actual decryption
 		byte[] decrypted = decrypt(encrypted, type, iv, key);
-		Log.i("EncryptedChannelReader.decryptNextBlock", "Decrypted data:");
-		Utility.logByteArrayAsHex("EncryptedChannelReader.decryptNextBlock", decrypted);
+		// Log.i("EncryptedChannelReader.decryptNextBlock", "Decrypted data:");
+		// Utility.logByteArrayAsHex("EncryptedChannelReader.decryptNextBlock", decrypted);
 		
 		// Grab any remaining data out of the buffer
 		Log.i("EncryptedChannelReader.decryptNextBlock", "Old available bytes: " + _availableBytes);
 		byte[] buffered = new byte[_availableBytes];
 		if (_availableBytes != 0) {
 			_buffer.get(buffered, 0, buffered.length);
-			Log.i("EncryptedChannelReader.decryptNextBlock", "Buffered data:");
-			Utility.logByteArrayAsHex("EncryptedChannelReader.decryptNextBlock", buffered);
+			// Log.i("EncryptedChannelReader.decryptNextBlock", "Buffered data:");
+			// Utility.logByteArrayAsHex("EncryptedChannelReader.decryptNextBlock", buffered);
 		}
 
 		// Create a new buffer containing the decrypted data followed by what was left in the old buffer
-		ByteBuffer newBuffer = ByteBuffer.allocate(decrypted.length + END_OF_LINE.length + buffered.length);
+		int newBufferSize = decrypted.length + END_OF_LINE.length + buffered.length;
+		ByteBuffer newBuffer = ByteBuffer.allocate(newBufferSize);
 		newBuffer.put(decrypted);
 		newBuffer.put(END_OF_LINE);
 		newBuffer.put(buffered);
@@ -85,7 +93,7 @@ public class EncryptedChannelReader
 		
 		// Replace the buffer of the underlying ChannelReader so that the other methods work seamlessly
 		_buffer = newBuffer;
-		_availableBytes = newBuffer.capacity();
+		_availableBytes = newBufferSize;
 		Log.i("EncryptedChannelReader.decryptNextBlock", "New available bytes: " + _availableBytes);
 	}
 	
@@ -105,10 +113,21 @@ public class EncryptedChannelReader
 	 * @throws BadPaddingException
 	 */
 	public byte[] readAndDecryptBytes(int length, EncryptionType type, byte[] iv, byte[] key)
-		throws IOException, InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException,
-		InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+		throws IOException, DecryptionException {
 		
 		byte[] encrypted = readBytes(length);
 		return decrypt(encrypted, type, iv, key);
+	}
+	
+	public class DecryptionException extends Exception {
+		private static final long serialVersionUID = 7004842321539940877L;
+		
+		public DecryptionException(String message) {
+			super(message);
+		}
+		
+		public DecryptionException(Exception innerException) {
+			super("Decryption failed: " + innerException.getMessage(), innerException);
+		}
 	}
 }

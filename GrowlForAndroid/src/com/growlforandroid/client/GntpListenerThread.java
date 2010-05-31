@@ -4,21 +4,17 @@ import java.io.*;
 import java.net.*;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.*;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-
 import com.growlforandroid.common.*;
+import com.growlforandroid.common.EncryptedChannelReader.DecryptionException;
 import com.growlforandroid.gntp.*;
 
 import android.util.Log;
 
 public class GntpListenerThread extends Thread {
+	private final SocketAcceptor _acceptor;
+	private final int _connectionID;
 	private final Socket _socket;
 	private final IGrowlRegistry _registry;
 	private final SocketChannel _channel;
@@ -39,10 +35,12 @@ public class GntpListenerThread extends Thread {
 	private int _resourceIndex = 0;
 	private Map<Integer, Map<String, String>> _notificationsHeaders = new HashMap<Integer, Map<String, String>>();
 	
-	public GntpListenerThread(IGrowlRegistry registry, SocketChannel channel)
+	public GntpListenerThread(SocketAcceptor socketAcceptor, int connectionID, IGrowlRegistry registry, SocketChannel channel)
 		throws IllegalCharsetNameException, UnsupportedCharsetException, CharacterCodingException {
 		
 		super("GntpListenerThread");
+		_acceptor = socketAcceptor;
+		_connectionID = connectionID;
 		_registry = registry;
 		
 		_channel = channel;
@@ -55,7 +53,7 @@ public class GntpListenerThread extends Thread {
 	public void run() {
 		try {
 			int remotePort = _socket.getPort();
-			Log.i("GNTPListenerThread.run", "Connected to client on port " + remotePort);
+			Log.i("GNTPListenerThread.run[" + _connectionID + "]", "Connected to client on port " + remotePort);
 			
 			// Read lines from the socket until we've sent a response back	
 			String inputLine;
@@ -63,7 +61,7 @@ public class GntpListenerThread extends Thread {
 					((inputLine = _socketReader.readLine()) != null)) {
 				
 				// Parse the input
-				Log.i("GNTPListenerThread.run", "Read line \"" + inputLine + "\"");
+				Log.i("GNTPListenerThread.run[" + _connectionID + "]", "Read line \"" + inputLine + "\"");
 				try {
 					// Parse the input
 					switch (_currentState) {
@@ -111,7 +109,7 @@ public class GntpListenerThread extends Thread {
 							
 							case Ignore:
 								// Notification hash is invalid, silently ignore this notification
-								Log.w("GntpListenerThread.run", "Ignoring notification with invalid hash");
+								Log.w("GntpListenerThread.run[" + _connectionID + "]", "Ignoring notification with invalid hash");
 								break;
 								
 							default:
@@ -125,7 +123,7 @@ public class GntpListenerThread extends Thread {
 					
 				} catch (Exception x) {
 					// Parsing error or something unexpected					
-					Log.e("GntpListenerThread.run", "Unexpected error while reading from socket", x);
+					Log.e("GntpListenerThread.run[" + _connectionID + "]", "Unexpected error while reading from socket", x);
 
 					// Send the error response
 					GntpError error = GntpError.getErrorFrom(x);
@@ -134,13 +132,17 @@ public class GntpListenerThread extends Thread {
 				}
 			}
 			
-			Log.i("GNTPListenerThread.run", "No more input data, closing client connection from port " + remotePort);
+			Log.i("GNTPListenerThread.run[" + _connectionID + "]", "No more input data, closing client connection from port " + remotePort);
 			_channel.close();
 			_socket.close();
 
 		} catch (Exception x) {
-			Log.e("GNTPListenerThread.run", "Unexpected exception while reading from socket", x);
+			Log.e("GNTPListenerThread.run[" + _connectionID + "]", "Unexpected exception while reading from socket", x);
 		}
+		
+		// Notify the SocketAcceptor that we're done
+		Log.i("GNTPListenerThread.run[" + _connectionID + "]", "Connection closed");
+		_acceptor.connectionClosed(this);
 	}
 	
 	private RequestState parseRequestHeader(String inputLine) throws GntpException {
@@ -151,7 +153,8 @@ public class GntpListenerThread extends Thread {
 				return RequestState.ReadingNotificationHeaders;
 			} else if (_resources.size() > 0) {
 				// This request has one or more resources remaining
-				Log.i("GntpListenerThread.parseRequestHeader", "Reading " + _resources.size() + " resources...");
+				Log.i("GntpListenerThread.parseRequestHeader[" + _connectionID + "]",
+						"Reading " + _resources.size() + " resources...");
 				return RequestState.ReadingResourceHeaders;
 			} else {
 				// We're done
@@ -165,14 +168,14 @@ public class GntpListenerThread extends Thread {
 	}
 
 	private RequestState parseNotificationHeader(String inputLine)
-		throws GntpException, InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException,
-		InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException {
+		throws GntpException, IOException, DecryptionException{
 		
 		if (inputLine.equals("")) {
 			if (_notificationIndex < (_notificationsCount - 1)) {
 				// There are more notifications to go
 				_notificationIndex ++;
-				Log.i("GntpListenerThread.parseNotificationHeader", "Preparing to read notification type " + _notificationIndex);
+				Log.i("GntpListenerThread.parseNotificationHeader[" + _connectionID + "]",
+						"Preparing to read notification type " + _notificationIndex);
 				_socketReader.decryptNextBlock(_encryptionType, _initVector, _key);
 			} else {
 				return RequestState.EndOfRequest;
@@ -190,13 +193,15 @@ public class GntpListenerThread extends Thread {
 	
 	private RequestState parseResourceHeader(String inputLine) throws GntpException, IOException {
 		if (inputLine.equals("")) {
-			Log.i("GntpListenerThread.parseResourceHeader", "End of resource " + _resourceIndex + " headers");
+			Log.i("GntpListenerThread.parseResourceHeader[" + _connectionID + "]",
+					"End of resource " + _resourceIndex + " headers");
 			return RequestState.ReadingResourceData;	
 			
 		} else {
 			if (_currentResource == null) {
 				_currentResource = new GrowlResource();
-				Log.i("GntpListenerThread.parseResourceHeader", "Start of resource " + _resourceIndex);
+				Log.i("GntpListenerThread.parseResourceHeader[" + _connectionID + "]",
+						"Start of resource " + _resourceIndex);
 			}
 			parseHeader(inputLine, _currentResource.Headers);
 		}
@@ -204,23 +209,23 @@ public class GntpListenerThread extends Thread {
 	}
 	
 	private RequestState readResourceData()
-		throws IOException, InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException,
-		InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+		throws IOException, DecryptionException {
 		
 		// Read the bytes directly from the stream
 		int length = _currentResource.getLength();
-		Log.i("GntpListenerThread.readResourceData", "Reading " + length + " bytes of resource data");
+		Log.i("GntpListenerThread.readResourceData[" + _connectionID + "]",
+				"Reading " + length + " bytes of resource data");
 		byte[] data = _socketReader.readAndDecryptBytes(length, _encryptionType, _initVector, _key);
 		
 		// Print the hex data to the debug window
-		Utility.logByteArrayAsHex("GntpListenerThread.readResourceData", data);
+		Utility.logByteArrayAsHex("GntpListenerThread.readResourceData[" + _connectionID + "]", data);
 		
 		_resources.put(_currentResource.getIdentifier(), _currentResource);
 		_currentResource = null;
 		
 		_resourceIndex ++;
 		if (_resourceIndex >= _resources.size()) {
-			Log.i("GntpListenerThread.readResourceData", "End of resources");
+			Log.i("GntpListenerThread.readResourceData[" + _connectionID + "]", "End of resources");
 			return RequestState.EndOfRequest;
 		}
 
@@ -280,8 +285,7 @@ public class GntpListenerThread extends Thread {
 	}
 
 	private RequestState parseRequestLine(String inputLine)
-		throws GntpException, InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException,
-		InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, IOException {
+		throws GntpException, IOException, DecryptionException {
 		
 		// GNTP/<version> <messagetype> <encryptionAlgorithmID>[:<ivValue>][ <keyHashAlgorithmID>:<keyHash>.<salt>]
 		String[] component = inputLine.split(Constants.FIELD_DELIMITER);
@@ -307,10 +311,12 @@ public class GntpListenerThread extends Thread {
 		_encryptionType = EncryptionType.fromString(encryptionTypeAndIV[0]);
 		if (_encryptionType == null)
 			throw new GntpException(GntpError.InvalidRequest, "Unsupported encryption type: " + _encryptionType);
-		Log.i("GntpListenerThread.parseRequestLine", "Encryption Type: " + _encryptionType);
+		Log.i("GntpListenerThread.parseRequestLine[" + _connectionID + "]",
+				"Encryption Type: " + _encryptionType);
 		String ivHex = (encryptionTypeAndIV.length == 2) ? encryptionTypeAndIV[1] : "";
 		_initVector = Utility.hexStringToByteArray(ivHex);
-		Log.i("GntpListenerThread.parseRequestLine", "Encryption IV:   " + ((encryptionTypeAndIV.length == 2) ? ivHex : "(none)"));
+		Log.i("GntpListenerThread.parseRequestLine[" + _connectionID + "]",
+				"Encryption IV:   " + ((encryptionTypeAndIV.length == 2) ? ivHex : "(none)"));
 		
 		// Authentication hash
 		if (component.length == 4) {
@@ -334,15 +340,18 @@ public class GntpListenerThread extends Thread {
 			_key = _registry.getMatchingKey(algorithm, hash, salt);
 			if (_key == null) {
 				// We couldn't find a key that matches, ignore this notification
-				Log.i("GntpListenerThread.parseRequestLine", "Encryption Key:  (none)");
-				_requestType = RequestType.Ignore;
+				Log.i("GntpListenerThread.parseRequestLine[" + _connectionID + "]",
+						"Encryption Key:  (none)");
+				throw new GntpException(GntpError.NotAuthorized);
 			} else {
-				Log.i("GntpListenerThread.parseRequestLine", "Encryption Key:  " + Utility.getHexStringFromByteArray(_key));
+				Log.i("GntpListenerThread.parseRequestLine[" + _connectionID + "]",
+						"Encryption Key:  " + Utility.getHexStringFromByteArray(_key));
 			}
 		} else if (_registry.requiresPassword()) {
 			// The application didn't supply a password hash, but the registry requires one
-			Log.w("GntpListenerThread.parseRequestLine", "Passwords are required, but this notification did not have one. Ignoring");
-			_requestType = RequestType.Ignore;
+			Log.w("GntpListenerThread.parseRequestLine[" + _connectionID + "]",
+					"Passwords are required, but this notification did not have one. Ignoring");
+			throw new GntpException(GntpError.NotAuthorized);
 		}
 
 		// Decrypt the request headers
@@ -361,7 +370,8 @@ public class GntpListenerThread extends Thread {
 		
 		if (value.startsWith(Constants.RESOURCE_URI_PREFIX)) {
 			String identifier = value.substring(Constants.RESOURCE_URI_PREFIX.length());
-			Log.i("GntpListenerThread.parseHeader", "Header " + key + " has a binary resource " + identifier + " for its value");
+			Log.i("GntpListenerThread.parseHeader[" + _connectionID + "]",
+					"Header " + key + " has a binary resource " + identifier + " for its value");
 			_resources.put(identifier, null);
 		}
 		

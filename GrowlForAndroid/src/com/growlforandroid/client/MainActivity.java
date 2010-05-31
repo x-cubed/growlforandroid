@@ -12,7 +12,7 @@ import android.view.View.OnClickListener;
 import android.widget.*;
 
 public class MainActivity extends Activity {
-	private final GrowlListenerConnection _service = new GrowlListenerConnection();
+	private GrowlListenerConnection _service;
 	private ListView _lsvNotifications;
 	private ToggleButton _tglServiceState;
 	private TextView _txtServiceState;
@@ -26,11 +26,13 @@ public class MainActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        _service = new GrowlListenerConnection();
         
         // Load the default preferences
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         
         setContentView(R.layout.main);
+        setTitle(R.string.app_name);
 
         // List the recent notifications
         _lsvNotifications = (ListView)findViewById(R.id.lsvNotifications);
@@ -84,24 +86,28 @@ public class MainActivity extends Activity {
     	if (_tglServiceState.isChecked() != isRunning)
     		_tglServiceState.setChecked(isRunning);
     	
-    	_txtServiceState.setText(isRunning ? "Growl is running" : "Growl is stopped");
+    	_txtServiceState.setText(isRunning ? R.string.growl_on_status : R.string.growl_off_status);
     }
     
     
     private class GrowlListenerConnection implements ServiceConnection {
+    	private final Intent _growlListenerService = new Intent(MainActivity.this, GrowlListenerService.class);
     	private boolean _isBound;
     	private GrowlListenerService _instance;
     	
     	public boolean isRunning() {
     		if (_instance == null) {
-    			return false;
+    			_isBound = bindService(_growlListenerService, this, 0);
+    			Log.i("GrowlListenerConnection.isRunning",
+    					"IsBound = " + _isBound + ", Has Instance = " + (_instance != null));
+    			return _isBound && (_instance != null) ? _instance.isRunning() : false;   			
     		} else {
     			return _instance.isRunning();
     		}
     	}
     	
     	public void start() {
-    		if (!bindService(new Intent(MainActivity.this, GrowlListenerService.class), this, BIND_AUTO_CREATE)) {
+    		if (!bindService(_growlListenerService, this, BIND_AUTO_CREATE)) {
             	Log.e("GrowlListenerConnection.start", "Unable to bind to service");
             	return;
             }
@@ -118,7 +124,7 @@ public class MainActivity extends Activity {
     			_isBound = false;
     			onServiceDisconnected(null);
     		}
-    		if (!stopService(new Intent(MainActivity.this, GrowlListenerService.class))) {
+    		if (!stopService(_growlListenerService)) {
     			Log.e("GrowlListenerConnection.stop", "Unable to stop service");
             	return;
     		}

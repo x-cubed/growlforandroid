@@ -118,7 +118,8 @@ public class GrowlListenerService
     	// Stop listening for TCP connections
 		try {
 	    	if (_socketAcceptor != null) {
-	    		_socketAcceptor.interrupt();
+	    		_socketAcceptor.stopListening();
+	    		_socketAcceptor.closeConnections();
 	    		_socketAcceptor = null;
 	    	}
     		
@@ -198,8 +199,8 @@ public class GrowlListenerService
 	    					"Failed to load an application from the database: " + x);
 	    		}
 	    	} while (apps.moveToNext());
-	    	apps.close();
     	}
+    	apps.close();
     	Log.i("GrowlListenerService.loadApplicationsFromDatabase",
     			"Loaded " + count + " applications from the database");
 	}
@@ -315,6 +316,7 @@ public class GrowlListenerService
 				// Log.i("GrowlListenerService.getMatchingKey", "Name:      " + name);
 				// Log.i("GrowlListenerService.getMatchingKey", "Password:  " + password);
 				byte[] key = algorithm.calculateKey(password, salt);
+				// Log.i("GrowlListenerService.getMatchingKey", "Key:       " + Utility.getHexStringFromByteArray(key));
 				byte[] validHash = algorithm.calculateHash(key);
 				// Log.i("GrowlListenerService.getMatchingKey", "Hash:      " + Utility.getHexStringFromByteArray(validHash));
 				boolean isValid = Utility.compareArrays(validHash, hash);
