@@ -5,14 +5,16 @@
     android:layout_height="wrap_content"
     android:orientation="vertical">
     
-	<RelativeLayout android:id="@+id/RelativeLayout01" android:layout_width="fill_parent" android:layout_height="fill_parent" xmlns:android="http://schemas.android.com/apk/res/android" android:paddingTop="10px" android:paddingLeft="10px">
-		<ToggleButton android:layout_width="wrap_content" android:layout_height="wrap_content" android:textOff="Off" android:textOn="On" android:id="@+id/tglServiceState" android:width="60px" android:height="60px"></ToggleButton>
-		<TextView android:text="Growl is not running" android:layout_toRightOf="@+id/tglServiceState" android:layout_height="wrap_content" android:id="@+id/txtServiceState" android:layout_width="wrap_content" android:height="60px" android:padding="10px" android:textSize="30px"></TextView>
-		
-			
+	<RelativeLayout android:id="@+id/RelativeLayout01" android:layout_width="fill_parent" android:layout_height="fill_parent"
+		android:paddingTop="10dip" android:paddingLeft="10dip">
+		<ToggleButton android:layout_width="wrap_content" android:layout_height="wrap_content"  android:width="60dip" android:height="60dip"
+			android:textOff="@string/growl_off" android:textOn="@string/growl_on" android:id="@+id/tglServiceState" />
+		<TextView android:text="@string/growl_off_status" android:layout_toRightOf="@+id/tglServiceState" android:layout_height="wrap_content"
+			android:id="@+id/txtServiceState" android:layout_width="wrap_content" android:height="60dip" android:padding="10dip" android:textSize="30dip" />
 	</RelativeLayout>
 
-	<TextView android:id="@+id/lblNotifications" android:layout_height="wrap_content" android:layout_width="fill_parent" style="?android:attr/listSeparatorTextViewStyle" android:text="Recent Notifications" android:layout_marginTop="10px" android:paddingLeft="10px"></TextView>	
+	<TextView android:id="@+id/lblNotifications" android:layout_height="wrap_content" android:layout_width="fill_parent"
+		style="?android:attr/listSeparatorTextViewStyle" android:text="@string/history_title" android:layout_marginTop="10dip" android:paddingLeft="10dip" />	
 	<ListView android:id="@+id/lsvNotifications" android:layout_width="fill_parent" android:layout_height="fill_parent">
 		
 	</ListView>

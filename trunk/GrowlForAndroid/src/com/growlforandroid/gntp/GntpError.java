@@ -1,5 +1,7 @@
 package com.growlforandroid.gntp;
 
+import com.growlforandroid.common.EncryptedChannelReader.DecryptionException;
+
 public enum GntpError {
 	Reserved (100, "Reserved for future use"),
 	TimedOut (200, "The server timed out waiting for the request to complete"),
@@ -27,6 +29,14 @@ public enum GntpError {
 	}
 
 	public static GntpError getErrorFrom(Exception x) {
-		return (x instanceof GntpException) ? ((GntpException)x).Error : GntpError.InternalServerError;
+		if (x instanceof GntpException) {
+			return ((GntpException)x).Error;
+		}
+		else if (x instanceof DecryptionException) {
+			return GntpError.NotAuthorized;
+		}
+		else {
+			return GntpError.InternalServerError;
+		}
 	}
 }
