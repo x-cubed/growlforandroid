@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="hello">Hello World, MainActivity!</string>
+    
     <string name="app_name">Growl for Android</string>
 
-<string name="service_label">Growl for Android Listener</string><string name="service_started">Growl for Android started</string>
+<string name="app_label">Growl</string><string name="service_label">Growl for Android Listener</string><string name="service_started">Growl for Android started</string>
 <string name="service_stopped">Growl for Android stopped</string>
 <string name="add_password_dialog_name">Name</string>
 <string name="add_password_dialog_password">Password</string>
@@ -25,6 +25,7 @@
 <string name="preferences_listen_growl_udp_summary">UDP</string>
 <string name="preferences_security_title">Security</string><string name="preferences_security_require_passwords">Require passwords</string><string name="preferences_security_require_passwords_summary">Applications must provide passwords in all messages</string><string name="preferences_security_passwords">Password Manager</string>
 <string name="preferences_security_passwords_summary">Manage allowed application passwords</string>
+
 
 
 
