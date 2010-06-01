@@ -10,6 +10,7 @@ import java.util.*;
 import com.growlforandroid.client.R;
 import com.growlforandroid.common.Database;
 import com.growlforandroid.common.GrowlApplication;
+import com.growlforandroid.common.GrowlNotification;
 import com.growlforandroid.common.GrowlResource;
 import com.growlforandroid.common.GrowlResources;
 import com.growlforandroid.common.IGrowlRegistry;
@@ -25,6 +26,7 @@ import android.graphics.drawable.Drawable;
 import android.os.*;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.widget.RemoteViews;
 import android.widget.Toast;
 
 public class GrowlListenerService
@@ -93,7 +95,7 @@ public class GrowlListenerService
         	// Start listening on GNTP_PORT, on all interfaces
         	_serverChannel = ServerSocketChannel.open();
         	_serverChannel.socket().bind(new InetSocketAddress(GNTP_PORT));
-        	
+
         	// Start accepting connections on another thread
 			_socketAcceptor = new SocketAcceptor(this, _serverChannel);
 			_socketAcceptor.start();
@@ -154,11 +156,9 @@ public class GrowlListenerService
      * Show a notification while this service is running.
      */
     private void showNotification() {
-        // In this sample, we'll use the same text for the ticker and the expanded notification
-        CharSequence text = getText(R.string.growl_on_status);
-
         // Set the icon, scrolling text and timestamp
-        Notification notification = new Notification(R.drawable.statusbar_enabled, text, System.currentTimeMillis());
+        Notification notification = new Notification(R.drawable.statusbar_enabled,
+        		getText(R.string.growl_on_status), System.currentTimeMillis());
 
         // The PendingIntent to launch our activity if the user selects this notification
         PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
@@ -167,7 +167,7 @@ public class GrowlListenerService
         // Set the info for the views that show in the notification panel.
         notification.flags = Notification.FLAG_ONGOING_EVENT | Notification.FLAG_NO_CLEAR;
         notification.setLatestEventInfo(this, getText(R.string.app_name),
-                       text, contentIntent);
+        		getText(R.string.growl_on_status), contentIntent);
 
         // Send the notification.
         _notifyMgr.notify(SERVICE_NOTIFICATION, notification);
@@ -242,26 +242,45 @@ public class GrowlListenerService
 		return _applications.get(name);
 	}
 	
-	public void displayNotification(NotificationType type, String ID, String title, String text, URL iconUrl) {
+	public void displayNotification(GrowlNotification notification) {
+		NotificationType type = notification.getType();
 		GrowlApplication app = type.Application;
+		String title = notification.getTitle();
+		String message = notification.getMessage();
+		URL iconUrl = notification.getIconUrl();
+		String origin = notification.getOrigin();
+		
+		_database.insertNotificationHistory(type.ID, title, message, iconUrl, origin);
+		
 		Log.i("GrowlListenerService.displayNotification", "Displaying notification from \"" + app.Name + "\" " +
-				"of type \"" + type.TypeName + "\" with title \"" + title + "\" and text \"" + text + "\"");
-		Notification notification = new Notification(R.drawable.statusbar_enabled, text, System.currentTimeMillis());
-
-		// The PendingIntent to launch our activity if the user selects this notification
-        PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-                new Intent(this, MainActivity.class), 0);
-
+				"of type \"" + type.TypeName + "\" with title \"" + title + "\" and message \"" + message + "\"");
+		Notification statusBarPanel = new Notification(R.drawable.statusbar_enabled, message, System.currentTimeMillis());
+		
         // Set the info for the views that show in the notification panel.
-        String statusBarTitle = app.Name + ": " + title;
-        notification.ledARGB = LED_COLOUR;
-        notification.ledOffMS = LED_OFF_MS;
-        notification.ledOnMS = LED_ON_MS;
-        notification.flags = Notification.FLAG_AUTO_CANCEL | Notification.FLAG_SHOW_LIGHTS;
-        notification.setLatestEventInfo(this, statusBarTitle, text, contentIntent);
+        statusBarPanel.ledARGB = LED_COLOUR;
+        statusBarPanel.ledOffMS = LED_OFF_MS;
+        statusBarPanel.ledOnMS = LED_ON_MS;
+        statusBarPanel.flags = Notification.FLAG_AUTO_CANCEL | Notification.FLAG_SHOW_LIGHTS;
+        
+        // Use our custom layout for the notification panel, so that we can insert the application icon
+        RemoteViews contentView = new RemoteViews(getPackageName(), R.layout.notification_list_item);
+        contentView.setImageViewResource(R.id.imgNotificationIcon, R.drawable.launcher);
+        contentView.setTextViewText(R.id.txtNotificationTitle, title);
+        contentView.setTextViewText(R.id.txtNotificationMessage, message);
+        contentView.setTextViewText(R.id.txtNotificationApp, app.Name);
+        statusBarPanel.contentView = contentView;
+
+        // The PendingIntent to launch our activity if the user selects this notification
+        statusBarPanel.contentIntent = PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), 0);
 
         // Send the notification to the status bar
-        _notifyMgr.notify(app.ID, notification);
+        _notifyMgr.notify(app.ID, statusBarPanel);
+        
+        String toastText = "Growl from " + app.Name + "\n\n" + title + "\n" + message;
+        Looper.prepare();
+        Toast toast = Toast.makeText(this, toastText, Toast.LENGTH_LONG);
+        toast.show();
+        Looper.loop();
 	}
 
 	public NotificationType getNotificationType(GrowlApplication application, String typeName) {

@@ -22,17 +22,20 @@ public final class R {
     public static final class id {
         public static final int LinearLayout01=0x7f070004;
         public static final int RelativeLayout01=0x7f070005;
-        public static final int imgApplication=0x7f07000a;
+        public static final int imgNotificationIcon=0x7f07000a;
+        public static final int layNotificationText=0x7f07000b;
         public static final int lblNotifications=0x7f070008;
         public static final int lblPasswordName=0x7f070000;
         public static final int lblPasswordPassword=0x7f070002;
-        public static final int lblPasswordText=0x7f07000c;
+        public static final int lblPasswordText=0x7f07000f;
         public static final int lsvNotifications=0x7f070009;
         public static final int tglServiceState=0x7f070006;
+        public static final int txtNotificationApp=0x7f07000e;
+        public static final int txtNotificationMessage=0x7f07000d;
+        public static final int txtNotificationTitle=0x7f07000c;
         public static final int txtPasswordName=0x7f070001;
         public static final int txtPasswordPassword=0x7f070003;
         public static final int txtServiceState=0x7f070007;
-        public static final int txtText=0x7f07000b;
     }
     public static final class layout {
         public static final int add_password_dialog=0x7f030000;

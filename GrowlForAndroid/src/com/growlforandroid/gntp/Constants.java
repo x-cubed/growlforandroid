@@ -22,6 +22,7 @@ public final class Constants {
 	public static final String HEADER_NOTIFICATION_TITLE = "Notification-Title";
 	public static final String HEADER_NOTIFICATION_TEXT = "Notification-Text";
 	public static final String HEADER_NOTIFICATION_ENABLED = "Notification-Enabled";
+	public static final String HEADER_NOTIFICATION_ORIGIN = "Origin-Machine-Name";
 	
 	public static final String HEADER_RESOURCE_IDENTIFIER = "Identifier";
 	public static final String HEADER_RESOURCE_LENGTH = "Length";

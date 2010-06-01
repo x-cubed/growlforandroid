@@ -13,7 +13,7 @@ import com.growlforandroid.gntp.*;
 import android.util.Log;
 
 public class GntpListenerThread extends Thread {
-	private static final boolean SKIP_LOADING_RESOURCES = true;
+	private static final boolean SKIP_LOADING_RESOURCES = false;
 	
 	private final SocketAcceptor _acceptor;
 	private final int _connectionID;
@@ -223,8 +223,14 @@ public class GntpListenerThread extends Thread {
 		} else {
 			Log.i("GntpListenerThread.readResourceData[" + _connectionID + "]",
 					"Reading " + length + " bytes of resource data");
-			byte[] data = _socketReader.readAndDecryptBytes(length, _encryptionType, _initVector, _key);
+			File cacheFolder = _registry.getCacheDir();
+			File tempResource = _socketReader.readAndDecryptBytesToTempFile(length, _encryptionType, _initVector, _key, cacheFolder);
 
+			Log.i("GntpListenerThread.readResourceData[" + _connectionID + "]", "Created " +
+					tempResource.getAbsolutePath() + " as resource (" + tempResource.length() + ")");
+			
+			tempResource.deleteOnExit();
+			
 			// TODO: Store the data against the current resource
 			
 			_resources.put(_currentResource.getIdentifier(), _currentResource);
@@ -264,14 +270,8 @@ public class GntpListenerThread extends Thread {
 		if (type == null)
 			throw new GntpException(GntpError.UnknownNotification);
 		
-		String ID = _requestHeaders.get(Constants.HEADER_NOTIFICATION_ID);
-		String icon = _requestHeaders.get(Constants.HEADER_NOTIFICATION_ICON);
-		URL iconUrl = (icon != null) ? new URL(icon) : null;
-		
-		String title = _requestHeaders.get(Constants.HEADER_NOTIFICATION_TITLE);
-		String text = _requestHeaders.get(Constants.HEADER_NOTIFICATION_TEXT);
-		
-		_registry.displayNotification(type, ID, title, text, iconUrl);
+		GrowlNotification notification = new GrowlNotification(type, _requestHeaders, _resources);
+		_registry.displayNotification(notification);
 	}
 
 	// Register an application and its notification types

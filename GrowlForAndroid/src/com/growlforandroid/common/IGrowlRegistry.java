@@ -1,5 +1,6 @@
 package com.growlforandroid.common;
 
+import java.io.File;
 import java.net.URL;
 
 import com.growlforandroid.gntp.HashAlgorithm;
@@ -15,9 +16,10 @@ public interface IGrowlRegistry {
 	GrowlApplication getApplication(String name);
 	Drawable getIcon(URL icon);
 	void registerResource(GrowlResource resource);
-	void displayNotification(NotificationType type, String ID, String title, String text, URL icon);
+	void displayNotification(GrowlNotification notification);
 	NotificationType getNotificationType(GrowlApplication application,	String typeName);
 	NotificationType registerNotificationType(GrowlApplication application, String typeName, String displayName, boolean enabled, URL iconUrl);
 	boolean requiresPassword();
 	byte[] getMatchingKey(HashAlgorithm algorithm, String hash, String salt);
+	File getCacheDir();
 }
