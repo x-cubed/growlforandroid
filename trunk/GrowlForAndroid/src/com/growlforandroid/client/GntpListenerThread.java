@@ -178,7 +178,6 @@ public class GntpListenerThread extends Thread {
 				_notificationIndex ++;
 				Log.i("GntpListenerThread.parseNotificationHeader[" + _connectionID + "]",
 						"Preparing to read notification type " + _notificationIndex);
-				_socketReader.decryptNextBlock(_encryptionType, _initVector, _key);
 			} else {
 				return RequestState.EndOfRequest;
 			}

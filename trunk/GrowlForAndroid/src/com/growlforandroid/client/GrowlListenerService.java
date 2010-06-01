@@ -36,6 +36,7 @@ public class GrowlListenerService
 	private static final int LED_COLOUR = 0xffffff00;
 	private static final int LED_OFF_MS = 100;
 	private static final int LED_ON_MS = 900;
+	private static final int SERVICE_NOTIFICATION = 0xDEADBEEF;
 	
 	private static Database _database;
 	private static GrowlResources _resources;
@@ -113,7 +114,7 @@ public class GrowlListenerService
     @Override
     public void onDestroy() {
         // Cancel the persistent notification.
-    	_notifyMgr.cancel(R.string.service_started);
+    	_notifyMgr.cancel(SERVICE_NOTIFICATION);
 
     	// Stop listening for TCP connections
 		try {
@@ -154,7 +155,7 @@ public class GrowlListenerService
      */
     private void showNotification() {
         // In this sample, we'll use the same text for the ticker and the expanded notification
-        CharSequence text = getText(R.string.service_started);
+        CharSequence text = getText(R.string.growl_on_status);
 
         // Set the icon, scrolling text and timestamp
         Notification notification = new Notification(R.drawable.statusbar_enabled, text, System.currentTimeMillis());
@@ -165,12 +166,11 @@ public class GrowlListenerService
 
         // Set the info for the views that show in the notification panel.
         notification.flags = Notification.FLAG_ONGOING_EVENT | Notification.FLAG_NO_CLEAR;
-        notification.setLatestEventInfo(this, getText(R.string.service_label),
+        notification.setLatestEventInfo(this, getText(R.string.app_name),
                        text, contentIntent);
 
         // Send the notification.
-        // We use a layout id because it is a unique number.  We use it later to cancel.
-        _notifyMgr.notify(R.string.service_started, notification);
+        _notifyMgr.notify(SERVICE_NOTIFICATION, notification);
     }
 
 	public Drawable getIcon(URL icon) {
