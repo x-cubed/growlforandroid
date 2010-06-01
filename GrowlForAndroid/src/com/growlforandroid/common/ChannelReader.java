@@ -13,7 +13,7 @@ import android.util.Log;
  * @author Carey Bishop
   */
 public class ChannelReader {
-	private static final int CAPACITY = 1024;
+	private static final int CAPACITY = 8192;
 	
 	private static final byte UTF8_MULTI_START = (byte) 0x80;
 	private static final byte UTF8_MULTI_MASK = (byte) 0xC0;
