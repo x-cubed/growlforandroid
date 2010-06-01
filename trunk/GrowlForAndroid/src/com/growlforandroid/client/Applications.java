@@ -23,14 +23,20 @@ public class Applications extends ListActivity {
         setListAdapter(new SimpleCursorAdapter(this, R.layout.notification_list_item,
                 _cursor,
                 new String[] { Database.KEY_NAME },
-                new int[] { R.id.txtText }));
+                new int[] { R.id.txtNotificationTitle }));
         getListView().setTextFilterEnabled(true);
     }
     
-    protected void finalize() {
+    protected void finalize() throws Throwable {
     	if (_cursor != null) {
     		_cursor.close();
     		_cursor = null;
     	}
+    	
+    	if (_database != null) {
+    		_database.close();
+    		_database = null;
+    	}
+    	super.finalize();
     }
 }

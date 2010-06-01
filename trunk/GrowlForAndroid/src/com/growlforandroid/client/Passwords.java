@@ -46,6 +46,12 @@ public class Passwords extends ListActivity {
     	if (_cursor != null) {
     		_cursor.close();
     	}
+    	
+    	if (_database != null) {
+    		_database.close();
+    		_database = null;
+    	}
+    	
     	super.finalize();
     }
     

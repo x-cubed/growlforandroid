@@ -20,6 +20,10 @@ public class Database {
 	public static final String KEY_ENABLED = "enabled";
 	public static final String KEY_ICON_URL = "icon_url";
 	public static final String KEY_PASSWORD = "password";
+	public static final String KEY_RECEIVED_AT = "received_at";
+	public static final String KEY_TITLE = "title";
+	public static final String KEY_MESSAGE = "message";
+	public static final String KEY_ORIGIN = "origin";
 
 	private static final String DATABASE_NAME = "growl";
 	private static final int DATABASE_VERSION = 1;
@@ -55,7 +59,7 @@ public class Database {
 					+ "name TEXT NOT NULL, "
 					+ "display_name TEXT NOT NULL, "
 					+ "enabled INTEGER NOT NULL, "
-					+ "icon_url TEXT,"
+					+ "icon_url TEXT, "
 					+ "FOREIGN KEY(app_id) REFERENCES applications(id));");
 
 			db.execSQL("CREATE TABLE passwords ("
@@ -71,10 +75,12 @@ public class Database {
 			
 			db.execSQL("CREATE TABLE notification_history ("
 					+ "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+					+ "received_at TIMESTAMP NOT NULL,"
 					+ "type_id INTEGER NOT NULL, "
 					+ "title TEXT NOT NULL, "
 					+ "message TEXT NOT NULL, "
-					+ "source TEXT NOT NULL, "
+					+ "icon_url TEXT, "
+					+ "origin TEXT, "
 					+ "FOREIGN KEY(type_id) REFERENCES notification_types(id));");
 		}
 
@@ -188,5 +194,25 @@ public class Database {
 		boolean history = db.delete("notification_history", KEY_TYPE_ID + "=" + rowId, null) > 0;
 		boolean type = db.delete("notification_types", KEY_ROWID + "=" + rowId, null) > 0;
 		return history && type;
+	}
+
+	public int insertNotificationHistory(int typeID, String title, String message, URL iconUrl, String origin) {
+		ContentValues initialValues = new ContentValues();
+		initialValues.put(KEY_TYPE_ID, typeID);
+		initialValues.put(KEY_RECEIVED_AT, System.currentTimeMillis());
+		initialValues.put(KEY_TITLE, title);
+		initialValues.put(KEY_MESSAGE, message);
+
+		String url = iconUrl == null ? null : iconUrl.toString();
+		initialValues.put(KEY_ICON_URL, url);
+		
+		initialValues.put(KEY_ORIGIN, origin);
+		return (int) db.insert("notification_history", null, initialValues);
+	}
+	
+	public Cursor getNotificationHistory() {
+		return db.query("notification_history", new String[] {
+				KEY_ROWID, KEY_TYPE_ID, KEY_RECEIVED_AT, KEY_TITLE, KEY_MESSAGE, KEY_ICON_URL, KEY_ORIGIN },
+				null, null, null, null, KEY_RECEIVED_AT + " DESC");
 	}
 }

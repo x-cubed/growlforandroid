@@ -1,11 +1,14 @@
 package com.growlforandroid.common;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
 import com.growlforandroid.gntp.Constants;
 
+import android.content.Context;
 import android.util.Log;
 
 /**
@@ -13,7 +16,7 @@ import android.util.Log;
  * @author Carey Bishop
   */
 public class ChannelReader {
-	private static final int CAPACITY = 8192;
+	protected static final int BUFFER_SIZE = 8192;
 	
 	private static final byte UTF8_MULTI_START = (byte) 0x80;
 	private static final byte UTF8_MULTI_MASK = (byte) 0xC0;
@@ -33,7 +36,7 @@ public class ChannelReader {
 
 	public ChannelReader(SocketChannel channel) {
 		_channel = channel;
-		_buffer = ByteBuffer.allocateDirect(CAPACITY);
+		_buffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
 	}
 	
 	/**
@@ -91,8 +94,11 @@ public class ChannelReader {
 	}
 	
 	public ByteBuffer readBytesUntil(byte[] delimiter) throws IOException {
+		if ((delimiter == null) || (delimiter.length == 0))
+			throw new IOException("delimiter is invalid");
+		
 		byte endOfDelimiter = delimiter[delimiter.length - 1];
-		ByteBuffer buffer = ByteBuffer.allocate(CAPACITY);
+		ByteBuffer buffer = ByteBuffer.allocate(BUFFER_SIZE);
 		
 		while (true) {
 			// Read a byte into the buffer
@@ -100,7 +106,7 @@ public class ChannelReader {
 			buffer.put(data);
 			
 			// If this byte is the last byte of the delimiter
-			if (data == endOfDelimiter) {
+			if ((buffer.position() >= delimiter.length) && (data == endOfDelimiter)) {
 				// Check to see if the preceding bytes also match the delimiter
 				boolean found = true;
 				int startOfDelimiter = buffer.position() - delimiter.length;
