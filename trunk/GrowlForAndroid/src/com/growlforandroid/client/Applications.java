@@ -15,15 +15,18 @@ public class Applications extends ListActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        setTitle(R.string.applications_title);
+        
         _database = new Database(this);
-        _cursor = _database.getAllApplications();
+        String typeCountCaption = getText(R.string.database_notification_types).toString(); 
+        _cursor = _database.getAllApplications(typeCountCaption);
         
         // Use an existing ListAdapter that will map an array
         // of strings to TextViews
-        setListAdapter(new SimpleCursorAdapter(this, R.layout.notification_list_item,
+        setListAdapter(new SimpleCursorAdapter(this, R.layout.history_list_item,
                 _cursor,
-                new String[] { Database.KEY_NAME },
-                new int[] { R.id.txtNotificationTitle }));
+                new String[] { Database.KEY_NAME, Database.KEY_TYPE_COUNT },
+                new int[] { R.id.txtNotificationTitle, R.id.txtNotificationMessage }));
         getListView().setTextFilterEnabled(true);
     }
     

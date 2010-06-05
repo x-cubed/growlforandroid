@@ -3,6 +3,8 @@ package com.growlforandroid.common;
 import java.net.URL;
 import java.util.HashSet;
 
+import com.growlforandroid.client.R;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -25,6 +27,16 @@ public class Database {
 	public static final String KEY_MESSAGE = "message";
 	public static final String KEY_ORIGIN = "origin";
 
+	public static final String KEY_APP_NAME = "appName";
+	public static final String KEY_TYPE_DISPLAY_NAME = "typeName";
+	public static final String KEY_TYPE_COUNT = "typeCount";
+	
+	public static final String TABLE_APPLICATIONS = "applications";
+	public static final String TABLE_NOTIFICATION_TYPES = "notification_types";
+	public static final String TABLE_PASSWORDS = "passwords";
+	public static final String TABLE_SUBSCRIPTIONS = "subscriptions";
+	public static final String TABLE_NOTIFICATION_HISTORY = "notification_history";
+	
 	private static final String DATABASE_NAME = "growl";
 	private static final int DATABASE_VERSION = 1;
 
@@ -89,11 +101,11 @@ public class Database {
 			Log.w("Database", "Upgrading database from version "
 							+ oldVersion + " to " + newVersion
 							+ ", which will destroy all old data");
-			db.execSQL("DROP TABLE IF EXISTS applications;");
-			db.execSQL("DROP TABLE IF EXISTS notification_types;");
-			db.execSQL("DROP TABLE IF EXISTS passwords;");
-			db.execSQL("DROP TABLE IF EXISTS subscriptions;");
-			db.execSQL("DROP TABLE IF EXISTS notification_history;");
+			db.execSQL("DROP TABLE IF EXISTS " + TABLE_APPLICATIONS + ";");
+			db.execSQL("DROP TABLE IF EXISTS " + TABLE_NOTIFICATION_TYPES + ";");
+			db.execSQL("DROP TABLE IF EXISTS " + TABLE_PASSWORDS + ";");
+			db.execSQL("DROP TABLE IF EXISTS " + TABLE_SUBSCRIPTIONS + ";");
+			db.execSQL("DROP TABLE IF EXISTS " + TABLE_NOTIFICATION_HISTORY + ";");
 			onCreate(db);
 		}
 	}
@@ -106,16 +118,16 @@ public class Database {
 		ContentValues initialValues = new ContentValues();
 		initialValues.put(KEY_NAME, name);
 		initialValues.put(KEY_PASSWORD, password);
-		return (int) db.insert("passwords", null, initialValues);
+		return (int) db.insert(TABLE_PASSWORDS, null, initialValues);
 	}
 
 	public boolean deletePassword(long rowId) {
 		Log.i("Database.deletePassword", "Deleting password " + rowId);
-		return db.delete("passwords", KEY_ROWID + "=" + rowId, null) > 0;
+		return db.delete(TABLE_PASSWORDS, KEY_ROWID + "=" + rowId, null) > 0;
 	}
 
 	public Cursor getAllPasswordsAndNames() {
-		return db.query("passwords", new String[] { KEY_ROWID, KEY_NAME,
+		return db.query(TABLE_PASSWORDS, new String[] { KEY_ROWID, KEY_NAME,
 				KEY_PASSWORD }, null, null, null, null, null);
 	}
 
@@ -142,21 +154,40 @@ public class Database {
 
 		String url = iconUrl == null ? null : iconUrl.toString();
 		initialValues.put(KEY_ICON_URL, url);
-		return (int) db.insert("applications", null, initialValues);
+		return (int) db.insert(TABLE_APPLICATIONS, null, initialValues);
 	}
 
 	public boolean deleteApplication(long rowId) {
-		return db.delete("applications", KEY_ROWID + "=" + rowId, null) > 0;
+		return db.delete(TABLE_APPLICATIONS, KEY_ROWID + "=" + rowId, null) > 0;
 	}
 
 	public Cursor getAllApplications() {
-		return db.query("applications", new String[] {
+		return db.query(TABLE_APPLICATIONS, new String[] {
 				KEY_ROWID, KEY_NAME, KEY_ENABLED, KEY_ICON_URL },
 				null, null, null, null, null);
 	}
+	
+	public Cursor getAllApplications(String typeCountCaption) {
+		/* return db.rawQuery(
+				"SELECT " + KEY_ROWID + ", " + KEY_NAME + ", " + KEY_ICON_URL + ", " +
+					"replace(?, '#', coalesce(" + KEY_TYPE_COUNT + ", 0)) AS " + KEY_TYPE_COUNT + " " +
+				"FROM " + TABLE_APPLICATIONS + " " +
+					"LEFT JOIN (SELECT " + KEY_APP_ID + ", COUNT(*) AS " + KEY_TYPE_COUNT + " " +
+							"FROM " + TABLE_NOTIFICATION_TYPES + ") AS " + TABLE_NOTIFICATION_TYPES + " " +
+						"ON " + TABLE_NOTIFICATION_TYPES + "." + KEY_APP_ID + " = " + TABLE_APPLICATIONS + "." + KEY_ROWID + " " +
+				"ORDER BY " + KEY_NAME, new String[] { typeCountCaption });*/
+		
+		return db.rawQuery(
+				"SELECT " + KEY_ROWID + ", " + KEY_NAME + ", " + KEY_ICON_URL + ", " + KEY_TYPE_COUNT + " " +
+				"FROM " + TABLE_APPLICATIONS + " " +
+					"LEFT JOIN (SELECT " + KEY_APP_ID + ", group_concat(" + KEY_DISPLAY_NAME + ", ', ') AS " + KEY_TYPE_COUNT + " " +
+							"FROM " + TABLE_NOTIFICATION_TYPES + " GROUP BY + " + KEY_APP_ID + ") AS " + TABLE_NOTIFICATION_TYPES + " " +
+						"ON " + TABLE_NOTIFICATION_TYPES + "." + KEY_APP_ID + " = " + TABLE_APPLICATIONS + "." + KEY_ROWID + " " +
+				"ORDER BY " + KEY_NAME, null);
+	}
 
 	public Cursor getApplication(int id) throws SQLException {
-		Cursor cursor = db.query(true, "applications", new String[] {
+		Cursor cursor = db.query(true, TABLE_APPLICATIONS, new String[] {
 				KEY_ROWID, KEY_NAME, KEY_ENABLED, KEY_ICON_URL }, KEY_ROWID
 				+ "=" + id, null, null, null, null, null);
 		return cursor;
@@ -165,11 +196,11 @@ public class Database {
 	public boolean updateApplication(int id, String name, String iconUrl) {
 		ContentValues args = new ContentValues();
 		args.put(KEY_NAME, name);
-		return db.update("applications", args, KEY_ROWID + "=" + id, null) > 0;
+		return db.update(TABLE_APPLICATIONS, args, KEY_ROWID + "=" + id, null) > 0;
 	}
 
 	public Cursor getNotificationType(int appId, String typeName) {
-		Cursor cursor = db.query(true, "notification_types", new String[] {
+		Cursor cursor = db.query(true, TABLE_NOTIFICATION_TYPES, new String[] {
 				KEY_ROWID, KEY_NAME, KEY_DISPLAY_NAME, KEY_ENABLED,
 				KEY_ICON_URL }, KEY_APP_ID + "=" + appId + " AND " + KEY_NAME
 				+ "=?", new String[] { typeName }, null, null, null, null);
@@ -187,12 +218,12 @@ public class Database {
 
 		String url = iconUrl == null ? null : iconUrl.toString();
 		initialValues.put(KEY_ICON_URL, url);
-		return (int) db.insert("notification_types", null, initialValues);
+		return (int) db.insert(TABLE_NOTIFICATION_TYPES, null, initialValues);
 	}
 	
 	public boolean deleteNotificationType(long rowId) {
-		boolean history = db.delete("notification_history", KEY_TYPE_ID + "=" + rowId, null) > 0;
-		boolean type = db.delete("notification_types", KEY_ROWID + "=" + rowId, null) > 0;
+		boolean history = db.delete(TABLE_NOTIFICATION_HISTORY, KEY_TYPE_ID + "=" + rowId, null) > 0;
+		boolean type = db.delete(TABLE_NOTIFICATION_TYPES, KEY_ROWID + "=" + rowId, null) > 0;
 		return history && type;
 	}
 
@@ -207,12 +238,23 @@ public class Database {
 		initialValues.put(KEY_ICON_URL, url);
 		
 		initialValues.put(KEY_ORIGIN, origin);
-		return (int) db.insert("notification_history", null, initialValues);
+		return (int) db.insert(TABLE_NOTIFICATION_HISTORY, null, initialValues);
 	}
 	
+	/**
+	 * Returns all columns and rows from the notification_history table, as well as the notification type name and the application type name
+	 * @return
+	 */
 	public Cursor getNotificationHistory() {
-		return db.query("notification_history", new String[] {
-				KEY_ROWID, KEY_TYPE_ID, KEY_RECEIVED_AT, KEY_TITLE, KEY_MESSAGE, KEY_ICON_URL, KEY_ORIGIN },
-				null, null, null, null, KEY_RECEIVED_AT + " DESC");
+		return db.rawQuery(
+				"SELECT " + TABLE_NOTIFICATION_HISTORY + ".*, " +
+					TABLE_NOTIFICATION_TYPES + "." + KEY_DISPLAY_NAME + " AS " + KEY_TYPE_DISPLAY_NAME + ", " +
+					TABLE_APPLICATIONS + "." + KEY_NAME + " AS " + KEY_APP_NAME + " " +
+				"FROM " + TABLE_NOTIFICATION_HISTORY + " " +
+					"INNER JOIN " + TABLE_NOTIFICATION_TYPES + " " +
+						"ON " + TABLE_NOTIFICATION_TYPES + "." + KEY_ROWID + " = " + TABLE_NOTIFICATION_HISTORY + "." + KEY_TYPE_ID + " " +
+					"INNER JOIN " + TABLE_APPLICATIONS + " " +
+						"ON " + TABLE_APPLICATIONS + "." + KEY_ROWID + " = " + TABLE_NOTIFICATION_TYPES + "." + KEY_APP_ID + " " +
+				"ORDER BY " + KEY_RECEIVED_AT + " DESC", null);
 	}
 }

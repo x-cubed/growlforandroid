@@ -24,7 +24,7 @@ public class MainActivity extends Activity {
 	private TextView _txtServiceState;
 
 	private MenuItem _mniApplications;
-	private MenuItem _mniSettings;
+	private MenuItem _mniPreferences;
 
     /** Called when the activity is first created. */
     @Override
@@ -43,8 +43,8 @@ public class MainActivity extends Activity {
         // List the recent notifications
         _lsvNotifications = (ListView)findViewById(R.id.lsvNotifications);
         _lsvNotifications.setAdapter(new SimpleCursorAdapter(this,
-        		R.layout.notification_list_item, _cursor,
-                new String[] { Database.KEY_TITLE, Database.KEY_MESSAGE, Database.KEY_ORIGIN },
+        		R.layout.history_list_item, _cursor,
+                new String[] { Database.KEY_TITLE, Database.KEY_MESSAGE, Database.KEY_APP_NAME },
                 new int[] { R.id.txtNotificationTitle, R.id.txtNotificationMessage, R.id.txtNotificationApp }));
         
         // Watch for button clicks.
@@ -93,11 +93,11 @@ public class MainActivity extends Activity {
     
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-    	_mniApplications = menu.add("Applications");
+    	_mniApplications = menu.add(R.string.menu_applications);
     	_mniApplications.setIcon(android.R.drawable.ic_menu_manage);
     	
-    	_mniSettings = menu.add("Settings");
-    	_mniSettings.setIcon(android.R.drawable.ic_menu_preferences);
+    	_mniPreferences = menu.add(R.string.menu_preferences);
+    	_mniPreferences.setIcon(android.R.drawable.ic_menu_preferences);
     	
     	return true;
     }
@@ -108,7 +108,7 @@ public class MainActivity extends Activity {
     		startActivity(new Intent(this, Applications.class));
     		return true;
     		
-    	} else if (item == _mniSettings) {
+    	} else if (item == _mniPreferences) {
     		startActivity(new Intent(this, Preferences.class));
     		return true;
     		
