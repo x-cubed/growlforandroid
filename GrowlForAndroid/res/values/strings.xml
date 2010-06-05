@@ -5,17 +5,17 @@
 
 <string name="app_label">Growl</string><string name="growl_on">On</string><string name="growl_off">Off</string><string name="growl_on_status">Growl is running</string><string name="growl_off_status">Growl is stopped</string><string name="history_title">Recent notifications</string><string name="service_label">Growl for Android Listener</string><string name="service_started">Growl for Android started</string>
 <string name="service_stopped">Growl for Android stopped</string>
-<string name="add_password_dialog_name">Name</string>
+<string name="menu_applications">Applications</string><string name="menu_preferences">Preferences</string><string name="add_password_dialog_name">Name</string>
 <string name="add_password_dialog_password">Password</string>
 <string name="add_password_dialog_title">Add Password</string>
 <string name="add_password_dialog_ok">Add</string>
 <string name="add_password_dialog_cancel">Cancel</string>
-<string name="passwords_title">Passwords</string>
+<string name="applications_title">Growl - Registered Applications</string><string name="passwords_title">Growl - Password Manager</string>
 <string name="passwords_add_password">Add Password</string>
 
 <string-array name="passwords_item_menu"><item>Delete</item>
 </string-array>
-<string name="preferences_general_title">Growl Options</string>
+<string name="preferences_title">Growl - Preferences</string><string name="preferences_general_title">General</string>
 <string name="preferences_general_auto_start">Start automatically</string>
 <string name="preferences_general_auto_start_summary">Start Growl when this device is powered on</string>
 <string name="preferences_listen_title">Listen for notifications from</string>
@@ -30,6 +30,11 @@
 
 
 
+
+
+
+
+<string name="database_notification_types"># notification types</string>
 
 
 

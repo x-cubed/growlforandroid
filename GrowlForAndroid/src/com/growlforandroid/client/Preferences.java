@@ -8,6 +8,8 @@ public class Preferences extends PreferenceActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
+        setTitle(R.string.preferences_title);
+        
         // Load the preferences from an XML resource
         addPreferencesFromResource(R.xml.preferences);
     }
