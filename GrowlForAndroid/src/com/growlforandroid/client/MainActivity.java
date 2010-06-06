@@ -25,6 +25,7 @@ public class MainActivity extends Activity {
 
 	private MenuItem _mniApplications;
 	private MenuItem _mniPreferences;
+	private MenuItem _mniClearHistory;
 
     /** Called when the activity is first created. */
     @Override
@@ -32,7 +33,6 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         _service = new GrowlListenerConnection();
         _database = new Database(this);
-        refresh();
         
         // Load the default preferences
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
@@ -42,16 +42,11 @@ public class MainActivity extends Activity {
 
         // List the recent notifications
         _lsvNotifications = (ListView)findViewById(R.id.lsvNotifications);
-        _lsvNotifications.setAdapter(new SimpleCursorAdapter(this,
-        		R.layout.history_list_item, _cursor,
-                new String[] { Database.KEY_TITLE, Database.KEY_MESSAGE, Database.KEY_APP_NAME },
-                new int[] { R.id.txtNotificationTitle, R.id.txtNotificationMessage, R.id.txtNotificationApp }));
         
         // Watch for button clicks.
         _tglServiceState = (ToggleButton)findViewById(R.id.tglServiceState);
         _tglServiceState.setOnClickListener(new OnClickListener() {
-            public void onClick(View v)
-            {
+            public void onClick(View v) {
                 if (!_tglServiceState.isChecked()) {
                 	_service.stop();
                 } else {
@@ -59,22 +54,37 @@ public class MainActivity extends Activity {
                 }
             }
         });
-        
-        _txtServiceState = (TextView)findViewById(R.id.txtServiceState);
+    }
+    
+    @Override
+    public void onResume() {
+    	super.onResume();
+
+    	Log.i("MainActivity.onResume", "Updating...");
+    	_txtServiceState = (TextView)findViewById(R.id.txtServiceState);
         updateServiceState();
+
+        // Update the notification history, then scroll to the top (most recent)
+        refresh();
+        _lsvNotifications.setSelection(0);
     }
     
     private void refresh() {
     	if (_cursor == null) {
     		_cursor = _database.getNotificationHistory();
+    		_lsvNotifications.setAdapter(new SimpleCursorAdapter(this,
+            		R.layout.history_list_item, _cursor,
+                    new String[] { Database.KEY_TITLE, Database.KEY_MESSAGE, Database.KEY_APP_NAME },
+                    new int[] { R.id.txtNotificationTitle, R.id.txtNotificationMessage, R.id.txtNotificationApp }));
     	} else {
     		_cursor.requery();
     	}
     }
 
-    protected void finalize() throws Throwable {
+    @Override
+    public void onDestroy() {
     	if (_service != null) {
-    		_service.finalize();
+    		_service.unbind();
     		_service = null;
     	}
     	
@@ -87,7 +97,11 @@ public class MainActivity extends Activity {
     		_database.close();
     		_database = null;
     	}
-    	
+    	super.onDestroy();
+    }
+    
+    protected void finalize() throws Throwable {
+    	onDestroy();
     	super.finalize();
     }
     
@@ -98,6 +112,9 @@ public class MainActivity extends Activity {
     	
     	_mniPreferences = menu.add(R.string.menu_preferences);
     	_mniPreferences.setIcon(android.R.drawable.ic_menu_preferences);
+    	
+    	_mniClearHistory = menu.add(R.string.menu_clear_history);
+    	_mniClearHistory.setIcon(android.R.drawable.ic_menu_delete);
     	
     	return true;
     }
@@ -112,6 +129,11 @@ public class MainActivity extends Activity {
     		startActivity(new Intent(this, Preferences.class));
     		return true;
     		
+    	} else if (item == _mniClearHistory) {
+    		_database.deleteNotificationHistory();
+    		refresh();
+    		return true;
+    		
     	} else {
     		Log.e("MainActivity.onOptionsItemSelected", "Unknown menu item: " + item.getTitle());
     		return false;
@@ -119,11 +141,12 @@ public class MainActivity extends Activity {
     }
     
     protected void updateServiceState() {
-    	boolean isRunning = _service.isRunning();
-    	
+    	updateServiceState(_service.isRunning());
+    }
+    
+    protected void updateServiceState(boolean isRunning) {   	
     	if (_tglServiceState.isChecked() != isRunning)
     		_tglServiceState.setChecked(isRunning);
-    	
     	_txtServiceState.setText(isRunning ? R.string.growl_on_status : R.string.growl_off_status);
     }
     
@@ -134,25 +157,27 @@ public class MainActivity extends Activity {
     	private GrowlListenerService _instance;
     	
     	public boolean isRunning() {
-    		if (_instance == null) {
-    			_isBound = bindService(_growlListenerService, this, 0);
-    			Log.i("GrowlListenerConnection.isRunning",
-    					"IsBound = " + _isBound + ", Has Instance = " + (_instance != null));
+			Log.i("GrowlListenerConnection.isRunning",
+					"IsBound = " + _isBound + ", Has Instance = " + (_instance != null));
+    		if (!_isBound) {
+    			bind();
     			return _isBound && (_instance != null) ? _instance.isRunning() : false;   			
-    		} else {
+    		} else if (_instance != null) {
     			return _instance.isRunning();
+    		} else {
+    			return false;
     		}
     	}
     	
     	public void start() {
-    		if (!bindService(_growlListenerService, this, BIND_AUTO_CREATE)) {
+    		if (!bind()) {
             	Log.e("GrowlListenerConnection.start", "Unable to bind to service");
             	return;
             }
     		
     		_isBound = true;
     		startService(new Intent(MainActivity.this, GrowlListenerService.class));
-    		updateServiceState();
+    		updateServiceState(true);
     	}
     	
     	public void stop() {
@@ -161,7 +186,16 @@ public class MainActivity extends Activity {
     			Log.e("GrowlListenerConnection.stop", "Unable to stop service");
             	return;
     		}
-    		updateServiceState();
+    		updateServiceState(false);
+    	}
+    	
+    	private boolean bind() {
+    		if (_isBound)
+    			return _isBound;
+    		
+    		Log.i("GrowlListenerConnection.bind", "Binding to the service");
+    		_isBound = bindService(_growlListenerService, this, 0);
+    		return _isBound;
     	}
     	
     	private void unbind() {
@@ -176,13 +210,13 @@ public class MainActivity extends Activity {
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			Log.i("GrowlListenerConnection.onServiceConnected", "Connected to " + name);
 			_instance = ((GrowlListenerService.LocalBinder)service).getService();
-			updateServiceState();
+			updateServiceState(isRunning());
 		}
 
 		public void onServiceDisconnected(ComponentName name) {
 			Log.i("GrowlListenerConnection.onServiceDisconnected", "Disconnected from " + name);
 			_instance = null;
-			updateServiceState();
+			updateServiceState(false);
 		}
 		
 		protected void finalize() {

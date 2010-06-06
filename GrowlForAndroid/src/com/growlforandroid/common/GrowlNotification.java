@@ -20,6 +20,7 @@ public class GrowlNotification {
 	private final URL _iconUrl;
 	private final String _origin;
 	private final Map<String, GrowlResource> _resources;
+	private final long _receivedAtMS;
 	
 	public GrowlNotification(NotificationType type, String id, String title, String text, URL icon) {
 		_id = id;
@@ -30,9 +31,10 @@ public class GrowlNotification {
 		
 		_resources = new HashMap<String, GrowlResource>();
 		_origin = null;
+		_receivedAtMS = System.currentTimeMillis();
 	}
 	
-	public GrowlNotification(NotificationType type,	Map<String, String> headers, Map<String, GrowlResource> resources)
+	public GrowlNotification(NotificationType type,	Map<String, String> headers, Map<String, GrowlResource> resources, long receivedAtMS)
 		throws MalformedURLException {
 		
 		_id = headers.get(Constants.HEADER_NOTIFICATION_ID);
@@ -45,6 +47,7 @@ public class GrowlNotification {
 		_text = headers.get(Constants.HEADER_NOTIFICATION_TEXT);
 		_origin = headers.get(Constants.HEADER_NOTIFICATION_ORIGIN);
 		_resources = resources;
+		_receivedAtMS = receivedAtMS;
 	}
 
 	public NotificationType getType() {
@@ -65,6 +68,10 @@ public class GrowlNotification {
 	
 	public URL getIconUrl() {
 		return _iconUrl;
+	}
+	
+	public long getReceivedAtMS() {
+		return _receivedAtMS;
 	}
 	
 	public GrowlResource getResource(String identifier) {

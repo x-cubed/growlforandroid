@@ -24,6 +24,7 @@ public class GntpListenerThread extends Thread {
 	private final ChannelWriter _socketWriter;
 	private RequestState _currentState = RequestState.Connected;
 	
+	private long _requestStartedMS;
 	private RequestType _requestType;
 	private EncryptionType _encryptionType;
 	private byte[] _initVector;
@@ -41,6 +42,9 @@ public class GntpListenerThread extends Thread {
 		throws IllegalCharsetNameException, UnsupportedCharsetException, CharacterCodingException {
 		
 		super("GntpListenerThread");
+
+		_requestStartedMS = System.currentTimeMillis();
+		
 		_acceptor = socketAcceptor;
 		_connectionID = connectionID;
 		_registry = registry;
@@ -93,9 +97,7 @@ public class GntpListenerThread extends Thread {
 					}
 					
 					// Are we ready to reply?
-					if (_currentState == RequestState.EndOfRequest) {
-						registerResources();
-						
+					if (_currentState == RequestState.EndOfRequest) {				
 						switch (_requestType) {
 							case Register:
 								doRegister();
@@ -223,16 +225,16 @@ public class GntpListenerThread extends Thread {
 		} else {
 			Log.i("GntpListenerThread.readResourceData[" + _connectionID + "]",
 					"Reading " + length + " bytes of resource data");
+
+			// Read in the file data, decrypt it and save it to a temporary location
 			File cacheFolder = _registry.getCacheDir();
 			File tempResource = _socketReader.readAndDecryptBytesToTempFile(length, _encryptionType, _initVector, _key, cacheFolder);
-
 			Log.i("GntpListenerThread.readResourceData[" + _connectionID + "]", "Created " +
 					tempResource.getAbsolutePath() + " as resource (" + tempResource.length() + ")");
 			
-			tempResource.deleteOnExit();
-			
-			// TODO: Store the data against the current resource
-			
+			// Link the source file to the resource, register the resource and link the resource to the notification
+			_currentResource.setSourceFile(tempResource);
+			_registry.registerResource(_currentResource);
 			_resources.put(_currentResource.getIdentifier(), _currentResource);
 			_currentResource = null;
 		}
@@ -245,14 +247,6 @@ public class GntpListenerThread extends Thread {
 
 		return RequestState.ReadingResourceHeaders;
 	}
-	
-	private void registerResources() {
-		for(GrowlResource resource : _resources.values()) {
-			if (resource != null) {
-				_registry.registerResource(resource);
-			}
-		}
-	}
 		
 	private void doSubscribe() throws GntpException, MalformedURLException {
 		throw new GntpException(GntpError.InternalServerError);
@@ -260,17 +254,20 @@ public class GntpListenerThread extends Thread {
 
 	// Perform a notification
 	private void doNotify() throws GntpException, MalformedURLException {
+		// Find the registered application
 		String name = _requestHeaders.get(Constants.HEADER_APPLICATION_NAME);
 		GrowlApplication application = _registry.getApplication(name);
 		if (application == null)
 			throw new GntpException(GntpError.UnknownApplication);
 		
+		// Find the registered notification type
 		String typeName = _requestHeaders.get(Constants.HEADER_NOTIFICATION_NAME);
 		NotificationType type = application.getNotificationType(typeName);
 		if (type == null)
 			throw new GntpException(GntpError.UnknownNotification);
 		
-		GrowlNotification notification = new GrowlNotification(type, _requestHeaders, _resources);
+		// Display the notification
+		GrowlNotification notification = new GrowlNotification(type, _requestHeaders, _resources, _requestStartedMS);
 		_registry.displayNotification(notification);
 	}
 
