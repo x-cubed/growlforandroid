@@ -1,6 +1,7 @@
 package com.growlforandroid.client;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -24,6 +25,7 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.os.*;
+import android.os.MessageQueue.IdleHandler;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.RemoteViews;
@@ -44,10 +46,11 @@ public class GrowlListenerService
 	private static GrowlResources _resources;
 	
 	private final Map<String, GrowlApplication> _applications = new HashMap<String, GrowlApplication>();
+	private final Set<WeakReference<StatusChangedHandler>> _statusChangedHandlers = new HashSet<WeakReference<StatusChangedHandler>>();
 	
     private NotificationManager _notifyMgr;
     private ServerSocketChannel _serverChannel;
-    private SocketAcceptor _socketAcceptor;
+    private SocketAcceptor _socketAcceptor;    
     
     /**
      * Class for clients to access.  Because we know this service always
@@ -276,11 +279,14 @@ public class GrowlListenerService
         // Send the notification to the status bar
         _notifyMgr.notify(app.ID, statusBarPanel);
         
-        String toastText = "Growl from " + app.Name + "\n\n" + title + "\n" + message;
-        Looper.prepare();
-        Toast toast = Toast.makeText(this, toastText, Toast.LENGTH_LONG);
-        toast.show();
-        Looper.loop();
+        // FIXME: Find a way to enqueue the displaying of the Toast on the UI threads Looper
+        /* final String toastText = "Growl from " + app.Name + "\n\n" + title + "\n" + message;
+        final GrowlListenerService service = this;		
+    	Toast toast = Toast.makeText(service, toastText, Toast.LENGTH_LONG);
+        toast.show(); */	
+        
+        // Notify the status changed handlers
+        onDisplayNotification(notification);
 	}
 
 	public NotificationType getNotificationType(GrowlApplication application, String typeName) {
@@ -348,6 +354,37 @@ public class GrowlListenerService
 		}
 		cursor.close();
 		return matchingKey;
+	}
+	
+	public void addStatusChangedHandler(StatusChangedHandler h) {
+		WeakReference<StatusChangedHandler> reference = new WeakReference<StatusChangedHandler>(h);
+		_statusChangedHandlers.add(reference);
+	}
+	
+	public void removeStatusChangedHandler(StatusChangedHandler h) {
+		for(WeakReference<StatusChangedHandler> reference : _statusChangedHandlers) {
+			StatusChangedHandler handler = reference.get();
+			if ((handler == null) || (handler == h)) {
+				_statusChangedHandlers.remove(reference);
+				break;
+			}
+		}
+	}
+	
+	private void onDisplayNotification(GrowlNotification notification) {
+		for(WeakReference<StatusChangedHandler> reference : _statusChangedHandlers) {
+			StatusChangedHandler handler = reference.get();
+			if (handler != null) {
+				handler.onDisplayNotification(notification);
+			} else {
+				// This reference has expired
+				_statusChangedHandlers.remove(reference);
+			}
+		}
+	}
+	
+	public interface StatusChangedHandler {
+		abstract void onDisplayNotification(GrowlNotification notification);
 	}
 }
 
