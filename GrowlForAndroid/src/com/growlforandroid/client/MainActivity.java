@@ -1,6 +1,8 @@
 package com.growlforandroid.client;
 
+import com.growlforandroid.client.GrowlListenerService.StatusChangedHandler;
 import com.growlforandroid.common.Database;
+import com.growlforandroid.common.GrowlNotification;
 
 import android.app.*;
 import android.content.*;
@@ -14,7 +16,11 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.*;
 
-public class MainActivity extends Activity {
+public class MainActivity
+	extends Activity
+	implements GrowlListenerService.StatusChangedHandler {
+	private static final int MAX_HISTORY_ITEMS = 20;
+	
 	private GrowlListenerConnection _service;
 	private Database _database;
 	private Cursor _cursor;
@@ -31,7 +37,7 @@ public class MainActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        _service = new GrowlListenerConnection();
+        _service = new GrowlListenerConnection(this);
         _database = new Database(this);
         
         // Load the default preferences
@@ -71,7 +77,7 @@ public class MainActivity extends Activity {
     
     private void refresh() {
     	if (_cursor == null) {
-    		_cursor = _database.getNotificationHistory();
+    		_cursor = _database.getNotificationHistory(MAX_HISTORY_ITEMS);
     		_lsvNotifications.setAdapter(new SimpleCursorAdapter(this,
             		R.layout.history_list_item, _cursor,
                     new String[] { Database.KEY_TITLE, Database.KEY_MESSAGE, Database.KEY_APP_NAME },
@@ -150,11 +156,26 @@ public class MainActivity extends Activity {
     	_txtServiceState.setText(isRunning ? R.string.growl_on_status : R.string.growl_off_status);
     }
     
+	public void onDisplayNotification(GrowlNotification notification) {
+		// Update the history view
+		this.runOnUiThread(new Runnable() {
+			public void run() {
+				refresh();
+			}
+		});
+	}
     
-    private class GrowlListenerConnection implements ServiceConnection {
+    private class GrowlListenerConnection
+    	implements ServiceConnection {
+    	
     	private final Intent _growlListenerService = new Intent(MainActivity.this, GrowlListenerService.class);
+    	private final StatusChangedHandler _handler;
     	private boolean _isBound;
     	private GrowlListenerService _instance;
+    	
+    	public GrowlListenerConnection(StatusChangedHandler handler) {
+    		_handler = handler;
+    	}
     	
     	public boolean isRunning() {
 			Log.i("GrowlListenerConnection.isRunning",
@@ -210,11 +231,17 @@ public class MainActivity extends Activity {
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			Log.i("GrowlListenerConnection.onServiceConnected", "Connected to " + name);
 			_instance = ((GrowlListenerService.LocalBinder)service).getService();
+			if (_handler != null) {
+				_instance.addStatusChangedHandler(_handler);
+			}
 			updateServiceState(isRunning());
 		}
 
 		public void onServiceDisconnected(ComponentName name) {
 			Log.i("GrowlListenerConnection.onServiceDisconnected", "Disconnected from " + name);
+			if (_handler != null) {
+				_instance.removeStatusChangedHandler(_handler);
+			}
 			_instance = null;
 			updateServiceState(false);
 		}

@@ -265,7 +265,7 @@ public class Database {
 	 * Returns all columns and rows from the notification_history table, as well as the notification type name and the application type name
 	 * @return
 	 */
-	public Cursor getNotificationHistory() {
+	public Cursor getNotificationHistory(int limit) {
 		return db.rawQuery(
 				"SELECT " + TABLE_NOTIFICATION_HISTORY + ".*, " +
 					TABLE_NOTIFICATION_TYPES + "." + KEY_DISPLAY_NAME + " AS " + KEY_TYPE_DISPLAY_NAME + ", " +
@@ -275,7 +275,8 @@ public class Database {
 						"ON " + TABLE_NOTIFICATION_TYPES + "." + KEY_ROWID + " = " + TABLE_NOTIFICATION_HISTORY + "." + KEY_TYPE_ID + " " +
 					"INNER JOIN " + TABLE_APPLICATIONS + " " +
 						"ON " + TABLE_APPLICATIONS + "." + KEY_ROWID + " = " + TABLE_NOTIFICATION_TYPES + "." + KEY_APP_ID + " " +
-				"ORDER BY " + KEY_RECEIVED_AT + " DESC", null);
+				"ORDER BY " + KEY_RECEIVED_AT + " DESC " +
+				"LIMIT ?", new String[] { Integer.toString(limit) });
 	}
 
 	public void deleteNotificationHistory() {
