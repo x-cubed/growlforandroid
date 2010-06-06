@@ -34,7 +34,7 @@ public class GrowlResources implements URLStreamHandlerFactory {
 	
 	private class ResourceURLConnection extends URLConnection {
 		private String _identifier;
-		private InputStream _inputStream;
+		private GrowlResource _resource;
 		
 		protected ResourceURLConnection(URL url) {
 			super(url);
@@ -44,11 +44,13 @@ public class GrowlResources implements URLStreamHandlerFactory {
 		@Override
 		public void connect() throws IOException {
 			Log.i("GrowlResourceURLConnection.connect()", "Connecting to resource " + _identifier);
-			GrowlResource resource = get(_identifier);
+			_resource = get(_identifier);
 		}
 		
 		synchronized public InputStream getInputStream() throws IOException {
-			return _inputStream;
+			File source = _resource.getSourceFile();
+			FileInputStream inputStream = new FileInputStream(source);
+			return inputStream;
 		}
 	}
 }

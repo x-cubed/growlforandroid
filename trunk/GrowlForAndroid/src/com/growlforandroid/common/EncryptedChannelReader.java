@@ -150,7 +150,10 @@ public class EncryptedChannelReader extends ChannelReader {
 		File tempFile = null;
 		FileOutputStream output = null;
 		try {
+			// Create a new file and marker it for deletion when we exit
 			tempFile = File.createTempFile(TEMP_FILE_PREFIX, "", folder);
+			tempFile.deleteOnExit();
+			
 			output = new FileOutputStream(tempFile);
 
 			boolean isFinalBlock = false;
