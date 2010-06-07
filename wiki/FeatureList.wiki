@@ -3,8 +3,10 @@
 
 == Current Features ==
  * Runs on Android 2.0 or above.
- * Basic support for receiving notifications using GNTP, without authentication, encryption or embedded resources.
+ * Support for receiving notifications using GNTP, with authentication and encryption.
+ * Embedded resources (icons, sounds, etc) are read in and cached, but not consumed yet.
  * Displays notifications in the status bar.
+ * Keeps a log on the main screen of all recent notifications.
 
 == Planned Features ==
  * Full support for the [http://growl.info/documentation/developer/protocol.php GrowlTalk protocol].
