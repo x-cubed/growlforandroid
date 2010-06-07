@@ -84,11 +84,13 @@ public class ListenerServiceConnection implements ServiceConnection {
 	}
 
 	public void onServiceDisconnected(ComponentName name) {
-		Log.i("ListenerServiceConnection.onServiceDisconnected",
-				"Disconnected from " + name);
-		_instance.removeStatusChangedHandler(_handler);
-		_instance = null;
-		_handler.onIsRunningChanged(false);
+		if (_instance != null) {
+			Log.i("ListenerServiceConnection.onServiceDisconnected",
+					"Disconnected from " + name);
+			_instance.removeStatusChangedHandler(_handler);
+			_instance = null;
+			_handler.onIsRunningChanged(false);
+		}
 	}
 
 	protected void finalize() {
