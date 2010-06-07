@@ -17,6 +17,7 @@
 <activity android:name="Passwords"></activity>
 <activity android:name="Preferences"></activity>
 <activity android:name="Application"></activity>
+<activity android:name="TypePreferences"></activity>
 </application>
     <uses-sdk android:minSdkVersion="5" />
 

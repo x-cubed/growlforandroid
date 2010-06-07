@@ -53,4 +53,12 @@
 
 
 
+<string name="type_title">Growl - Notification Type Preferences</string><string name="type_option_enabled">Enabled</string>
+<string name="type_option_enabled_summary">Display notifications of this type</string>
+<string name="type_displays_title">Display Options</string><string name="type_displays_statusbar_title">Status Bar</string>
+<string name="type_displays_statusbar_summary">Show a notification panel in the status bar</string>
+<string name="type_displays_toast_title">Toast</string>
+<string name="type_displays_toast_summary">Display a notification window on top of any running application</string>
+
+
 </resources>
