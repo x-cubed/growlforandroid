@@ -1,6 +1,10 @@
 package com.growlforandroid.client;
 
+import com.growlforandroid.client.GrowlListenerService.StatusChangedHandler;
 import com.growlforandroid.common.Database;
+import com.growlforandroid.common.GrowlApplication;
+import com.growlforandroid.common.GrowlNotification;
+import com.growlforandroid.common.NotificationType;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -14,13 +18,18 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 
-public class Applications extends ListActivity {
+public class Applications
+	extends ListActivity
+	implements StatusChangedHandler {
+	
 	private static final int DIALOG_ITEM_MENU = 1;
 	private static final int DIALOG_DELETE_PROMPT = 2;
 	
 	private static final int ITEM_MENU_PREFERENCES = 0;
 	private static final int ITEM_MENU_DELETE = 1;
 	
+	private ListenerServiceConnection _service;
+
 	private Database _database;
 	private Cursor _cursor;
 	private long _appId;
@@ -30,7 +39,8 @@ public class Applications extends ListActivity {
         super.onCreate(savedInstanceState);
 
         setTitle(R.string.applications_title);
-        
+
+        _service = new ListenerServiceConnection(this, this);      
         _database = new Database(this);
         refresh();
         
@@ -42,13 +52,34 @@ public class Applications extends ListActivity {
                 new int[] { R.id.txtNotificationTitle, R.id.txtNotificationMessage }));
         getListView().setTextFilterEnabled(true);
     }
+    
+    @Override
+    public void onResume() {
+    	super.onResume();
+    	_service.bind();
+    }
+    
+    @Override
+    public void onPause() {
+    	_service.unbind();
+    	super.onPause();
+    }
 
     private void refresh() {
+    	Log.i("Applications.refresh", "Updating...");
     	if (_cursor == null) {
     		_cursor = _database.getAllApplicationsAndTypes();
     	} else {
     		_cursor.requery();
     	}
+    }
+    
+    private void refreshOnUiThread() {
+    	this.runOnUiThread(new Runnable() {
+			public void run() {
+				refresh();
+			}
+		});
     }
     
     @Override
@@ -110,7 +141,13 @@ public class Applications extends ListActivity {
     	return null;
     }
     
-    protected void finalize() throws Throwable {
+    @Override
+    public void onDestroy() {
+    	if (_service != null) {
+    		_service.unbind();
+    		_service = null;
+    	}
+    	
     	if (_cursor != null) {
     		_cursor.close();
     		_cursor = null;
@@ -120,6 +157,25 @@ public class Applications extends ListActivity {
     		_database.close();
     		_database = null;
     	}
+    	super.onDestroy();
+    }
+    
+    protected void finalize() throws Throwable {
+    	onDestroy();
     	super.finalize();
     }
+
+    public void onApplicationRegistered(GrowlApplication app) {
+    	// We don't need to handle this here, as the application will be registering at least one type as well
+    }
+    
+    public void onNotificationTypeRegistered(NotificationType type) {
+	    refreshOnUiThread();
+    }
+    
+	public void onDisplayNotification(GrowlNotification notification) {	
+	}
+
+	public void onIsRunningChanged(boolean isRunning) {
+	}
 }

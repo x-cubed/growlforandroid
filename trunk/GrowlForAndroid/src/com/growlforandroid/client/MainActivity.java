@@ -1,8 +1,9 @@
 package com.growlforandroid.client;
 
-import com.growlforandroid.client.GrowlListenerService.StatusChangedHandler;
 import com.growlforandroid.common.Database;
+import com.growlforandroid.common.GrowlApplication;
 import com.growlforandroid.common.GrowlNotification;
+import com.growlforandroid.common.NotificationType;
 
 import android.app.*;
 import android.content.*;
@@ -19,9 +20,16 @@ import android.widget.*;
 public class MainActivity
 	extends Activity
 	implements GrowlListenerService.StatusChangedHandler {
+	
 	private static final int MAX_HISTORY_ITEMS = 20;
 	
-	private GrowlListenerConnection _service;
+	private static final int DIALOG_ITEM_MENU = 1;
+	private static final int DIALOG_DELETE_PROMPT = 2;
+	
+	private static final int ITEM_MENU_PREFERENCES = 0;
+	private static final int ITEM_MENU_DELETE = 1;
+	
+	private ListenerServiceConnection _service;
 	private Database _database;
 	private Cursor _cursor;
 	
@@ -37,7 +45,7 @@ public class MainActivity
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        _service = new GrowlListenerConnection(this);
+        _service = new ListenerServiceConnection(this, this);
         _database = new Database(this);
         
         // Load the default preferences
@@ -136,8 +144,7 @@ public class MainActivity
     		return true;
     		
     	} else if (item == _mniClearHistory) {
-    		_database.deleteNotificationHistory();
-    		refresh();
+    		showDialog(DIALOG_DELETE_PROMPT);
     		return true;
     		
     	} else {
@@ -146,15 +153,66 @@ public class MainActivity
     	}
     }
     
-    protected void updateServiceState() {
-    	updateServiceState(_service.isRunning());
+    @Override
+    public Dialog onCreateDialog(int id) {   	
+    	final MainActivity apps = this;
+    	switch (id) {
+	    	/* case DIALOG_ITEM_MENU:
+	            return new AlertDialog.Builder(this)
+	                .setTitle(appName)
+	                .setItems(R.array.notification_item_menu, new DialogInterface.OnClickListener() {
+	                    public void onClick(DialogInterface dialog, int which) {
+	                    	switch (which) {
+	                    		case ITEM_MENU_PREFERENCES:
+	                    			Intent appPrefs = new Intent(apps, Application.class);
+	                    			appPrefs.putExtra("ID", _appId);
+	                    			startActivity(appPrefs);
+	                    			break;
+	                    	
+	                    		case ITEM_MENU_DELETE:
+	                    			showDialog(DIALOG_DELETE_PROMPT);
+	                    			break;
+	                    			
+                    			default:
+                    				Log.e("Applications.ItemMenu.onClick",
+                    						"Unknown menu item " + which);
+	                    	}
+	                    }
+	                })
+	                .create();*/
+	            
+	    	case DIALOG_DELETE_PROMPT:
+	    		return new AlertDialog.Builder(this)
+	                .setTitle(R.string.history_title)
+	                .setMessage(R.string.history_delete_prompt)
+	                .setPositiveButton(R.string.button_delete, new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int which) {
+							_database.deleteNotificationHistory();
+	                    	refresh();
+						}
+					})
+					.setNegativeButton(R.string.button_cancel, null)
+	                .create();
+    	}   	
+    	return null;
     }
     
-    protected void updateServiceState(boolean isRunning) {   	
-    	if (_tglServiceState.isChecked() != isRunning)
+    protected void updateServiceState() {
+    	onIsRunningChanged(_service.isRunning());
+    }
+
+
+    public void onApplicationRegistered(GrowlApplication app) {
+    }
+    
+    public void onNotificationTypeRegistered(NotificationType type) {
+    }
+    
+	public void onIsRunningChanged(boolean isRunning) {
+		if (_tglServiceState.isChecked() != isRunning)
     		_tglServiceState.setChecked(isRunning);
     	_txtServiceState.setText(isRunning ? R.string.growl_on_status : R.string.growl_off_status);
-    }
+	}
     
 	public void onDisplayNotification(GrowlNotification notification) {
 		// Update the history view
@@ -164,90 +222,4 @@ public class MainActivity
 			}
 		});
 	}
-    
-    private class GrowlListenerConnection
-    	implements ServiceConnection {
-    	
-    	private final Intent _growlListenerService = new Intent(MainActivity.this, GrowlListenerService.class);
-    	private final StatusChangedHandler _handler;
-    	private boolean _isBound;
-    	private GrowlListenerService _instance;
-    	
-    	public GrowlListenerConnection(StatusChangedHandler handler) {
-    		_handler = handler;
-    	}
-    	
-    	public boolean isRunning() {
-			Log.i("GrowlListenerConnection.isRunning",
-					"IsBound = " + _isBound + ", Has Instance = " + (_instance != null));
-    		if (!_isBound) {
-    			bind();
-    			return _isBound && (_instance != null) ? _instance.isRunning() : false;   			
-    		} else if (_instance != null) {
-    			return _instance.isRunning();
-    		} else {
-    			return false;
-    		}
-    	}
-    	
-    	public void start() {
-    		if (!bind()) {
-            	Log.e("GrowlListenerConnection.start", "Unable to bind to service");
-            	return;
-            }
-    		
-    		_isBound = true;
-    		startService(new Intent(MainActivity.this, GrowlListenerService.class));
-    		updateServiceState(true);
-    	}
-    	
-    	public void stop() {
-    		unbind();
-    		if (!stopService(_growlListenerService)) {
-    			Log.e("GrowlListenerConnection.stop", "Unable to stop service");
-            	return;
-    		}
-    		updateServiceState(false);
-    	}
-    	
-    	private boolean bind() {
-    		if (_isBound)
-    			return _isBound;
-    		
-    		Log.i("GrowlListenerConnection.bind", "Binding to the service");
-    		_isBound = bindService(_growlListenerService, this, 0);
-    		return _isBound;
-    	}
-    	
-    	private void unbind() {
-    		if (_isBound) {
-    			Log.i("GrowlListenerConnection.unbind", "Unbinding from service");
-    			unbindService(this);
-    			_isBound = false;
-    			onServiceDisconnected(null);
-    		}
-    	}
-    	
-		public void onServiceConnected(ComponentName name, IBinder service) {
-			Log.i("GrowlListenerConnection.onServiceConnected", "Connected to " + name);
-			_instance = ((GrowlListenerService.LocalBinder)service).getService();
-			if (_handler != null) {
-				_instance.addStatusChangedHandler(_handler);
-			}
-			updateServiceState(isRunning());
-		}
-
-		public void onServiceDisconnected(ComponentName name) {
-			Log.i("GrowlListenerConnection.onServiceDisconnected", "Disconnected from " + name);
-			if (_handler != null) {
-				_instance.removeStatusChangedHandler(_handler);
-			}
-			_instance = null;
-			updateServiceState(false);
-		}
-		
-		protected void finalize() {
-			unbind();
-		}
-    }
 }

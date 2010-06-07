@@ -200,11 +200,18 @@ public class Database {
 
 	public Cursor getApplication(long itemId) throws SQLException {
 		Cursor cursor = db.query(true, TABLE_APPLICATIONS, new String[] {
-				KEY_ROWID, KEY_NAME, KEY_ENABLED, KEY_ICON_URL }, KEY_ROWID
-				+ "=" + itemId, null, null, null, null, null);
+				KEY_ROWID, KEY_NAME, KEY_ENABLED, KEY_ICON_URL },
+				KEY_ROWID + "=" + itemId, null, null, null, null, null);
 		return cursor;
 	}
 
+	public Cursor getApplication(String name) throws SQLException {
+		Cursor cursor = db.query(true, TABLE_APPLICATIONS, new String[] {
+				KEY_ROWID, KEY_NAME, KEY_ENABLED, KEY_ICON_URL },
+				KEY_NAME + "=?", new String[] { name }, null, null, null, null);
+		return cursor;
+	}
+	
 	public boolean updateApplication(long id, String name, String iconUrl) {
 		ContentValues args = new ContentValues();
 		args.put(KEY_NAME, name);

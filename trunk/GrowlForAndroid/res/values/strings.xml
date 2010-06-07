@@ -3,7 +3,7 @@
     
     <string name="app_name">Growl for Android</string>
 
-<string name="app_label">Growl</string><string name="growl_on">On</string><string name="growl_off">Off</string><string name="growl_on_status">Growl is running</string><string name="growl_off_status">Growl is stopped</string><string name="history_title">Recent notifications</string><string name="service_label">Growl for Android Listener</string><string name="service_started">Growl for Android started</string>
+<string name="app_label">Growl</string><string name="growl_on">On</string><string name="growl_off">Off</string><string name="growl_on_status">Growl is running</string><string name="growl_off_status">Growl is stopped</string><string name="history_title">Notification History</string><string name="history_recent_title">Recent Notifications</string><string name="history_delete_prompt">Are you sure you want to delete your notification history?</string><string name="service_label">Growl for Android Listener</string><string name="service_started">Growl for Android started</string>
 <string name="service_stopped">Growl for Android stopped</string>
 <string name="menu_applications">Applications</string><string name="menu_preferences">Preferences</string><string name="menu_clear_history">Clear History</string><string name="add_password_dialog_name">Name</string>
 <string name="add_password_dialog_password">Password</string>
@@ -45,6 +45,8 @@
 
 <string name="button_delete">Delete</string>
 <string name="button_cancel">Cancel</string>
+
+
 
 
 
