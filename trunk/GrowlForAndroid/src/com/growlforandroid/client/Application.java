@@ -3,6 +3,7 @@ package com.growlforandroid.client;
 import com.growlforandroid.common.Database;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.view.View;
@@ -40,9 +41,14 @@ public class Application extends Activity {
                 new int[] { R.id.txtNotificationTitle }));
         lsvNotificationTypes.setTextFilterEnabled(true);
         
+        final Application app = this;
         lsvNotificationTypes.setOnItemClickListener(new OnItemClickListener() {
 			public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-				_typeId = id;				
+				_typeId = id;
+				
+				Intent typePrefs = new Intent(app, TypePreferences.class);
+    			typePrefs.putExtra("ID", _typeId);
+				startActivity(typePrefs);
 			}
         });
     }
@@ -66,5 +72,24 @@ public class Application extends Activity {
     	} else {
     		_cursor.requery();
     	}
+    }
+    
+    @Override
+    public void onDestroy() {
+    	if (_cursor != null) {
+    		_cursor.close();
+    		_cursor = null;
+    	}
+    	
+    	if (_database != null) {
+    		_database.close();
+    		_database = null;
+    	}
+    	super.onDestroy();
+    }
+    
+    protected void finalize() throws Throwable {
+    	onDestroy();
+    	super.finalize();
     }
 }
