@@ -14,7 +14,7 @@
 	</RelativeLayout>
 
 	<TextView android:id="@+id/lblNotifications" android:layout_height="wrap_content" android:layout_width="fill_parent"
-		style="?android:attr/listSeparatorTextViewStyle" android:text="@string/history_title" android:layout_marginTop="10dip" android:paddingLeft="10dip" />	
+		style="?android:attr/listSeparatorTextViewStyle" android:layout_marginTop="10dip" android:paddingLeft="10dip" android:text="@string/history_recent_title"/>	
 	<ListView android:id="@+id/lsvNotifications" android:layout_width="fill_parent" android:layout_height="fill_parent">
 		
 	</ListView>

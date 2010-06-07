@@ -25,7 +25,6 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.os.*;
-import android.os.MessageQueue.IdleHandler;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.RemoteViews;
@@ -45,7 +44,6 @@ public class GrowlListenerService
 	private static Database _database;
 	private static GrowlResources _resources;
 	
-	private final Map<String, GrowlApplication> _applications = new HashMap<String, GrowlApplication>();
 	private final Set<WeakReference<StatusChangedHandler>> _statusChangedHandlers = new HashSet<WeakReference<StatusChangedHandler>>();
 	
     private NotificationManager _notifyMgr;
@@ -91,10 +89,7 @@ public class GrowlListenerService
         	return START_STICKY;
         }
         
-        try {
-            // Open the database
-            loadApplicationsFromDatabase();
-        	
+        try {       	
         	// Start listening on GNTP_PORT, on all interfaces
         	_serverChannel = ServerSocketChannel.open();
         	_serverChannel.socket().bind(new InetSocketAddress(GNTP_PORT));
@@ -140,7 +135,6 @@ public class GrowlListenerService
 	
 		_database.close();
 		_database = null;
-		_applications.clear();
 		
         // Tell the user we stopped.
         Toast.makeText(this, R.string.service_stopped, Toast.LENGTH_SHORT).show();
@@ -185,30 +179,21 @@ public class GrowlListenerService
 		_resources.put(resource);
 	}
 
-    private void loadApplicationsFromDatabase() {
-    	int count = 0;
-    	_applications.clear();
-    	Cursor apps = _database.getAllApplications();
-    	if (apps == null)
-    		return;
-    	
-    	if (apps.moveToFirst()) {	    	
-	    	do {
-	    		count ++;
-	    		try {
-	    			loadApplication(apps);
-	    		} catch (Exception x) {
-	    			Log.e("GrowlListenerService.loadApplicationsFromDatabase",
-	    					"Failed to load an application from the database: " + x);
-	    		}
-	    	} while (apps.moveToNext());
-    	}
-    	apps.close();
-    	Log.i("GrowlListenerService.loadApplicationsFromDatabase",
-    			"Loaded " + count + " applications from the database");
+	public GrowlApplication getApplication(String name) {
+		GrowlApplication application = null;
+		Cursor cursor = _database.getApplication(name);
+		if (cursor.moveToFirst()) {
+			try {
+				application = getApplication(cursor);
+			} catch (MalformedURLException x) {
+				Log.e("GrowlListenerService.getApplication", x.toString());
+			}
+		}
+		cursor.close();
+		return application;
 	}
-
-	private GrowlApplication loadApplication(Cursor cursor) throws MalformedURLException {
+	
+	private GrowlApplication getApplication(Cursor cursor) throws MalformedURLException {
 		int id = cursor.getInt(0);
 		String name = cursor.getString(1);
 		boolean enabled = cursor.getInt(2) != 0;
@@ -216,33 +201,30 @@ public class GrowlListenerService
 		URL iconUrl = icon == null ? null : new URL(icon);
 		
 		GrowlApplication app = new GrowlApplication(this, id, name, enabled, iconUrl);
-		_applications.put(name, app);
 		
-		Log.i("GrowlListenerService.loadApplication", "Registered existing application \"" + name + "\" with ID = " + id);
+		Log.i("GrowlListenerService.loadApplication", "Loaded application \"" + name + "\" with ID = " + id);
 		
 		return app;
 	}
 	
 	public GrowlApplication registerApplication(String name, URL iconUrl) {
 		// Create a new Application and store application in a dictionary
-		GrowlApplication oldApp = _applications.get(name);
+		GrowlApplication oldApp = getApplication(name);
+		GrowlApplication result = oldApp;
 		if (oldApp != null) {
 			Log.i("GrowlListenerService.registerApplication", "Re-registering application \"" + name + "\" with ID = " + oldApp.ID);
 			oldApp.IconUrl = iconUrl;
-			return oldApp;
+			result = oldApp;
 		} else {
 			Boolean enabled = true;
 			int id = _database.insertApplication(name, enabled, iconUrl);
 			GrowlApplication newApp = new GrowlApplication(this, id, name, enabled, iconUrl);
 			Log.i("GrowlListenerService.registerApplication", "Registered new application \"" + name + "\" with ID = " + newApp.ID);
-			_applications.put(name, newApp);
-			return newApp;
+			result = newApp;
 		}
-	}
-
-	public GrowlApplication getApplication(String name) {
-		// Get an application from the dictionary
-		return _applications.get(name);
+		
+		onApplicationRegistered(result);
+		return result;
 	}
 	
 	public void displayNotification(GrowlNotification notification) {
@@ -314,14 +296,15 @@ public class GrowlListenerService
 		if (displayName == null)
 			displayName = typeName;
 		int id = _database.insertNotificationType(application.ID, typeName, displayName, enabled, iconUrl);
-		return new NotificationType(id, application, typeName, displayName, enabled, iconUrl);
+		NotificationType type = new NotificationType(id, application, typeName, displayName, enabled, iconUrl);
+		onNotificationTypeRegistered(type);
+		return type;
 	}
-	
+
 	public boolean requiresPassword() {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		return prefs.getBoolean("security_require_passwords", true);
 	}
-
 
 	public byte[] getMatchingKey(HashAlgorithm algorithm, String hash, String salt) {
 		byte[] hashBytes = Utility.hexStringToByteArray(hash);
@@ -371,7 +354,21 @@ public class GrowlListenerService
 		}
 	}
 	
+	private void onApplicationRegistered(GrowlApplication application) {
+		Log.i("GrowlListenerService.onApplicationRegistered", application.Name + " has been registered");
+		for(WeakReference<StatusChangedHandler> reference : _statusChangedHandlers) {
+			StatusChangedHandler handler = reference.get();
+			if (handler != null) {
+				handler.onApplicationRegistered(application);
+			} else {
+				// This reference has expired
+				_statusChangedHandlers.remove(reference);
+			}
+		}
+	}
+	
 	private void onDisplayNotification(GrowlNotification notification) {
+		Log.i("GrowlListenerService.onDisplayNotification", "Message: \"" + notification.getMessage() + "\"");
 		for(WeakReference<StatusChangedHandler> reference : _statusChangedHandlers) {
 			StatusChangedHandler handler = reference.get();
 			if (handler != null) {
@@ -383,8 +380,24 @@ public class GrowlListenerService
 		}
 	}
 	
+	private void onNotificationTypeRegistered(NotificationType type) {
+		Log.i("GrowlListenerService.onNotificationTypeRegistered", type.getDisplayName() + " has been registered");
+		for(WeakReference<StatusChangedHandler> reference : _statusChangedHandlers) {
+			StatusChangedHandler handler = reference.get();
+			if (handler != null) {
+				handler.onNotificationTypeRegistered(type);
+			} else {
+				// This reference has expired
+				_statusChangedHandlers.remove(reference);
+			}
+		}
+	}
+	
 	public interface StatusChangedHandler {
-		abstract void onDisplayNotification(GrowlNotification notification);
+		void onIsRunningChanged(boolean isRunning);
+		void onNotificationTypeRegistered(NotificationType type);
+		void onApplicationRegistered(GrowlApplication app);
+		void onDisplayNotification(GrowlNotification notification);	
 	}
 }
 
