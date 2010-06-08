@@ -14,6 +14,7 @@
 --> 
  
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res/com.growlforandroid.client"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="vertical"
@@ -28,50 +29,13 @@
 <TextView android:id="@+id/lblOptions" android:layout_height="wrap_content" android:layout_width="fill_parent"
 		style="?android:attr/listSeparatorTextViewStyle" android:paddingLeft="10dip" android:text="@string/application_options_title"/>	
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" 
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
-    android:minHeight="?android:attr/listPreferredItemHeight"
+<com.growlforandroid.client.PreferenceCheckBoxView android:id="@+id/chkEnabled"
+	app:title="@string/application_option_enabled" app:summary="@string/application_option_enabled_summary"
+	android:minHeight="?android:attr/listPreferredItemHeight"
     android:gravity="center_vertical"
-    android:paddingRight="?android:attr/scrollbarSize"> 
-    
-    <RelativeLayout 
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="15dip"
-        android:layout_marginRight="6dip"
-        android:layout_marginTop="6dip"
-        android:layout_marginBottom="6dip"
-        android:layout_weight="1"> 
-    
-        <TextView android:id="@+android:id/title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:singleLine="true"
-            android:textAppearance="?android:attr/textAppearanceLarge"
-            android:ellipsize="marquee"
-            android:fadingEdge="horizontal" android:text="@string/application_option_enabled"/> 
-            
-        <TextView android:id="@+android:id/summary"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@android:id/title"
-            android:layout_alignLeft="@android:id/title"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:maxLines="2" android:text="@string/application_option_enabled_summary"/> 
- 
-    </RelativeLayout> 
-    
-    <!-- Preference should place its actual preference widget here. --> 
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="fill_parent"
-        android:gravity="center_vertical"
-        android:orientation="vertical">
-        <CheckBox android:id="@+id/chkAppEnabled" android:layout_width="wrap_content" android:layout_height="wrap_content"></CheckBox>
-    </LinearLayout> 
- 
-</LinearLayout> 
+    android:paddingRight="?android:attr/scrollbarSize"
+	android:layout_height="wrap_content" android:layout_width="fill_parent" />
+
 <TextView android:id="@+id/lblNotificationTypes" android:layout_height="wrap_content" android:layout_width="fill_parent"
 		style="?android:attr/listSeparatorTextViewStyle" android:paddingLeft="10dip" android:text="@string/application_types_title"/>	
 

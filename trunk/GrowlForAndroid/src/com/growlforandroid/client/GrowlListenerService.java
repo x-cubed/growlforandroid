@@ -180,11 +180,28 @@ public class GrowlListenerService
 	}
 
 	public GrowlApplication getApplication(String name) {
-		GrowlApplication application = null;
 		Cursor cursor = _database.getApplication(name);
+		return getApplication(cursor);
+	}
+	
+	public GrowlApplication getApplication(long id) {
+		Cursor cursor = _database.getApplication(id);
+		return getApplication(cursor);
+	}
+	
+	private GrowlApplication getApplication(Cursor cursor) {
+		GrowlApplication application = null;
 		if (cursor.moveToFirst()) {
 			try {
-				application = getApplication(cursor);
+				int id = cursor.getInt(0);
+				String name = cursor.getString(1);
+				boolean enabled = cursor.getInt(2) != 0;
+				String icon = cursor.getString(3);
+				URL iconUrl = icon == null ? null : new URL(icon);
+				
+				application = new GrowlApplication(this, id, name, enabled, iconUrl);
+				
+				Log.i("GrowlListenerService.loadApplication", "Loaded application \"" + name + "\" with ID = " + id);
 			} catch (MalformedURLException x) {
 				Log.e("GrowlListenerService.getApplication", x.toString());
 			}
@@ -193,28 +210,15 @@ public class GrowlListenerService
 		return application;
 	}
 	
-	private GrowlApplication getApplication(Cursor cursor) throws MalformedURLException {
-		int id = cursor.getInt(0);
-		String name = cursor.getString(1);
-		boolean enabled = cursor.getInt(2) != 0;
-		String icon = cursor.getString(3);
-		URL iconUrl = icon == null ? null : new URL(icon);
-		
-		GrowlApplication app = new GrowlApplication(this, id, name, enabled, iconUrl);
-		
-		Log.i("GrowlListenerService.loadApplication", "Loaded application \"" + name + "\" with ID = " + id);
-		
-		return app;
-	}
-	
 	public GrowlApplication registerApplication(String name, URL iconUrl) {
 		// Create a new Application and store application in a dictionary
 		GrowlApplication oldApp = getApplication(name);
 		GrowlApplication result = oldApp;
 		if (oldApp != null) {
-			Log.i("GrowlListenerService.registerApplication", "Re-registering application \"" + name + "\" with ID = " + oldApp.ID);
-			oldApp.IconUrl = iconUrl;
-			result = oldApp;
+			long id = oldApp.ID;
+			Log.i("GrowlListenerService.registerApplication", "Re-registering application \"" + name + "\" with ID = " + id);
+			_database.setApplicationIcon(id, iconUrl);
+			result = getApplication(id);
 		} else {
 			Boolean enabled = true;
 			int id = _database.insertApplication(name, enabled, iconUrl);
@@ -230,6 +234,17 @@ public class GrowlListenerService
 	public void displayNotification(GrowlNotification notification) {
 		NotificationType type = notification.getType();
 		GrowlApplication app = type.Application;
+		if (!type.isEnabled()) {
+			Log.i("GrowlListenerService.displayNotification", "Not displaying notification from \"" + app.getName() + "\" " +
+					"of type \"" + type.TypeName + "\" as notification type is disabled");
+			return;
+		}		
+		if (!app.isEnabled()) {
+			Log.i("GrowlListenerService.displayNotification", "Not displaying notification from \"" + app.getName() + "\" " +
+					"of type \"" + type.TypeName + "\" as application is disabled");
+			return;
+		}
+		
 		String title = notification.getTitle();
 		String message = notification.getMessage();
 		URL iconUrl = notification.getIconUrl();
@@ -237,7 +252,7 @@ public class GrowlListenerService
 		
 		_database.insertNotificationHistory(type.ID, title, message, iconUrl, origin);
 		
-		Log.i("GrowlListenerService.displayNotification", "Displaying notification from \"" + app.Name + "\" " +
+		Log.i("GrowlListenerService.displayNotification", "Displaying notification from \"" + app.getName() + "\" " +
 				"of type \"" + type.TypeName + "\" with title \"" + title + "\" and message \"" + message + "\"");
 		Notification statusBarPanel = new Notification(R.drawable.statusbar_enabled, message, System.currentTimeMillis());
 		
@@ -252,7 +267,7 @@ public class GrowlListenerService
         contentView.setImageViewResource(R.id.imgNotificationIcon, R.drawable.launcher);
         contentView.setTextViewText(R.id.txtNotificationTitle, title);
         contentView.setTextViewText(R.id.txtNotificationMessage, message);
-        contentView.setTextViewText(R.id.txtNotificationApp, app.Name);
+        contentView.setTextViewText(R.id.txtNotificationApp, app.getName());
         statusBarPanel.contentView = contentView;
 
         // The PendingIntent to launch our activity if the user selects this notification
@@ -355,7 +370,7 @@ public class GrowlListenerService
 	}
 	
 	private void onApplicationRegistered(GrowlApplication application) {
-		Log.i("GrowlListenerService.onApplicationRegistered", application.Name + " has been registered");
+		Log.i("GrowlListenerService.onApplicationRegistered", application.getName() + " has been registered");
 		for(WeakReference<StatusChangedHandler> reference : _statusChangedHandlers) {
 			StatusChangedHandler handler = reference.get();
 			if (handler != null) {

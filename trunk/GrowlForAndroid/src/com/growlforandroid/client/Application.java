@@ -9,10 +9,12 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 
 public class Application extends Activity {
 	private long _appId = 1;
@@ -62,8 +64,13 @@ public class Application extends Activity {
     		TextView txtTitle = (TextView)findViewById(R.id.txtAppName);
     		txtTitle.setText(appName);
     		
-    		CheckBox chkEnabled = (CheckBox)findViewById(R.id.chkAppEnabled);
+    		PreferenceCheckBoxView chkEnabled = (PreferenceCheckBoxView)findViewById(R.id.chkEnabled);
     		chkEnabled.setChecked(enabled);
+    		chkEnabled.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+				public void onCheckedChanged(CompoundButton buttonView,	boolean isChecked) {
+					_database.setApplicationEnabled(_appId, isChecked);
+				}
+    		});
     	}
     	appCursor.close();
     	

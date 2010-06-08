@@ -28,7 +28,7 @@ public class NotificationType {
 		_displayName = displayName;
 	}
 
-	public boolean getEnabled() {
+	public boolean isEnabled() {
 		return _enabled;
 	}
 	

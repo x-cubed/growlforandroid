@@ -7,6 +7,7 @@ import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.*;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 
 public class PreferenceCheckBoxView
 	extends LinearLayout {
@@ -100,5 +101,9 @@ public class PreferenceCheckBoxView
 	
 	public boolean isChecked() {
 		return _chkCheckBox.isChecked();
+	}
+
+	public void setOnCheckedChangeListener(OnCheckedChangeListener listener) {
+		_chkCheckBox.setOnCheckedChangeListener(listener);
 	}
 }
