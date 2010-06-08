@@ -198,10 +198,10 @@ public class Database {
 				"ORDER BY lower(" + KEY_NAME + ")", null);
 	}
 
-	public Cursor getApplication(long itemId) throws SQLException {
+	public Cursor getApplication(long id) throws SQLException {
 		Cursor cursor = db.query(true, TABLE_APPLICATIONS, new String[] {
 				KEY_ROWID, KEY_NAME, KEY_ENABLED, KEY_ICON_URL },
-				KEY_ROWID + "=" + itemId, null, null, null, null, null);
+				KEY_ROWID + "=" + id, null, null, null, null, null);
 		return cursor;
 	}
 
@@ -212,12 +212,18 @@ public class Database {
 		return cursor;
 	}
 	
-	public boolean updateApplication(long id, String name, String iconUrl) {
+	public boolean setApplicationEnabled(long id, boolean isEnabled) {
 		ContentValues args = new ContentValues();
-		args.put(KEY_NAME, name);
-		return db.update(TABLE_APPLICATIONS, args, KEY_ROWID + "=" + id, null) > 0;
+		args.put(KEY_ENABLED, isEnabled);
+		return db.update(TABLE_APPLICATIONS, args, KEY_ROWID + "=" + id, null) > 0;		
 	}
 
+	public boolean setApplicationIcon(long id, URL iconUrl) {
+		ContentValues args = new ContentValues();
+		args.put(KEY_ICON_URL, (iconUrl != null) ? iconUrl.toString() : null);
+		return db.update(TABLE_APPLICATIONS, args, KEY_ROWID + "=" + id, null) > 0;
+	}
+	
 	public Cursor getNotificationType(long appId, String typeName) {
 		Cursor cursor = db.query(true, TABLE_NOTIFICATION_TYPES, new String[] {
 				KEY_ROWID, KEY_NAME, KEY_DISPLAY_NAME, KEY_ENABLED,

@@ -89,21 +89,24 @@ public class Applications
     }
     
     @Override
-    public Dialog onCreateDialog(int id) {
+    protected void onPrepareDialog(int id, Dialog dialog) {
     	String appName = null;
     	Cursor cursor = _database.getApplication(_appId);
     	if (cursor.moveToFirst()) {
     		appName = cursor.getString(cursor.getColumnIndex(Database.KEY_NAME));
+    		Log.i("Applications.onCreateDialog", "App ID = " + _appId + ", Name = " + appName);
+    		dialog.setTitle(appName);
     	}
     	cursor.close();
-    	if (appName == null)
-    		return null;
-    	
+    }
+    
+    @Override
+    public Dialog onCreateDialog(int id) {
     	final Applications apps = this;
     	switch (id) {
 	    	case DIALOG_ITEM_MENU:
 	            return new AlertDialog.Builder(this)
-	                .setTitle(appName)
+	            	.setTitle("Application")
 	                .setItems(R.array.applications_item_menu, new DialogInterface.OnClickListener() {
 	                    public void onClick(DialogInterface dialog, int which) {
 	                    	switch (which) {
@@ -127,7 +130,7 @@ public class Applications
 	            
 	    	case DIALOG_DELETE_PROMPT:
 	    		return new AlertDialog.Builder(this)
-	                .setTitle(appName)
+	    			.setTitle("Application")
 	                .setMessage(R.string.applications_delete_prompt)
 	                .setPositiveButton(R.string.button_delete, new DialogInterface.OnClickListener() {
 						public void onClick(DialogInterface dialog, int which) {

@@ -47,15 +47,14 @@ containing a value of this type.
     public static final class id {
         public static final int LinearLayout01=0x7f07000f;
         public static final int RelativeLayout01=0x7f070010;
-        public static final int chkAppEnabled=0x7f070008;
         public static final int chkCheckBox=0x7f070016;
-        public static final int chkEnabled=0x7f070017;
-        public static final int chkStatusBar=0x7f070019;
-        public static final int chkToast=0x7f07001a;
+        public static final int chkEnabled=0x7f070008;
+        public static final int chkStatusBar=0x7f070018;
+        public static final int chkToast=0x7f070019;
         public static final int imgAppIcon=0x7f070005;
         public static final int imgNotificationIcon=0x7f07000b;
         public static final int layTitle=0x7f070004;
-        public static final int lblDisplayOptions=0x7f070018;
+        public static final int lblDisplayOptions=0x7f070017;
         public static final int lblNotificationTypes=0x7f070009;
         public static final int lblNotifications=0x7f070013;
         public static final int lblOptions=0x7f070007;
