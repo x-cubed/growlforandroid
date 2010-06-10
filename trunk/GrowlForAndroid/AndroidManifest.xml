@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="com.growlforandroid.client"
-      android:versionCode="1"
-      android:versionName="1.0">
-    <application android:label="@string/app_name" android:icon="@drawable/launcher">
+      android:versionCode="1" android:versionName="0.9">
+    <application android:label="@string/app_name" android:icon="@drawable/launcher" android:description="@string/app_description">
         <activity android:name=".MainActivity"
                   android:launchMode="singleInstance" android:icon="@drawable/launcher" android:label="@string/app_label">
             <intent-filter>
@@ -12,23 +11,15 @@
             </intent-filter>
         </activity>
 
-    <service android:name="GrowlListenerService"></service>
-<activity android:name="Applications"></activity>
-<activity android:name="Passwords"></activity>
-<activity android:name="Preferences"></activity>
-<activity android:name="Application"></activity>
-<activity android:name="TypePreferences"></activity>
-</application>
+    	<service android:name="GrowlListenerService"></service>
+		<activity android:name="Applications"></activity>
+		<activity android:name="Passwords"></activity>
+		<activity android:name="Preferences"></activity>
+		<activity android:name="Application"></activity>
+		<activity android:name="TypePreferences"></activity>
+		<activity android:name="Subscriptions"></activity>
+	</application>
     <uses-sdk android:minSdkVersion="5" />
-
-
-<uses-permission android:name="android.permission.INTERNET"></uses-permission>
-<uses-permission android:name="android.permission.VIBRATE"></uses-permission>
-
-
-
-<uses-permission android:name="android.permission.BATTERY_STATS"></uses-permission>
-<uses-permission android:name="android.permission.BROADCAST_SMS"></uses-permission>
-<uses-permission android:name="android.permission.READ_PHONE_STATE"></uses-permission>
-
+	<uses-permission android:name="android.permission.INTERNET"></uses-permission>
+	<uses-permission android:name="android.permission.VIBRATE"></uses-permission>
 </manifest> 

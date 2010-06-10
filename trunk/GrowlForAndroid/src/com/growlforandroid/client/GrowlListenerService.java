@@ -9,14 +9,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.util.*;
 
 import com.growlforandroid.client.R;
-import com.growlforandroid.common.Database;
-import com.growlforandroid.common.GrowlApplication;
-import com.growlforandroid.common.GrowlNotification;
-import com.growlforandroid.common.GrowlResource;
-import com.growlforandroid.common.GrowlResources;
-import com.growlforandroid.common.IGrowlRegistry;
-import com.growlforandroid.common.NotificationType;
-import com.growlforandroid.common.Utility;
+import com.growlforandroid.common.*;
 import com.growlforandroid.gntp.HashAlgorithm;
 
 import android.app.*;
@@ -48,7 +41,8 @@ public class GrowlListenerService
 	
     private NotificationManager _notifyMgr;
     private ServerSocketChannel _serverChannel;
-    private SocketAcceptor _socketAcceptor;    
+    private SocketAcceptor _socketAcceptor;
+    private Subscriber _subscriber;
     
     /**
      * Class for clients to access.  Because we know this service always
@@ -97,6 +91,11 @@ public class GrowlListenerService
         	// Start accepting connections on another thread
 			_socketAcceptor = new SocketAcceptor(this, _serverChannel);
 			_socketAcceptor.start();
+			
+			// Start subscribing to notifications from other devices
+			_subscriber = new Subscriber(this);
+			_subscriber.start();
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -118,6 +117,11 @@ public class GrowlListenerService
 
     	// Stop listening for TCP connections
 		try {
+			if (_subscriber != null) {
+				_subscriber.stop();
+				_subscriber = null;
+			}
+			
 	    	if (_socketAcceptor != null) {
 	    		_socketAcceptor.stopListening();
 	    		_socketAcceptor.closeConnections();
