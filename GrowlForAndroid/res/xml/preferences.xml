@@ -15,12 +15,21 @@
 		        android:key="listen_gntp"
 		        android:title="@string/preferences_listen_gntp"
 		        android:summary="@string/preferences_listen_gntp_summary"
+		        android:enabled="false" 
 		        android:defaultValue="true" />
 		<CheckBoxPreference
 		        android:key="listen_growl_udp"
 		        android:title="@string/preferences_listen_growl_udp"
 			    android:summary="@string/preferences_listen_growl_udp_summary"
 			    android:enabled="false" />
+		<PreferenceScreen
+	            android:title="@string/preferences_listen_subscriptions"
+                android:summary="@string/preferences_listen_subscriptions_summary">
+		        
+			<intent android:action="android.intent.action.MAIN"
+					android:targetPackage="com.growlforandroid.client"
+					android:targetClass="com.growlforandroid.client.Subscriptions" />
+		</PreferenceScreen>
 	</PreferenceCategory>
 	
 	<PreferenceCategory

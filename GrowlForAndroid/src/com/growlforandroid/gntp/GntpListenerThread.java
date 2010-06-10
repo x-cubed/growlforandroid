@@ -1,4 +1,4 @@
-package com.growlforandroid.client;
+package com.growlforandroid.gntp;
 
 import java.io.*;
 import java.net.*;
@@ -6,9 +6,9 @@ import java.nio.channels.SocketChannel;
 import java.nio.charset.*;
 import java.util.*;
 
+import com.growlforandroid.client.SocketAcceptor;
 import com.growlforandroid.common.*;
 import com.growlforandroid.common.EncryptedChannelReader.DecryptionException;
-import com.growlforandroid.gntp.*;
 
 import android.util.Log;
 

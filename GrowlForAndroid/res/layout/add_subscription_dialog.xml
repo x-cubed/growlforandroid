@@ -5,7 +5,7 @@
     android:orientation="vertical">
 
     <TextView 
-        android:id="@+id/lblPasswordName"
+        android:id="@+id/lblSubscriptionName"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
         android:layout_marginLeft="20dip"
@@ -15,7 +15,7 @@
         android:textAppearance="?android:attr/textAppearanceMedium" />
             
     <EditText
-        android:id="@+id/txtPasswordName"
+        android:id="@+id/txtSubscriptionName"
         android:layout_height="wrap_content"
         android:layout_width="fill_parent"
         android:layout_marginLeft="20dip"
@@ -27,7 +27,29 @@
         android:textAppearance="?android:attr/textAppearanceMedium" />
 
     <TextView
-        android:id="@+id/lblPasswordPassword"
+        android:id="@+id/lblSubscriptionAddress"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_marginLeft="20dip"
+        android:layout_marginRight="20dip"
+        android:text="@string/dialog_address"
+        android:gravity="left"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+            
+    <EditText
+        android:id="@+id/txtSubscriptionAddress"
+        android:layout_height="wrap_content"
+        android:layout_width="fill_parent"
+        android:layout_marginLeft="20dip"
+        android:layout_marginRight="20dip"
+        android:scrollHorizontally="true"
+        android:autoText="false"
+        android:capitalize="none"
+        android:gravity="fill_horizontal"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <TextView
+        android:id="@+id/lblSubscriptionPassword"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
         android:layout_marginLeft="20dip"
@@ -37,7 +59,7 @@
         android:textAppearance="?android:attr/textAppearanceMedium" />
             
     <EditText
-        android:id="@+id/txtPasswordPassword"
+        android:id="@+id/txtSubscriptionPassword"
         android:layout_height="wrap_content"
         android:layout_width="fill_parent"
         android:layout_marginLeft="20dip"
@@ -49,4 +71,3 @@
         android:password="true"
         android:textAppearance="?android:attr/textAppearanceMedium" />
 </LinearLayout>
-

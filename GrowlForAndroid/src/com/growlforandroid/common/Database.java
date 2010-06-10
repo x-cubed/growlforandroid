@@ -3,8 +3,6 @@ package com.growlforandroid.common;
 import java.net.URL;
 import java.util.HashSet;
 
-import com.growlforandroid.client.R;
-
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -26,6 +24,8 @@ public class Database {
 	public static final String KEY_TITLE = "title";
 	public static final String KEY_MESSAGE = "message";
 	public static final String KEY_ORIGIN = "origin";
+	public static final String KEY_ADDRESS = "address";
+	public static final String KEY_STATUS = "status";
 
 	public static final String KEY_APP_NAME = "appName";
 	public static final String KEY_TYPE_DISPLAY_NAME = "typeName";
@@ -83,7 +83,8 @@ public class Database {
 					+ "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
 					+ "name TEXT NOT NULL, "
 					+ "address TEXT NOT NULL, "
-					+ "password TEXT);");
+					+ "password TEXT NOT NULL, "
+					+ "status TEXT NOT NULL);");
 			
 			db.execSQL("CREATE TABLE notification_history ("
 					+ "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -294,5 +295,40 @@ public class Database {
 
 	public void deleteNotificationHistory() {
 		db.delete(TABLE_NOTIFICATION_HISTORY, null, null);
+	}
+	
+	public long insertSubscription(String name, String address, String password, String status) {
+		ContentValues initialValues = new ContentValues();
+		initialValues.put(KEY_NAME, name);
+		initialValues.put(KEY_ADDRESS, address);
+		initialValues.put(KEY_PASSWORD, password);
+		initialValues.put(KEY_STATUS, status);
+		return db.insert(TABLE_SUBSCRIPTIONS, null, initialValues);
+	}
+
+	public boolean updateSubscription(long id, String name, String address, String password, String status) {		
+		ContentValues args = new ContentValues();
+		args.put(KEY_NAME, name);
+		args.put(KEY_ADDRESS, address);
+		args.put(KEY_PASSWORD, password);
+		args.put(KEY_STATUS, status);
+		return db.update(TABLE_SUBSCRIPTIONS, args, KEY_ROWID + "=" + id, null) > 0;
+	}
+	
+	public boolean updateSubscription(long id, String status) {		
+		ContentValues args = new ContentValues();
+		args.put(KEY_STATUS, status);
+		return db.update(TABLE_SUBSCRIPTIONS, args, KEY_ROWID + "=" + id, null) > 0;
+	}
+	
+	public boolean deleteSubscription(long rowId) {
+		Log.i("Database.deleteSubscription", "Deleting subscription " + rowId);
+		return db.delete(TABLE_SUBSCRIPTIONS, KEY_ROWID + "=" + rowId, null) > 0;
+	}
+
+	public Cursor getSubscriptions() {
+		return db.query(TABLE_SUBSCRIPTIONS, new String[] {
+				KEY_ROWID, KEY_NAME, KEY_ADDRESS, KEY_PASSWORD, KEY_STATUS },
+				null, null, null, null, null);
 	}
 }

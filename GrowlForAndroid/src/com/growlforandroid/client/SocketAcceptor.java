@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.growlforandroid.common.IGrowlRegistry;
+import com.growlforandroid.gntp.GntpListenerThread;
 
 import android.util.Log;
 
