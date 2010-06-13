@@ -121,7 +121,18 @@ public class GntpListenerThread extends Thread {
 						}
 
 						// Send the response
-						new Response(ResponseType.OK).write(_socketWriter);
+						Response response = new Response(ResponseType.OK);
+						switch(_requestType) {
+							case Notify:
+								response.addHeader(Constants.HEADER_NOTIFICATION_ID, "");
+								break;
+								
+							case Subscribe:
+								response.addHeader(Constants.HEADER_SUBSCRIPTION_TTL, Constants.SUBSCRIPTION_TTL);
+								break;
+						}
+						
+						response.write(_socketWriter);
 						_currentState = RequestState.ResponseSent;
 					}
 					

@@ -35,8 +35,8 @@ public class TypePreferences
     		TextView txtTitle = (TextView)findViewById(R.id.txtAppName);
     		txtTitle.setText(appName);
     		
-    		/* CheckBox chkEnabled = (CheckBox)findViewById(R.id.chkEnabled);
-    		chkEnabled.setChecked(enabled);*/
+    		PreferenceCheckBoxView chkEnabled = (PreferenceCheckBoxView)findViewById(R.id.chkEnabled);
+    		chkEnabled.setChecked(enabled);
     	}
     	typeCursor.close();
     }

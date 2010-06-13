@@ -1,5 +1,7 @@
 package com.growlforandroid.gntp;
 
+import java.util.EnumSet;
+
 import com.growlforandroid.common.EncryptedChannelReader.DecryptionException;
 
 public enum GntpError {
@@ -28,6 +30,14 @@ public enum GntpError {
 		Description = description;
 	}
 
+	public static GntpError fromErrorCode(int errorCode) {
+		for (GntpError error : EnumSet.allOf(GntpError.class)) {
+			if (error.ErrorCode == errorCode)
+				return error;
+		}
+		return null;
+	}
+	
 	public static GntpError getErrorFrom(Exception x) {
 		if (x instanceof GntpException) {
 			return ((GntpException)x).Error;

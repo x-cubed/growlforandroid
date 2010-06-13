@@ -5,8 +5,6 @@ import java.net.URL;
 import java.util.*;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 
 import com.growlforandroid.client.R;
@@ -83,7 +81,7 @@ public class GrowlNotification {
 	}
 	
 	public Drawable getIcon(Context context) {
-		URL source = _iconUrl != null ? _iconUrl : _type.getIconUrl();
+		//URL source = _iconUrl != null ? _iconUrl : _type.getIconUrl();
 		// FIXME: resolve source
 		return context.getResources().getDrawable(R.drawable.icon);
 	}

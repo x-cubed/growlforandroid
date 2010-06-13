@@ -23,11 +23,11 @@ public class MainActivity
 	
 	private static final int MAX_HISTORY_ITEMS = 20;
 	
-	private static final int DIALOG_ITEM_MENU = 1;
+	// private static final int DIALOG_ITEM_MENU = 1;
 	private static final int DIALOG_DELETE_PROMPT = 2;
 	
-	private static final int ITEM_MENU_PREFERENCES = 0;
-	private static final int ITEM_MENU_DELETE = 1;
+	/* private static final int ITEM_MENU_PREFERENCES = 0;
+	private static final int ITEM_MENU_DELETE = 1; */
 	
 	private ListenerServiceConnection _service;
 	private Database _database;
@@ -155,7 +155,7 @@ public class MainActivity
     
     @Override
     public Dialog onCreateDialog(int id) {   	
-    	final MainActivity apps = this;
+    	//final MainActivity apps = this;
     	switch (id) {
 	    	/* case DIALOG_ITEM_MENU:
 	            return new AlertDialog.Builder(this)
