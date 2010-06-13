@@ -1,23 +1,20 @@
 package com.growlforandroid.gntp;
 
 import java.io.IOException;
-
 import com.growlforandroid.common.ChannelWriter;
-
-import android.os.Build;
-import android.util.Log;
+import com.growlforandroid.common.EncryptedChannelReader;
 
 /*
  * Builds a GNTP Response in preparation for writing to a socket
  */
-public class Response {
+public class Response
+	extends GntpMessage {
+	
 	private final ResponseType _type;
-	private final GntpError _error;
-	private final String _errorDescription;
 	private final EncryptionType _encryptionType = EncryptionType.None;
 	
-	public Response(ResponseType messageType) throws Exception {
-		this(messageType, null);
+	public Response(ResponseType messageType) {
+		_type = messageType;
 	}
 	
 	public Response(ResponseType messageType, GntpError error) throws Exception {
@@ -25,63 +22,72 @@ public class Response {
 	}
 	
 	public Response(ResponseType messageType, GntpError error, String errorDescription) throws Exception {
+		this(messageType);
+		
 		switch(messageType) {
 			case OK:
 				if (error != null)
 					throw new Exception("Type is OK, but error details were provided");
-				_errorDescription = "";
+				addHeader(Constants.HEADER_RESPONSE_ACTION, _type.toString());
 				break;
 				
 			case Error:
 				if (error == null)
 					throw new Exception("Type is Error, but no error details were provided");
-				_errorDescription = (errorDescription == null) ? error.Description : errorDescription;
+				errorDescription = (errorDescription == null) ? error.Description : errorDescription;
+				addHeader(Constants.HEADER_ERROR_CODE, String.valueOf(error.ErrorCode));
+				addHeader(Constants.HEADER_ERROR_DESCRIPTION, errorDescription);
 				break;
 			
 			default:
 				throw new Exception("Invalid message type provided");		
 		}		
-		
-		_type = messageType;
-		_error = error;
 	}
 	
 	public ResponseType getType() {
 		return _type;
 	}
 	
-	public void write(ChannelWriter channelWriter) throws Exception {
-		writeResponseLine(channelWriter, _type, _encryptionType);
-		if (_error != null) {
-			Log.w("Response.write", "Sending error response \"" + _errorDescription + "\"");
-			writeHeader(channelWriter, Constants.HEADER_ERROR_CODE, String.valueOf(_error.ErrorCode));
-			writeHeader(channelWriter, Constants.HEADER_ERROR_DESCRIPTION, _errorDescription);
-		}
-		writeOriginResponseHeaders(channelWriter);
-		channelWriter.write(Constants.END_OF_LINE);
+	protected void writeLeaderLine(ChannelWriter writer) throws IOException {
+		writeResponseLine(writer, _type, _encryptionType);
 	}
-
+	
 	private static void writeResponseLine(ChannelWriter out, ResponseType messageType, EncryptionType encryptionType) throws IOException {
-		out.write(Constants.RESPONSE_PROTOCOL_VERSION + " " + messageType + " " +
+		out.write(Constants.GNTP_PROTOCOL_VERSION + " " + messageType + " " +
 			encryptionType.toString() + Constants.END_OF_LINE);
 	}
 
-	private static void writeOriginResponseHeaders(ChannelWriter out) throws Exception {
-		writeHeader(out, Constants.HEADER_ORIGIN_MACHINE_NAME, Build.DEVICE);
-		writeHeader(out, Constants.HEADER_ORIGIN_SOFTWARE_NAME, "Growl for Android");
-		writeHeader(out, Constants.HEADER_ORIGIN_SOFTWARE_VERSION, "0.1");
-		writeHeader(out, Constants.HEADER_ORIGIN_PLATFORM_NAME, Build.DISPLAY);
-		writeHeader(out, Constants.HEADER_ORIGIN_PLATFORM_VERSION, Build.VERSION.RELEASE);
+	public static Response read(EncryptedChannelReader reader) throws GntpException, IOException {
+		String leader = reader.readLine();
+		String[] leaderFields = leader.split(Constants.FIELD_DELIMITER);
+		
+		if (!Constants.GNTP_PROTOCOL_VERSION.equals(leaderFields[0]))
+			throw new GntpException(GntpError.UnknownProtocolVersion);
+		
+		if (leaderFields.length != 3)
+			throw new GntpException(GntpError.InvalidRequest,
+					"Expected \"protocol/version type encryptionTypeAndIV\"");
+		
+		ResponseType type = ResponseType.fromString(leaderFields[1]);
+
+		String[] encryptionFields = leaderFields[2].split(":");
+		EncryptionType encryptionType = EncryptionType.fromString(encryptionFields[0]);
+		if (encryptionType != EncryptionType.None)
+			throw new GntpException(GntpError.InternalServerError, "Response encryption is not yet supported");
+		
+		Response response = new Response(type);
+		response.readHeaders(reader);
+		
+		return response;
 	}
 
-	private static void writeHeader(ChannelWriter out, String key, String value) throws Exception {
-		if (key.contains(":"))
-			throw new Exception("Invalid header key: " + key);
+	public GntpException getError() {
+		if (_type == ResponseType.OK)
+			return null;
 		
-		out.write(key + ": " + escapeGntpString(value) + Constants.END_OF_LINE);
-	}
-	
-	private static String escapeGntpString(String source) {
-		return source.replace('\r', '\n');
+		int errorCode = getHeaderInt(Constants.HEADER_ERROR_CODE, GntpError.InternalServerError.ErrorCode);
+		GntpError error = GntpError.fromErrorCode(errorCode);
+		String description = getHeaderString(Constants.HEADER_ERROR_DESCRIPTION);
+		return new GntpException(error, description);
 	}
 }

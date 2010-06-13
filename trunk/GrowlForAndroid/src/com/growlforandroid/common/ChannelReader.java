@@ -1,14 +1,11 @@
 package com.growlforandroid.common;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
 import com.growlforandroid.gntp.Constants;
 
-import android.content.Context;
 import android.util.Log;
 
 /**

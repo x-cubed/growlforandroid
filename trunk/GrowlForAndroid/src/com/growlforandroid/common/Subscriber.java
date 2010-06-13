@@ -6,10 +6,15 @@ import com.growlforandroid.client.R;
 import com.growlforandroid.gntp.SubscriberThread;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.database.Cursor;
+import android.os.Build;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 public class Subscriber {
+	private final String PREFERENCE_SUBSCRIBER_ID = "subscriber_id";
 	private final int SUBSCRIPTION_INTERVAL_MS = 60 * 1000;
 
 	private final Context _context;
@@ -19,7 +24,29 @@ public class Subscriber {
 	
 	public Subscriber(Context context) {
 		_context = context;
-		_id = UUID.randomUUID();
+
+		// Determine the subscriber ID to use
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(_context);
+		String uuid = prefs.getString(PREFERENCE_SUBSCRIBER_ID, null);
+		UUID id = null;
+		if (uuid != null) {
+			// We have a subscriber ID from last time
+			try {
+				id = UUID.fromString(uuid);
+				Log.i("Subscriber.ctor", "Using existing subscriber ID: " + id.toString());
+			} catch (IllegalArgumentException iae) {
+			}
+		}
+		if (id == null) {
+			// Generate a new subscriber ID and save it in the preferences for next time
+			id = UUID.randomUUID();
+			Editor editor = prefs.edit();
+			editor.putString(PREFERENCE_SUBSCRIBER_ID, id.toString());
+			editor.commit();
+			Log.i("Subscriber.ctor", "Created new subscriber ID: " + id.toString());
+		}
+		
+		_id = id;
 	}
 	
 	public UUID getId() {
@@ -27,8 +54,7 @@ public class Subscriber {
 	}
 	
 	public String getName() {
-		// TODO Auto-generated method stub
-		return null;
+		return Build.DEVICE;
 	}
 
 	public void start() {
@@ -84,8 +110,18 @@ public class Subscriber {
 	
 	public void onSubscriptionComplete(SubscriberThread subscribe, Exception error) {
 		long id = subscribe.getSubscriptionId();
-		int statusId = (error == null) ? R.string.subscriptions_status_registered : R.string.subscriptions_status_unregistered;
-		_database.updateSubscription(id, _context.getText(statusId).toString());
+		int statusId = 0;
+		if (error == null) {
+			statusId = R.string.subscriptions_status_registered;
+			Log.i("Subscriber.onSubscriptionComplete", "Subscription " + id + " was successfully renewed");
+		} else {
+			statusId = R.string.subscriptions_status_unregistered;
+			Log.i("Subscriber.onSubscriptionComplete", "Subscription " + id + " failed: " + error.getMessage());
+		}
+		
+		if (_database != null) {
+			_database.updateSubscription(id, _context.getText(statusId).toString());
+		}
 	}
 	
 	protected void finalize() throws Throwable {

@@ -19,8 +19,8 @@ public class SubscriberThread extends Thread {
 		Exception error = null;
 		try {
 			Request request = new Request(RequestType.Subscribe, EncryptionType.None, HashAlgorithm.MD5, _password);
-			request.addHeader("Subscriber-ID", _subscriber.getId().toString());
-			request.addHeader("Subscriber-Name", _subscriber.getName());
+			request.addHeader(Constants.HEADER_SUBSCRIPTION_ID, _subscriber.getId().toString());
+			request.addHeader(Constants.HEADER_SUBSCRIPTION_NAME, _subscriber.getName());
 			request.sendTo(_address);
 			
 		} catch (Exception x) {

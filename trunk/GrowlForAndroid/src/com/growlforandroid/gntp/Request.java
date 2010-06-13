@@ -1,14 +1,18 @@
 package com.growlforandroid.gntp;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.io.*;
+import java.net.*;
+import java.nio.channels.Channel;
+import java.nio.channels.SocketChannel;
+import java.util.*;
 
-import android.os.Build;
+import android.util.Log;
 
-import com.growlforandroid.common.Utility;
+import com.growlforandroid.common.*;
 
-public class Request {
+public class Request
+	extends GntpMessage {
+	
 	private RequestState _currentState = RequestState.Connected;
 	
 	private RequestType _requestType;
@@ -17,7 +21,6 @@ public class Request {
 	private String _initVector = "";
 	private String _hash = "";
 	private String _salt = "";
-	private Map<String, String> _requestHeaders = new HashMap<String, String>();
 	
 	private int _notificationsCount = 0;
 	private int _notificationIndex = 0;
@@ -46,20 +49,67 @@ public class Request {
 		ResponseSent
 	}
 
-	public void sendTo(String address) throws GntpException {
-		// TODO Auto-generated method stub
+	public void sendTo(String hostAndPort) throws GntpException, UnknownHostException, IOException {
+		String host = hostAndPort;
+		int port = 23053;
 		
-	}
-
-	public void addHeader(String name, String value) {
-		_requestHeaders.put(name, value);
+		int colon = hostAndPort.indexOf(':');
+		if (colon >= 0) {
+			port = Integer.parseInt(hostAndPort.substring(colon));
+			host = hostAndPort.substring(0, colon);
+		}
+		
+		sendTo(host, port);
 	}
 	
-	public void addCommonHeaders() {
-		addHeader(Constants.HEADER_ORIGIN_MACHINE_NAME, Build.DEVICE);
-		addHeader(Constants.HEADER_ORIGIN_SOFTWARE_NAME, "Growl for Android");
-		addHeader(Constants.HEADER_ORIGIN_SOFTWARE_VERSION, "0.1");
-		addHeader(Constants.HEADER_ORIGIN_PLATFORM_NAME, Build.DISPLAY);
-		addHeader(Constants.HEADER_ORIGIN_PLATFORM_VERSION, Build.VERSION.RELEASE);
+	public void sendTo(String host, int port) throws GntpException, UnknownHostException, IOException {
+		Socket socket = null;
+		SocketChannel channel = null;
+		try {
+			Log.i("Request.sendTo", "Connecting to " + host + " on port " + port + "...");
+			socket = new Socket(host, port);
+			
+			channel = socket.getChannel();
+			ChannelWriter writer = new ChannelWriter(channel, Constants.CHARSET);
+			EncryptedChannelReader reader = new EncryptedChannelReader(channel);
+			
+			// Write the request line and headers
+			Log.i("Request.sendTo", "Sending " + _requestType.toString() + " request...");
+			write(writer);
+			
+			// Wait for the response
+			Log.i("Request.sendTo", "Waiting for response...");
+			Response response = Response.read(reader);
+			GntpException error = response.getError();
+			if (error != null) {
+				Log.i("Request.sendTo", "Failed: " + error.getMessage());
+				throw error;
+			}
+			Log.i("Request.sendTo", "Succeeded");
+			
+		} finally {
+			if (channel != null) {
+				channel.close();
+				channel = null;
+			}
+			if (socket != null) {
+				socket.close();
+				socket = null;
+			}
+			Log.i("Request.sendTo", "Done");
+		}
+	}
+
+	protected void writeLeaderLine(ChannelWriter writer) throws IOException {
+		writer.write(Constants.GNTP_PROTOCOL_VERSION + " ");
+		writer.write(_requestType.toString() + " ");
+		writer.write(_encryptionType.toString());
+		if (_initVector != null) {
+			writer.write(":" + _initVector);
+		}
+		if (_hashAlgorithm != HashAlgorithm.NONE) {
+			writer.write(" " + _hashAlgorithm.toString() + ":" + _hash + "." + _salt);
+		}
+		writer.write(Constants.END_OF_LINE);
 	}
 }

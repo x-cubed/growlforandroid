@@ -12,6 +12,8 @@ public class GntpException extends Exception {
 	
 	public GntpException(GntpError error, String description) {
 		this(error);
-		Error.setDescription(description);
+		if (description != null) {
+			Error.setDescription(description);
+		}
 	}
 }

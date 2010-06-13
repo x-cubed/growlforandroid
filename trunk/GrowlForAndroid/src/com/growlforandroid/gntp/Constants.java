@@ -9,7 +9,7 @@ public final class Constants {
 	public static final String SUPPORTED_PROTOCOL = "GNTP";
 	public static final String SUPPORTED_PROTOCOL_VERSION = "1.0";
 	
-	public static final String RESPONSE_PROTOCOL_VERSION = SUPPORTED_PROTOCOL + "/" + SUPPORTED_PROTOCOL_VERSION;
+	public static final String GNTP_PROTOCOL_VERSION = SUPPORTED_PROTOCOL + "/" + SUPPORTED_PROTOCOL_VERSION;
 	
 	public static final String HEADER_APPLICATION_NAME = "Application-Name";
 	public static final String HEADER_APPLICATION_ICON = "Application-Icon";
@@ -26,7 +26,14 @@ public final class Constants {
 	
 	public static final String HEADER_RESOURCE_IDENTIFIER = "Identifier";
 	public static final String HEADER_RESOURCE_LENGTH = "Length";
+
+	public static final String HEADER_SUBSCRIPTION_ID = "Subscriber-ID";
+	public static final String HEADER_SUBSCRIPTION_NAME = "Subscriber-Name";
+	public static final String HEADER_SUBSCRIPTION_TTL = "Subscription-TTL";
+	public static final int SUBSCRIPTION_TTL = 300; // seconds
 	
+	public static final String HEADER_RESPONSE_ACTION = "Response-Action";
+		
 	public static final String HEADER_ERROR_CODE = "Error-Code";
 	public static final String HEADER_ERROR_DESCRIPTION = "Error-Description";
 	
