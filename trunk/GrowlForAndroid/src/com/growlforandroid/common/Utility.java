@@ -1,5 +1,7 @@
 package com.growlforandroid.common;
 
+import android.bluetooth.BluetoothAdapter;
+import android.os.Build;
 import android.util.Log;
 
 public final class Utility {
@@ -20,14 +22,20 @@ public final class Utility {
 			throw new IllegalArgumentException("String should have an even number of characters");
 		
 		byte[] data = new byte[len / 2];
-		for (int i = 0; i < len; i += 2) {
-			data[i / 2] = (byte) (
-				(HEXES.indexOf(s.charAt(i)) << 4) +
-				 HEXES.indexOf(s.charAt(i + 1)));
+		for (int i = 0; i < len; i += 2) {		
+			data[i / 2] = (byte) ((getHexNibbleValue(s.charAt(i)) << 4) + getHexNibbleValue(s.charAt(i + 1)));
 		}
 		return data;
 	}
 
+	public static byte getHexNibbleValue(char c) {
+		byte nibble = (byte)HEXES.indexOf(Character.toUpperCase(c));
+		if (nibble < 0) {
+			throw new IllegalArgumentException("Invalid hex character: " + c);
+		}
+		return nibble;
+	}
+	
 	public static String getHexStringFromByteArray(byte[] raw) {
 		return getHexStringFromByteArray(raw, 0, raw.length);
 	}
@@ -69,5 +77,20 @@ public final class Utility {
 			int blockLength = remaining > BLOCK_SIZE ? BLOCK_SIZE : remaining;
 			Log.i(tag, getHexStringFromByteArray(data, offset, blockLength));
 		}		
+	}
+
+	public static String getDeviceFriendlyName() {
+		String deviceName = null;
+
+		// Try to use the name used by Bluetooth
+		BluetoothAdapter bluetooth = BluetoothAdapter.getDefaultAdapter();
+		if (bluetooth != null) {
+			deviceName = bluetooth.getName();
+		}
+		
+		if (deviceName == null) {
+			deviceName = Build.DEVICE;
+		}
+		return deviceName;
 	}
 }

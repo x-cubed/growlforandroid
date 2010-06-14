@@ -92,7 +92,7 @@ containing a value of this type.
     }
     public static final class string {
         public static final int add_password_dialog_title=0x7f050015;
-        public static final int add_subscription_dialog_title=0x7f050041;
+        public static final int add_subscription_dialog_title=0x7f050042;
         public static final int app_description=0x7f050002;
         public static final int app_label=0x7f050001;
         public static final int app_name=0x7f050000;
@@ -144,7 +144,8 @@ containing a value of this type.
         public static final int service_started=0x7f05000b;
         public static final int service_stopped=0x7f05000c;
         public static final int subscriptions_add_subscription=0x7f05003c;
-        public static final int subscriptions_menu_title=0x7f050040;
+        public static final int subscriptions_menu_title=0x7f050041;
+        public static final int subscriptions_status_not_authorized=0x7f050040;
         public static final int subscriptions_status_registered=0x7f05003f;
         public static final int subscriptions_status_registering=0x7f05003e;
         public static final int subscriptions_status_unregistered=0x7f05003d;

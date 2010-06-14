@@ -57,14 +57,20 @@ public class MainActivity
         // List the recent notifications
         _lsvNotifications = (ListView)findViewById(R.id.lsvNotifications);
         
-        // Watch for button clicks.
+        // Watch for button clicks
         _tglServiceState = (ToggleButton)findViewById(R.id.tglServiceState);
         _tglServiceState.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
                 if (!_tglServiceState.isChecked()) {
                 	_service.stop();
                 } else {
-                	_service.start();
+                	try {
+						_service.start();
+					} catch (Exception e) {
+						// Failed to start the service
+						Log.e("tglServiceState.onClick", e.toString());
+						_tglServiceState.setChecked(false);
+					}
                 }
             }
         });
@@ -221,5 +227,8 @@ public class MainActivity
 				refresh();
 			}
 		});
+	}
+	
+	public void onSubscriptionStatusChanged(long id, String status) {
 	}
 }

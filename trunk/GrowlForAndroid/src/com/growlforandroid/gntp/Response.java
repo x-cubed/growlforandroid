@@ -1,7 +1,9 @@
 package com.growlforandroid.gntp;
 
 import java.io.IOException;
-import com.growlforandroid.common.ChannelWriter;
+
+import android.util.Log;
+
 import com.growlforandroid.common.EncryptedChannelReader;
 
 /*
@@ -48,17 +50,13 @@ public class Response
 		return _type;
 	}
 	
-	protected void writeLeaderLine(ChannelWriter writer) throws IOException {
-		writeResponseLine(writer, _type, _encryptionType);
-	}
-	
-	private static void writeResponseLine(ChannelWriter out, ResponseType messageType, EncryptionType encryptionType) throws IOException {
-		out.write(Constants.GNTP_PROTOCOL_VERSION + " " + messageType + " " +
-			encryptionType.toString() + Constants.END_OF_LINE);
+	protected String getLeaderLine() throws IOException {
+		return Constants.GNTP_PROTOCOL_VERSION + " " + _type + " " + _encryptionType.toString();
 	}
 
 	public static Response read(EncryptedChannelReader reader) throws GntpException, IOException {
 		String leader = reader.readLine();
+		Log.i("Response.read", leader);
 		String[] leaderFields = leader.split(Constants.FIELD_DELIMITER);
 		
 		if (!Constants.GNTP_PROTOCOL_VERSION.equals(leaderFields[0]))

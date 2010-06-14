@@ -1,6 +1,9 @@
 package com.growlforandroid.client;
 
 import com.growlforandroid.common.Database;
+import com.growlforandroid.common.GrowlApplication;
+import com.growlforandroid.common.GrowlNotification;
+import com.growlforandroid.common.NotificationType;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -16,9 +19,14 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 
-public class Subscriptions extends ListActivity {
+public class Subscriptions
+	extends ListActivity
+	implements GrowlListenerService.StatusChangedHandler {
+	
 	private final int DIALOG_ADD_SUBSCRIPTION = 0;
 	private final int DIALOG_ITEM_MENU = 1;
+	
+	private ListenerServiceConnection _service;
 	
 	private Database _database;
 	private Cursor _cursor;
@@ -30,6 +38,7 @@ public class Subscriptions extends ListActivity {
         super.onCreate(savedInstanceState);
         setTitle(R.string.subscriptions_title);
         
+        _service = new ListenerServiceConnection(this, this);
         _database = new Database(this);
         refresh();
         
@@ -49,16 +58,47 @@ public class Subscriptions extends ListActivity {
     	}
     }
     
-    protected void finalize() throws Throwable {
+    private void refreshOnUiThread() {
+    	this.runOnUiThread(new Runnable() {
+			public void run() {
+				refresh();
+			}
+		});
+    }
+    
+    @Override
+    public void onResume() {
+    	super.onResume();
+    	_service.bind();
+    }
+    
+    @Override
+    public void onPause() {
+    	_service.unbind();
+    	super.onPause();
+    }
+    
+    @Override
+    public void onDestroy() {
+    	if (_service != null) {
+    		_service.unbind();
+    		_service = null;
+    	}
+    	
     	if (_cursor != null) {
     		_cursor.close();
+    		_cursor = null;
     	}
     	
     	if (_database != null) {
     		_database.close();
     		_database = null;
     	}
-    	
+    	super.onDestroy();
+    }
+    
+    protected void finalize() throws Throwable {
+    	onDestroy();
     	super.finalize();
     }
     
@@ -133,4 +173,21 @@ public class Subscriptions extends ListActivity {
     	
     	return null;
     }
+    
+
+    public void onApplicationRegistered(GrowlApplication app) {
+    }
+    
+    public void onNotificationTypeRegistered(NotificationType type) {
+    }
+    
+	public void onDisplayNotification(GrowlNotification notification) {	
+	}
+
+	public void onIsRunningChanged(boolean isRunning) {
+	}
+	
+	public void onSubscriptionStatusChanged(long id, String status) {
+		refreshOnUiThread();
+	}
 }

@@ -4,14 +4,14 @@
   	<PreferenceCategory
 	       android:title="@string/preferences_general_title">	
 		<CheckBoxPreference
-		        android:key="listen_gntp"
+		        android:key="start_at_boot"
 		        android:title="@string/preferences_general_auto_start"
 		        android:summary="@string/preferences_general_auto_start_summary" />
 	</PreferenceCategory>
   
 	<PreferenceCategory
 	       android:title="@string/preferences_listen_title">	
-		<CheckBoxPreference
+		<!-- CheckBoxPreference
 		        android:key="listen_gntp"
 		        android:title="@string/preferences_listen_gntp"
 		        android:summary="@string/preferences_listen_gntp_summary"
@@ -21,7 +21,7 @@
 		        android:key="listen_growl_udp"
 		        android:title="@string/preferences_listen_growl_udp"
 			    android:summary="@string/preferences_listen_growl_udp_summary"
-			    android:enabled="false" />
+			    android:enabled="false" / -->
 		<PreferenceScreen
 	            android:title="@string/preferences_listen_subscriptions"
                 android:summary="@string/preferences_listen_subscriptions_summary">

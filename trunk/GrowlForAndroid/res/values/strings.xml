@@ -69,9 +69,10 @@
 
 
 
-<string name="subscriptions_status_unregistered">Not subscribed</string><string name="subscriptions_status_registering">Subscribing...</string><string name="subscriptions_status_registered">Subscribed</string>
+<string name="subscriptions_status_unregistered">Not subscribed</string><string name="subscriptions_status_registering">Subscribing...</string><string name="subscriptions_status_registered">Subscribed</string><string name="subscriptions_status_not_authorized">Bad password</string>
 <string name="subscriptions_menu_title">Subscription</string><string-array name="subscriptions_menu"><item>Delete</item>
 </string-array><string name="add_subscription_dialog_title">Add Subscription</string>
+
 
 
 
