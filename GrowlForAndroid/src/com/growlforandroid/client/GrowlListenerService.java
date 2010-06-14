@@ -93,9 +93,15 @@ public class GrowlListenerService
 			_socketAcceptor.start();
 			
 			// Start subscribing to notifications from other devices
-			_subscriber = new Subscriber(this);
+			final GrowlListenerService service = this;
+			_subscriber = new Subscriber(service) {
+				public void onSubscriptionStatusChanged(long id, String status) {
+					service.onSubscriptionStatusChanged(id, status);
+				}
+			};
 			_subscriber.start();
 			
+			setWasRunning(true);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -106,6 +112,12 @@ public class GrowlListenerService
         return START_STICKY;
     }
 
+    private void setWasRunning(boolean wasRunning) {
+    	Log.i("ListenerServiceConnection.setWasRunning", "Was Running = " + wasRunning);
+    	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+		prefs.edit().putBoolean(Preferences.WAS_RUNNING, wasRunning).commit();	
+    }
+    
 	public boolean isRunning() {
     	return _serverChannel != null;
     }
@@ -412,11 +424,26 @@ public class GrowlListenerService
 		}
 	}
 	
+	private void onSubscriptionStatusChanged(long id, String status) {
+		Log.i("GrowlListenerService.onSubscriptionStatusChanged",
+				"The status of subscription " + id + " has changed");
+		for(WeakReference<StatusChangedHandler> reference : _statusChangedHandlers) {
+			StatusChangedHandler handler = reference.get();
+			if (handler != null) {
+				handler.onSubscriptionStatusChanged(id, status);
+			} else {
+				// This reference has expired
+				_statusChangedHandlers.remove(reference);
+			}
+		}
+	}
+	
 	public interface StatusChangedHandler {
 		void onIsRunningChanged(boolean isRunning);
 		void onNotificationTypeRegistered(NotificationType type);
 		void onApplicationRegistered(GrowlApplication app);
-		void onDisplayNotification(GrowlNotification notification);	
+		void onDisplayNotification(GrowlNotification notification);
+		void onSubscriptionStatusChanged(long id, String status);
 	}
 }
 

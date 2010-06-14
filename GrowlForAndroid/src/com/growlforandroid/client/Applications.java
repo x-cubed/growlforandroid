@@ -40,7 +40,7 @@ public class Applications
 
         setTitle(R.string.applications_title);
 
-        _service = new ListenerServiceConnection(this, this);      
+        _service = new ListenerServiceConnection(this, this);
         _database = new Database(this);
         refresh();
         
@@ -180,5 +180,8 @@ public class Applications
 	}
 
 	public void onIsRunningChanged(boolean isRunning) {
+	}
+	
+	public void onSubscriptionStatusChanged(long id, String status) {
 	}
 }

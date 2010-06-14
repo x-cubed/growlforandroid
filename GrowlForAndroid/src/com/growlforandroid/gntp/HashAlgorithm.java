@@ -46,6 +46,11 @@ public enum HashAlgorithm {
 		return key;
 	}
 	
+	public byte[] calculateHash(String password, byte[] salt) {
+		byte[] key = calculateKey(password, salt);
+		return calculateHash(key);
+	}
+	
 	public byte[] calculateHash(byte[] data) {
 		if ((Digest == null) || (data == null))
 			return null;

@@ -16,7 +16,7 @@ public class GntpListenerThread extends Thread {
 	private static final boolean SKIP_LOADING_RESOURCES = false;
 	
 	private final SocketAcceptor _acceptor;
-	private final int _connectionID;
+	private final long _connectionID;
 	private final Socket _socket;
 	private final IGrowlRegistry _registry;
 	private final SocketChannel _channel;
@@ -38,7 +38,7 @@ public class GntpListenerThread extends Thread {
 	private int _resourceIndex = 0;
 	private Map<Integer, Map<String, String>> _notificationsHeaders = new HashMap<Integer, Map<String, String>>();
 	
-	public GntpListenerThread(SocketAcceptor socketAcceptor, int connectionID, IGrowlRegistry registry, SocketChannel channel)
+	public GntpListenerThread(SocketAcceptor socketAcceptor, long connectionID, IGrowlRegistry registry, SocketChannel channel)
 		throws IllegalCharsetNameException, UnsupportedCharsetException, CharacterCodingException {
 		
 		super("GntpListenerThread");
