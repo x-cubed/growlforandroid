@@ -5,7 +5,10 @@ import java.util.*;
 
 import com.growlforandroid.common.*;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Build;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 /**
@@ -15,6 +18,8 @@ import android.util.Log;
  *
  */
 public abstract class GntpMessage {
+	public static final String PREFERENCE_DEVICE_NAME = "device_name";
+	
 	protected final int CONNECTION_TIMEOUT_MS = 10000;
 	protected final int READ_TIMEOUT_MS = 10000;
 	
@@ -35,8 +40,10 @@ public abstract class GntpMessage {
 		addHeader(key, Integer.toString(value));
 	}
 	
-	public void addCommonHeaders() throws Exception {	
-		addHeader(Constants.HEADER_ORIGIN_MACHINE_NAME, Utility.getDeviceFriendlyName());
+	public void addCommonHeaders(Context context) throws Exception {
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+		String deviceName = prefs.getString(PREFERENCE_DEVICE_NAME, Build.DEVICE);
+		addHeader(Constants.HEADER_ORIGIN_MACHINE_NAME, deviceName);
 		addHeader(Constants.HEADER_ORIGIN_SOFTWARE_NAME, "Growl for Android");
 		addHeader(Constants.HEADER_ORIGIN_SOFTWARE_VERSION, "0.9");
 		addHeader(Constants.HEADER_ORIGIN_PLATFORM_NAME, Build.DISPLAY);

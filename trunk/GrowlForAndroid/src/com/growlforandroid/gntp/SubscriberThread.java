@@ -21,7 +21,7 @@ public class SubscriberThread extends Thread {
 			Request request = new Request(RequestType.Subscribe, EncryptionType.None, HashAlgorithm.MD5, _password);
 			request.addHeader(Constants.HEADER_SUBSCRIPTION_ID, _subscriber.getId().toString());
 			request.addHeader(Constants.HEADER_SUBSCRIPTION_NAME, _subscriber.getName());
-			request.addCommonHeaders();
+			request.addCommonHeaders(_subscriber.getContext());
 			request.sendTo(_id, _address);
 			
 		} catch (Exception x) {

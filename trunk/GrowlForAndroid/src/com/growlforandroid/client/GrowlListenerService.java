@@ -10,6 +10,7 @@ import java.util.*;
 
 import com.growlforandroid.client.R;
 import com.growlforandroid.common.*;
+import com.growlforandroid.gntp.GntpMessage;
 import com.growlforandroid.gntp.HashAlgorithm;
 
 import android.app.*;
@@ -83,7 +84,11 @@ public class GrowlListenerService
         	return START_STICKY;
         }
         
-        try {       	
+        try {
+        	// We can only get the Bluetooth adaptor name from a looper thread, so grab it now
+        	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+        	prefs.edit().putString(GntpMessage.PREFERENCE_DEVICE_NAME, Utility.getDeviceFriendlyName()).commit();
+        	
         	// Start listening on GNTP_PORT, on all interfaces
         	_serverChannel = ServerSocketChannel.open();
         	_serverChannel.socket().bind(new InetSocketAddress(GNTP_PORT));

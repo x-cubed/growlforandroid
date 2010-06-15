@@ -15,7 +15,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 public class Subscriber {
-	private final String PREFERENCE_SUBSCRIBER_ID = "subscriber_id";
+	public static final String PREFERENCE_SUBSCRIBER_ID = "subscriber_id";
 	private final int SUBSCRIPTION_INTERVAL_MS = 60 * 1000;
 	
 	private final String STATUS_UNREGISTERED;
@@ -59,6 +59,10 @@ public class Subscriber {
 		}
 		
 		_id = id;
+	}
+	
+	public Context getContext() {
+		return _context;
 	}
 	
 	public UUID getId() {
