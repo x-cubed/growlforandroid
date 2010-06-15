@@ -10,7 +10,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
     	<service android:name="GrowlListenerService"></service>
 		<activity android:name="Applications"></activity>
 		<activity android:name="Passwords"></activity>
@@ -18,15 +17,16 @@
 		<activity android:name="Application"></activity>
 		<activity android:name="TypePreferences"></activity>
 		<activity android:name="Subscriptions"></activity>
-	<receiver android:name="DeviceEventReceiver"><intent-filter><action android:name="android.intent.action.BOOT_COMPLETED"></action>
-<action android:name="android.net.conn.CONNECTIVITY_CHANGE"></action>
-
-</intent-filter>
-</receiver>
-</application>
+		<receiver android:name="DeviceEventReceiver">
+			<intent-filter>
+				<action android:name="android.intent.action.BOOT_COMPLETED"></action>
+				<action android:name="android.net.conn.CONNECTIVITY_CHANGE"></action>
+			</intent-filter>
+		</receiver>
+	</application>
     <uses-sdk android:minSdkVersion="5" />
 	<uses-permission android:name="android.permission.INTERNET"></uses-permission>
 	<uses-permission android:name="android.permission.VIBRATE"></uses-permission>
-<uses-permission android:name="android.permission.ACCESS_WIFI_STATE"></uses-permission>
-
+	<uses-permission android:name="android.permission.ACCESS_WIFI_STATE"></uses-permission>
+	<uses-permission android:name="android.permission.BLUETOOTH"></uses-permission>
 </manifest> 
