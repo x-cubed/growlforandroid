@@ -6,7 +6,7 @@
 		<CheckBoxPreference
 		        android:key="start_at_boot"
 		        android:title="@string/preferences_general_auto_start"
-		        android:summary="@string/preferences_general_auto_start_summary" />
+		        android:summary="@string/preferences_general_auto_start_summary" android:defaultValue="true"/>
 	</PreferenceCategory>
   
 	<PreferenceCategory
