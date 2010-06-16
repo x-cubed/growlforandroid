@@ -1,8 +1,6 @@
 package com.growlforandroid.common;
 
 import java.net.URL;
-import java.util.HashSet;
-
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -127,25 +125,18 @@ public class Database {
 		return db.delete(TABLE_PASSWORDS, KEY_ROWID + "=" + rowId, null) > 0;
 	}
 
-	public Cursor getAllPasswordsAndNames() {
+	public Cursor getPasswordsAndNames() {
 		return db.query(TABLE_PASSWORDS, new String[] { KEY_ROWID, KEY_NAME,
 				KEY_PASSWORD }, null, null, null, null, null);
 	}
 
-	public String[] getAllPasswords() {
-		HashSet<String> passwords = new HashSet<String>();
-		Cursor cursor = getAllPasswordsAndNames();
-		if (cursor.moveToFirst()) {
-			final int passwordColumn = cursor.getColumnIndex(KEY_PASSWORD);
-			do {
-				String password = cursor.getString(passwordColumn);
-				Log.i("Database.getAllPasswords()", "Adding password "
-						+ password);
-				passwords.add(password);
-			} while (cursor.moveToNext());
-		}
-		cursor.close();
-		return passwords.toArray(new String[0]);
+	public Cursor getAllPasswordsAndNames() {
+		return db.rawQuery(
+				"SELECT " + KEY_NAME + ", " + KEY_PASSWORD + " " +
+				"FROM " + TABLE_SUBSCRIPTIONS + " " +
+				"UNION " +
+				"SELECT " + KEY_NAME + ", " + KEY_PASSWORD + " " +
+				"FROM " + TABLE_PASSWORDS, null);
 	}
 
 	public int insertApplication(String name, Boolean enabled, URL iconUrl) {

@@ -36,7 +36,7 @@ public class Passwords extends ListActivity {
     
     private void refresh() {
     	if (_cursor == null) {
-    		_cursor = _database.getAllPasswordsAndNames();
+    		_cursor = _database.getPasswordsAndNames();
     	} else {
     		_cursor.requery();
     	}
