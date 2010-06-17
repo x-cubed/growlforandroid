@@ -29,7 +29,7 @@ public class TypePreferences
     private void refresh() {
     	Cursor typeCursor = _database.getApplication(_typeId);
     	if (typeCursor.moveToFirst()) {
-    		String appName = typeCursor.getString(typeCursor.getColumnIndex(Database.KEY_DISPLAY_NAME));
+    		String appName = typeCursor.getString(typeCursor.getColumnIndex(Database.KEY_NAME));
     		boolean enabled = typeCursor.getInt(typeCursor.getColumnIndex(Database.KEY_ENABLED)) != 0;
     		
     		TextView txtTitle = (TextView)findViewById(R.id.txtAppName);
