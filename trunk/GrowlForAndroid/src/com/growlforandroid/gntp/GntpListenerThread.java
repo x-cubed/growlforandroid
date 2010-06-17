@@ -10,6 +10,7 @@ import com.growlforandroid.client.SocketAcceptor;
 import com.growlforandroid.common.*;
 import com.growlforandroid.common.EncryptedChannelReader.DecryptionException;
 
+import android.content.Context;
 import android.util.Log;
 
 public class GntpListenerThread extends Thread {
@@ -56,6 +57,10 @@ public class GntpListenerThread extends Thread {
 		_socket = channel.socket();
 	}
 
+	public Context getContext() {
+		return _acceptor.getContext();
+	}
+	
 	public void run() {
 		try {
 			int remotePort = _socket.getPort();
@@ -142,7 +147,10 @@ public class GntpListenerThread extends Thread {
 
 					// Send the error response
 					GntpError error = GntpError.getErrorFrom(x);
-					new Response(ResponseType.Error, error).write(_socketWriter);
+					Response response = new Response(ResponseType.Error, error);
+					response.addCommonHeaders(getContext());
+					response.write(_socketWriter);
+					
 					_currentState = RequestState.ResponseSent;
 				}
 			}

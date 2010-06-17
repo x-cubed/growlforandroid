@@ -8,6 +8,7 @@ import java.util.Set;
 import com.growlforandroid.common.IGrowlRegistry;
 import com.growlforandroid.gntp.GntpListenerThread;
 
+import android.content.Context;
 import android.util.Log;
 
 /**
@@ -23,6 +24,10 @@ public class SocketAcceptor extends Thread {
 	public SocketAcceptor(IGrowlRegistry registry, ServerSocketChannel channel) {
 		_registry = registry;
 		_channel = channel;
+	}
+	
+	public Context getContext() {
+		return _registry.getContext();
 	}
 	
 	public void run() {
