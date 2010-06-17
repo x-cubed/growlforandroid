@@ -165,10 +165,17 @@ public class EncryptedChannelReader extends ChannelReader {
 					isFinalBlock = true;
 					blockLength = remaining;
 				}
-				byte[] encrypted = readBytes(blockLength);
-				byte[] decrypted = (isFinalBlock) ? decryptor.doFinal(encrypted) : decryptor.update(encrypted);				
-				output.write(decrypted);
+				byte[] raw = readBytes(blockLength);
+				if (decryptor == null) {
+					// Source is not encrypted, just save it
+					output.write(raw);
+				} else {
+					// Source is encrypted, decrypt it first
+					byte[] decrypted = (isFinalBlock) ? decryptor.doFinal(raw) : decryptor.update(raw);				
+					output.write(decrypted);
+				}
 			}
+
 		} catch (InvalidKeyException x) {
 			throw new DecryptionException(x);
 		} catch (NoSuchAlgorithmException x) {

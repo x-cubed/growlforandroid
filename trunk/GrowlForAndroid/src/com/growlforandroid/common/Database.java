@@ -130,13 +130,13 @@ public class Database {
 				KEY_PASSWORD }, null, null, null, null, null);
 	}
 
-	public Cursor getAllPasswordsAndNames() {
+	public Cursor getAllPasswordsAndNames(String subscriberId) {
 		return db.rawQuery(
-				"SELECT " + KEY_NAME + ", " + KEY_PASSWORD + " " +
+				"SELECT " + KEY_NAME + ", " + KEY_PASSWORD + " || ? AS " + KEY_PASSWORD + " " +
 				"FROM " + TABLE_SUBSCRIPTIONS + " " +
 				"UNION " +
 				"SELECT " + KEY_NAME + ", " + KEY_PASSWORD + " " +
-				"FROM " + TABLE_PASSWORDS, null);
+				"FROM " + TABLE_PASSWORDS, new String[] { subscriberId });
 	}
 
 	public int insertApplication(String name, Boolean enabled, URL iconUrl) {

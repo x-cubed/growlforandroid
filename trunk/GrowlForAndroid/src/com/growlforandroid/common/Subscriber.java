@@ -174,7 +174,7 @@ public class Subscriber {
 			Log.i("Subscriber.onSubscriptionComplete", "Subscription " + id + " was successfully renewed");
 		} else if (error instanceof UnknownHostException) {
 			status = STATUS_UNKNOWN_HOST;
-			Log.i("Subscriber.onSubscriptionComplete", "Subscription " + id + " failed due unknown host");
+			Log.i("Subscriber.onSubscriptionComplete", "Subscription " + id + " failed due to an unknown host");
 		} else if (errorCode == GntpError.NotAuthorized) {
 			status = STATUS_NOT_AUTHORIZED;
 			Log.i("Subscriber.onSubscriptionComplete", "Subscription " + id + " failed due to bad password");

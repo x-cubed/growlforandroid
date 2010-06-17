@@ -246,6 +246,7 @@ public class ChannelReader {
 		int withoutDelimiter = line.length() - Constants.END_OF_LINE.length();
 		if ((line != null) && (withoutDelimiter >= 0))
 			line = line.substring(0, withoutDelimiter);
+		// Log.d("ChannelReader.readLine", line);
 		return line;
 	}
 }

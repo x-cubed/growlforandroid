@@ -20,6 +20,7 @@ public class ChannelWriter {
 		
 	public void write(String text) throws IOException {
 		CharBuffer charBuffer = CharBuffer.wrap(text);
+		// Log.d("ChannelWriter.write", text);
 		ByteBuffer byteBuffer = _encoder.encode(charBuffer);
 		_channel.write(byteBuffer);
 	}
