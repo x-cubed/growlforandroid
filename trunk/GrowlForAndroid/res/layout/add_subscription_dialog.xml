@@ -1,73 +1,80 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical">
-
-    <TextView 
-        android:id="@+id/lblSubscriptionName"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
-        android:layout_marginLeft="20dip"
-        android:layout_marginRight="20dip"
-        android:text="@string/dialog_name"
-        android:gravity="left"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
-            
-    <EditText
-        android:id="@+id/txtSubscriptionName"
-        android:layout_height="wrap_content"
-        android:layout_width="fill_parent"
-        android:layout_marginLeft="20dip"
-        android:layout_marginRight="20dip"
-        android:scrollHorizontally="true"
-        android:autoText="false"
-        android:capitalize="none"
-        android:gravity="fill_horizontal"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
-
-    <TextView
-        android:id="@+id/lblSubscriptionAddress"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
-        android:layout_marginLeft="20dip"
-        android:layout_marginRight="20dip"
-        android:text="@string/dialog_address"
-        android:gravity="left"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
-            
-    <EditText
-        android:id="@+id/txtSubscriptionAddress"
-        android:layout_height="wrap_content"
-        android:layout_width="fill_parent"
-        android:layout_marginLeft="20dip"
-        android:layout_marginRight="20dip"
-        android:scrollHorizontally="true"
-        android:autoText="false"
-        android:capitalize="none"
-        android:gravity="fill_horizontal"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
-
-    <TextView
-        android:id="@+id/lblSubscriptionPassword"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
-        android:layout_marginLeft="20dip"
-        android:layout_marginRight="20dip"
-        android:text="@string/dialog_password"
-        android:gravity="left"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
-            
-    <EditText
-        android:id="@+id/txtSubscriptionPassword"
-        android:layout_height="wrap_content"
-        android:layout_width="fill_parent"
-        android:layout_marginLeft="20dip"
-        android:layout_marginRight="20dip"
-        android:scrollHorizontally="true"
-        android:autoText="false"
-        android:capitalize="none"
-        android:gravity="fill_horizontal"
-        android:password="true"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
-</LinearLayout>
+<ScrollView android:id="@+id/ScrollView01" 
+                android:layout_width="fill_parent" 
+                android:layout_height="fill_parent" 
+                xmlns:android="http://schemas.android.com/apk/res/android">
+	<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    android:orientation="vertical"
+	    android:scrollbars="vertical">
+	
+	    <TextView 
+	        android:id="@+id/lblSubscriptionName"
+	        android:layout_height="wrap_content"
+	        android:layout_width="wrap_content"
+	        android:layout_marginLeft="20dip"
+	        android:layout_marginRight="20dip"
+	        android:text="@string/dialog_name"
+	        android:gravity="left"
+	        android:textAppearance="?android:attr/textAppearanceMedium" />
+	            
+	    <EditText
+	        android:id="@+id/txtSubscriptionName"
+	        android:layout_height="wrap_content"
+	        android:layout_width="fill_parent"
+	        android:layout_marginLeft="20dip"
+	        android:layout_marginRight="20dip"
+	        android:scrollHorizontally="true"
+	        android:autoText="false"
+	        android:gravity="fill_horizontal"
+	        android:inputType="textCapWords"
+	        android:textAppearance="?android:attr/textAppearanceMedium" />
+	
+	    <TextView
+	        android:id="@+id/lblSubscriptionAddress"
+	        android:layout_height="wrap_content"
+	        android:layout_width="wrap_content"
+	        android:layout_marginLeft="20dip"
+	        android:layout_marginRight="20dip"
+	        android:text="@string/dialog_address"
+	        android:gravity="left"
+	        android:textAppearance="?android:attr/textAppearanceMedium" />
+	            
+	    <EditText
+	        android:id="@+id/txtSubscriptionAddress"
+	        android:layout_height="wrap_content"
+	        android:layout_width="fill_parent"
+	        android:layout_marginLeft="20dip"
+	        android:layout_marginRight="20dip"
+	        android:scrollHorizontally="true"
+	        android:autoText="false"
+	        android:capitalize="none"
+	        android:gravity="fill_horizontal"
+	        android:inputType="textNoSuggestions"
+	        android:textAppearance="?android:attr/textAppearanceMedium" />
+	
+	    <TextView
+	        android:id="@+id/lblSubscriptionPassword"
+	        android:layout_height="wrap_content"
+	        android:layout_width="wrap_content"
+	        android:layout_marginLeft="20dip"
+	        android:layout_marginRight="20dip"
+	        android:text="@string/dialog_password"
+	        android:gravity="left"
+	        android:textAppearance="?android:attr/textAppearanceMedium" />
+	            
+	    <EditText
+	        android:id="@+id/txtSubscriptionPassword"
+	        android:layout_height="wrap_content"
+	        android:layout_width="fill_parent"
+	        android:layout_marginLeft="20dip"
+	        android:layout_marginRight="20dip"
+	        android:scrollHorizontally="true"
+	        android:autoText="false"
+	        android:capitalize="none"
+	        android:gravity="fill_horizontal"
+	        android:password="true"
+	        android:textAppearance="?android:attr/textAppearanceMedium" />
+	</LinearLayout>
+</ScrollView>

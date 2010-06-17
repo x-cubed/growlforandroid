@@ -126,6 +126,17 @@ public class GrowlListenerService
 	public boolean isRunning() {
     	return _serverChannel != null;
     }
+	
+	public void subscribeNow() {
+		if (_subscriber == null) {
+			return;
+		}
+		if (_subscriber.isRunning()) {
+			_subscriber.subscribeNow();
+		} else {
+			_subscriber.start();
+		}
+	}
     
     @Override
     public void onDestroy() {
