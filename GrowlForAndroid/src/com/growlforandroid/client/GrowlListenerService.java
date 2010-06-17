@@ -366,7 +366,7 @@ public class GrowlListenerService
 	
 	public byte[] getMatchingKey(HashAlgorithm algorithm, byte[] hash, byte[] salt) {
 		byte[] matchingKey = null;
-		Cursor cursor = _database.getAllPasswordsAndNames();
+		Cursor cursor = _database.getAllPasswordsAndNames(_subscriber.getId().toString());
 		if (cursor.moveToFirst()) {
 			final int nameColumn = cursor.getColumnIndex(Database.KEY_NAME);
 			final int passwordColumn = cursor.getColumnIndex(Database.KEY_PASSWORD);
