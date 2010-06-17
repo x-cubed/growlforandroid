@@ -1,5 +1,6 @@
 package com.growlforandroid.common;
 
+import java.net.UnknownHostException;
 import java.util.*;
 
 import com.growlforandroid.client.R;
@@ -16,12 +17,15 @@ import android.util.Log;
 
 public class Subscriber {
 	public static final String PREFERENCE_SUBSCRIBER_ID = "subscriber_id";
-	private final int SUBSCRIPTION_INTERVAL_MS = 60 * 1000;
+	
+	private final int MINUTES = 60 * 1000; // in milliseconds
+	private final int SUBSCRIPTION_INTERVAL_MS = 2 * MINUTES;
 	
 	private final String STATUS_UNREGISTERED;
 	private final String STATUS_REGISTERING;
 	private final String STATUS_REGISTERED;
 	private final String STATUS_NOT_AUTHORIZED;
+	private final String STATUS_UNKNOWN_HOST;
 
 	private final Context _context;
 	private final UUID _id;
@@ -36,6 +40,7 @@ public class Subscriber {
 		STATUS_REGISTERING = _context.getText(R.string.subscriptions_status_registering).toString();
 		STATUS_REGISTERED = _context.getText(R.string.subscriptions_status_registered).toString();
 		STATUS_NOT_AUTHORIZED = _context.getText(R.string.subscriptions_status_not_authorized).toString();
+		STATUS_UNKNOWN_HOST = _context.getText(R.string.subscriptions_status_unknown_host).toString();
 		
 		// Determine the subscriber ID to use
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(_context);
@@ -89,8 +94,12 @@ public class Subscriber {
 		}, 0, SUBSCRIPTION_INTERVAL_MS);
 	}
 	
+	public boolean isRunning() {
+		return _timer != null;
+	}
+	
 	public void stop() {
-		if (_timer != null) {
+		if (isRunning()) {
 			Log.i("Subscriber.stop", "Stopping the subscriber " + _id + "...");
 			_timer.cancel();
 			_timer.purge();
@@ -163,6 +172,9 @@ public class Subscriber {
 		if (error == null) {
 			status = STATUS_REGISTERED;
 			Log.i("Subscriber.onSubscriptionComplete", "Subscription " + id + " was successfully renewed");
+		} else if (error instanceof UnknownHostException) {
+			status = STATUS_UNKNOWN_HOST;
+			Log.i("Subscriber.onSubscriptionComplete", "Subscription " + id + " failed due unknown host");
 		} else if (errorCode == GntpError.NotAuthorized) {
 			status = STATUS_NOT_AUTHORIZED;
 			Log.i("Subscriber.onSubscriptionComplete", "Subscription " + id + " failed due to bad password");

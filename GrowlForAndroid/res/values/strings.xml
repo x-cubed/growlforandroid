@@ -9,7 +9,7 @@
 <string name="dialog_address">Address</string><string name="dialog_password">Password</string>
 
 <string name="dialog_add">Add</string>
-<string name="dialog_cancel">Cancel</string><string name="add_password_dialog_title">Add Password</string>
+<string name="dialog_cancel">Cancel</string><string name="dialog_save">Save</string><string name="add_password_dialog_title">Add Password</string>
 <string name="applications_title">Growl - Registered Applications</string><string name="applications_delete_prompt">Are you sure you want to delete this application?\n\nDeleting an application will delete all of its notification types and history, but will not prevent the application from re-registering in future.</string><string-array name="applications_item_menu"><item>Preferences</item><item>Delete</item>
 
 </string-array><string name="application_title">Growl - Application Preferences</string><string name="application_options_title">Options</string><string name="application_option_enabled">Enabled</string><string name="application_option_enabled_summary">Display notifications from this application</string><string name="application_types_title">Notification Types</string><string name="passwords_title">Growl - Password Manager</string>
@@ -69,13 +69,19 @@
 
 
 
-<string name="subscriptions_status_unregistered">Not subscribed</string><string name="subscriptions_status_registering">Subscribing...</string><string name="subscriptions_status_registered">Subscribed</string><string name="subscriptions_status_not_authorized">Bad password</string>
-<string name="subscriptions_menu_title">Subscription</string><string-array name="subscriptions_menu"><item>Delete</item>
-</string-array><string name="add_subscription_dialog_title">Add Subscription</string>
+<string name="subscriptions_subscribe_now">Subscribe now</string><string name="subscriptions_status_unregistered">Not subscribed</string><string name="subscriptions_status_registering">Subscribing...</string><string name="subscriptions_status_registered">Subscribed</string><string name="subscriptions_status_not_authorized">Bad password</string>
+<string name="subscriptions_status_unknown_host">Currently unable to locate server</string><string name="subscriptions_menu_title">Subscription</string><string-array name="subscriptions_menu"><item>Edit</item><item>Delete</item>
+
+</string-array><string name="subscriptions_add_dialog_title">Add Subscription</string>
 
 
 
 
 
 
+
+
+
+
+<string name="subscriptions_edit_dialog_title">Edit Subscription</string>
 </resources>

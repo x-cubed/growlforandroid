@@ -117,6 +117,10 @@ public class ListenerServiceConnection implements ServiceConnection {
 			onIsRunningChanged(false);
 		}
 	}
+	
+	public void subscribeNow() {
+		_instance.subscribeNow();
+	}
 
 	protected void finalize() {
 		unbind();

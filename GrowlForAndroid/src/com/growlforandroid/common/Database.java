@@ -322,4 +322,11 @@ public class Database {
 				KEY_ROWID, KEY_NAME, KEY_ADDRESS, KEY_PASSWORD, KEY_STATUS },
 				null, null, null, null, null);
 	}
+
+	public Cursor getSubscription(long id) {
+		Cursor cursor = db.query(true, TABLE_SUBSCRIPTIONS, new String[] {
+				KEY_ROWID, KEY_NAME, KEY_ADDRESS, KEY_PASSWORD, KEY_STATUS },
+				KEY_ROWID + "=" + id, null, null, null, null, null);
+		return cursor;
+	}
 }
