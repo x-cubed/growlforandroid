@@ -14,6 +14,7 @@ import com.growlforandroid.gntp.GntpMessage;
 import com.growlforandroid.gntp.HashAlgorithm;
 
 import android.app.*;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
@@ -117,9 +118,13 @@ public class GrowlListenerService
         return START_STICKY;
     }
 
+    public Context getContext() {
+    	return getBaseContext();
+    }
+    
     private void setWasRunning(boolean wasRunning) {
     	Log.i("ListenerServiceConnection.setWasRunning", "Was Running = " + wasRunning);
-    	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+    	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
 		prefs.edit().putBoolean(Preferences.WAS_RUNNING, wasRunning).commit();	
     }
     

@@ -5,7 +5,7 @@ import java.net.URL;
 
 import com.growlforandroid.gntp.HashAlgorithm;
 
-
+import android.content.Context;
 import android.graphics.drawable.Drawable;
 
 /**
@@ -22,4 +22,5 @@ public interface IGrowlRegistry {
 	boolean requiresPassword();
 	byte[] getMatchingKey(HashAlgorithm algorithm, String hash, String salt);
 	File getCacheDir();
+	Context getContext();
 }
