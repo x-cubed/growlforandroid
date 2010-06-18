@@ -4,25 +4,21 @@
   	<PreferenceCategory
 	       android:title="@string/preferences_general_title">	
 		<CheckBoxPreference
-		        android:key="start_at_boot"
+		        android:key="start_automatically"
 		        android:title="@string/preferences_general_auto_start"
 		        android:summary="@string/preferences_general_auto_start_summary" android:defaultValue="true"/>
 	</PreferenceCategory>
   
 	<PreferenceCategory
 	       android:title="@string/preferences_listen_title">	
-		<!-- CheckBoxPreference
+		<CheckBoxPreference
 		        android:key="listen_gntp"
 		        android:title="@string/preferences_listen_gntp"
 		        android:summary="@string/preferences_listen_gntp_summary"
 		        android:enabled="false" 
 		        android:defaultValue="true" />
-		<CheckBoxPreference
-		        android:key="listen_growl_udp"
-		        android:title="@string/preferences_listen_growl_udp"
-			    android:summary="@string/preferences_listen_growl_udp_summary"
-			    android:enabled="false" / -->
 		<PreferenceScreen
+				android:layout="?android:attr/preferenceLayoutChild"
 	            android:title="@string/preferences_listen_subscriptions"
                 android:summary="@string/preferences_listen_subscriptions_summary">
 		        
@@ -30,6 +26,12 @@
 					android:targetPackage="com.growlforandroid.client"
 					android:targetClass="com.growlforandroid.client.Subscriptions" />
 		</PreferenceScreen>
+		        
+		<!-- CheckBoxPreference
+		        android:key="listen_growl_udp"
+		        android:title="@string/preferences_listen_growl_udp"
+			    android:summary="@string/preferences_listen_growl_udp_summary"
+			    android:enabled="false" / -->
 	</PreferenceCategory>
 	
 	<PreferenceCategory

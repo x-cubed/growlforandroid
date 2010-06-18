@@ -18,8 +18,8 @@
 <string name="password_menu_title">Password</string><string-array name="passwords_menu"><item>Delete</item>
 </string-array>
 <string name="preferences_title">Growl - Preferences</string><string name="preferences_general_title">General</string>
-<string name="preferences_general_auto_start">Start automatically</string>
-<string name="preferences_general_auto_start_summary">Start Growl when this device is powered on</string>
+<string name="preferences_general_auto_start">Listen automatically</string>
+<string name="preferences_general_auto_start_summary">Start/stop based on network availability</string>
 <string name="preferences_listen_title">Listen for notifications from</string>
 <string name="preferences_listen_gntp">Growl for Windows</string>
 <string name="preferences_listen_gntp_summary">GNTP</string>
