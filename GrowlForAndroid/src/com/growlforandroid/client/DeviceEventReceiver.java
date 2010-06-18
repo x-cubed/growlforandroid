@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.wifi.WifiManager;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -22,6 +24,9 @@ public class DeviceEventReceiver
 			} else if (ConnectivityManager.CONNECTIVITY_ACTION.equals(action)) {
 				onConnectivityChanged(context, intent, prefs);
 				
+			} else if (WifiManager.NETWORK_STATE_CHANGED_ACTION.equals(action)) {
+				onWifiNetworkStateChanged(context, intent, prefs);
+				
 			} else {
 				Log.i("DeviceEventReceiver.onReceive", "Unsupported action: " + action);
 			}
@@ -31,22 +36,40 @@ public class DeviceEventReceiver
 	}
 
 	private void onBootCompleted(Context context, Intent intent, SharedPreferences prefs) throws Exception {
-		boolean startOnBoot = prefs.getBoolean(Preferences.START_AT_BOOT, false);
-		if (startOnBoot) {
-			Log.i("DeviceEventReceiver.onBootCompleted", "Starting listener service...");
-			startService(context);
-		}
+		Log.i("DeviceEventReceiver.onBootCompleted", "Boot completed");
+		// startServiceIfAutoStartOn(context, prefs);
 	}
 	
 	private void onConnectivityChanged(Context context, Intent intent, SharedPreferences prefs) throws Exception {
-		boolean disconnected = intent.getBooleanExtra(ConnectivityManager.EXTRA_NO_CONNECTIVITY, false);
-		if (disconnected) {
-			Log.i("DeviceEventReceiver.onConnectivityChanged", "Disconnected");
+		String message = "Disconnected";
+		boolean isConnected = false;
+		NetworkInfo info = intent.getParcelableExtra(ConnectivityManager.EXTRA_NETWORK_INFO);
+		if (info != null) {
+			message = info.getTypeName() + " [" + info.getSubtypeName() + "]";		
+			isConnected = info.isConnected();
+			if (isConnected)
+				message += " (connected)";
+		}
+		
+		Log.i("DeviceEventReceiver.onConnectivityChanged", message);
+		
+		if (!isConnected) {
+			stopServiceIfAutoStartOn(context, prefs);
+		} else {
+			startServiceIfAutoStartOn(context, prefs);
+		}
+	}
+	
+	private void onWifiNetworkStateChanged(Context context, Intent intent, SharedPreferences prefs) throws Exception {
+		NetworkInfo info = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
+		String bssid = intent.getStringExtra(WifiManager.EXTRA_BSSID);
+		/*if (!info.isConnected()) {
+			Log.i("DeviceEventReceiver.onWifiNetworkStateChanged", "Disconnected");
 			stopService(context);
 		} else {
-			Log.i("DeviceEventReceiver.onConnectivityChanged", "Connected");
+			Log.i("DeviceEventReceiver.onWifiNetworkStateChanged", "Connected to " + bssid);
 			startServiceIfWasRunning(context, prefs);
-		}
+		}*/
 	}
 	
 	private void startServiceIfWasRunning(Context context, SharedPreferences prefs) throws Exception {
@@ -54,12 +77,30 @@ public class DeviceEventReceiver
 		if (wasRunning) {
 			Log.i("DeviceEventReceiver.startServiceIfWasRunning", "Restarting listener service...");
 			startService(context);
+		} else {
+			Log.i("DeviceEventReceiver.startServiceIfWasRunning", "Not starting listener service");
+		}
+	}
+	
+	private void startServiceIfAutoStartOn(Context context, SharedPreferences prefs) throws Exception {
+		boolean startOnBoot = prefs.getBoolean(Preferences.START_AUTOMATICALLY, false);
+		if (startOnBoot) {
+			Log.i("DeviceEventReceiver.startServiceIfAutoStartOn", "Starting listener service...");
+			startService(context);
 		}
 	}
 	
 	private void startService(Context context) throws Exception {
 		Intent growlListenerService = new Intent(context, GrowlListenerService.class);
 		context.startService(growlListenerService);
+	}
+	
+	private void stopServiceIfAutoStartOn(Context context, SharedPreferences prefs) throws Exception {
+		boolean startOnBoot = prefs.getBoolean(Preferences.START_AUTOMATICALLY, false);
+		if (startOnBoot) {
+			Log.i("DeviceEventReceiver.stopServiceIfAutoStartOn", "Stopping listener service...");
+			stopService(context);
+		}
 	}
 	
 	private boolean stopService(Context context) {
