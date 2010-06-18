@@ -13,8 +13,13 @@ import com.growlforandroid.common.EncryptedChannelReader.DecryptionException;
 import android.content.Context;
 import android.util.Log;
 
+/**
+ * Listens for incoming GNTP requests on the specified SocketChannel, notifying the specified
+ * IGrowlRegistry about each message.
+ */
 public class GntpListenerThread extends Thread {
-	private static final boolean SKIP_LOADING_RESOURCES = false;
+	/** If true, skips over the embedded resources in a message and doesn't cache them locally */
+	private static final boolean SKIP_LOADING_RESOURCES = true;
 	
 	private final SocketAcceptor _acceptor;
 	private final long _connectionID;

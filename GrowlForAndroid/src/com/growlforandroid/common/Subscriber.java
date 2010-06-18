@@ -19,7 +19,7 @@ public class Subscriber {
 	public static final String PREFERENCE_SUBSCRIBER_ID = "subscriber_id";
 	
 	private final int MINUTES = 60 * 1000; // in milliseconds
-	private final int SUBSCRIPTION_INTERVAL_MS = 2 * MINUTES;
+	private final int SUBSCRIPTION_INTERVAL_MS = (int)(1.5 * MINUTES);
 	
 	private final String STATUS_UNREGISTERED;
 	private final String STATUS_REGISTERING;

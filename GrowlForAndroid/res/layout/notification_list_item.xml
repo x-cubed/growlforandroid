@@ -40,6 +40,7 @@
             android:textColor="#ff000000"
             android:ellipsize="marquee"
             android:fadingEdge="horizontal"
+            android:singleLine="true"
             android:textSize="14sp"
             android:paddingLeft="4dp"
             /> 

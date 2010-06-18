@@ -55,8 +55,13 @@ public enum HashAlgorithm {
 		if ((Digest == null) || (data == null))
 			return null;
 		
-		byte[] hash = Digest.digest(data);
-		Digest.reset();
+		/* Android seems to die with a SIGSEGV in libcrypto.so (killing the service) if we try
+		 * to do this on two threads at once, so let's try to synchronise this */
+		byte[] hash;
+		synchronized (Digest) {
+			hash = Digest.digest(data);
+			Digest.reset();
+		}
 
 		return hash;
 	}
