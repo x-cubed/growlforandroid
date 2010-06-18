@@ -303,7 +303,7 @@ public class GrowlListenerService
         RemoteViews contentView = new RemoteViews(getPackageName(), R.layout.notification_list_item);
         contentView.setImageViewResource(R.id.imgNotificationIcon, R.drawable.launcher);
         contentView.setTextViewText(R.id.txtNotificationTitle, title);
-        contentView.setTextViewText(R.id.txtNotificationMessage, message);
+        contentView.setTextViewText(R.id.txtNotificationMessage, message.replace("\n", " / "));
         contentView.setTextViewText(R.id.txtNotificationApp, app.getName());
         statusBarPanel.contentView = contentView;
 
