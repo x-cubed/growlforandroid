@@ -10,7 +10,11 @@ import android.content.*;
 import android.database.Cursor;
 import android.os.*;
 import android.preference.PreferenceManager;
+import android.text.SpannableString;
+import android.text.method.LinkMovementMethod;
+import android.text.util.Linkify;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -25,6 +29,7 @@ public class MainActivity
 	
 	// private static final int DIALOG_ITEM_MENU = 1;
 	private static final int DIALOG_DELETE_PROMPT = 2;
+	private static final int DIALOG_ABOUT = 3;
 	
 	/* private static final int ITEM_MENU_PREFERENCES = 0;
 	private static final int ITEM_MENU_DELETE = 1; */
@@ -40,6 +45,7 @@ public class MainActivity
 	private MenuItem _mniApplications;
 	private MenuItem _mniPreferences;
 	private MenuItem _mniClearHistory;
+	private MenuItem _mniAbout;
 
     /** Called when the activity is first created. */
     @Override
@@ -136,6 +142,9 @@ public class MainActivity
     	_mniClearHistory = menu.add(R.string.menu_clear_history);
     	_mniClearHistory.setIcon(android.R.drawable.ic_menu_delete);
     	
+    	_mniAbout = menu.add(R.string.menu_about);
+    	_mniAbout.setIcon(android.R.drawable.ic_menu_info_details);
+    	
     	return true;
     }
     
@@ -151,6 +160,10 @@ public class MainActivity
     		
     	} else if (item == _mniClearHistory) {
     		showDialog(DIALOG_DELETE_PROMPT);
+    		return true;
+
+    	} else if (item == _mniAbout) {
+    		showDialog(DIALOG_ABOUT);
     		return true;
     		
     	} else {
@@ -199,6 +212,29 @@ public class MainActivity
 					})
 					.setNegativeButton(R.string.button_cancel, null)
 	                .create();
+	    		
+	    	case DIALOG_ABOUT:
+				LayoutInflater factory = LayoutInflater.from(this);
+				View aboutDialog = factory.inflate(R.layout.about_dialog, null);
+
+				String appName = getString(R.string.app_name);
+				String appVersion = getString(R.string.app_version);
+				String title = appName + " " + appVersion;
+				
+				TextView txtCopyright = (TextView)aboutDialog.findViewById(R.id.txtCopyright);
+				String copyright = getString(R.string.app_copyright_message);
+				SpannableString spanText = new SpannableString(copyright);
+			    Linkify.addLinks(spanText, Linkify.ALL);
+				txtCopyright.setMovementMethod(LinkMovementMethod.getInstance());
+				txtCopyright.setText(spanText);
+
+	    		return new AlertDialog.Builder(this)
+	                .setIcon(R.drawable.launcher)
+	                .setTitle(title)
+	                .setView(aboutDialog)
+	                .setPositiveButton(R.string.dialog_ok, null)					
+	                .create();
+	    			
     	}   	
     	return null;
     }

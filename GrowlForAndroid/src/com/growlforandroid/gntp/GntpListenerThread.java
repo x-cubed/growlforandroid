@@ -3,10 +3,8 @@ package com.growlforandroid.gntp;
 import java.io.*;
 import java.net.*;
 import java.nio.channels.SocketChannel;
-import java.nio.charset.*;
 import java.util.*;
 
-import com.growlforandroid.client.SocketAcceptor;
 import com.growlforandroid.common.*;
 import com.growlforandroid.common.EncryptedChannelReader.DecryptionException;
 
@@ -44,9 +42,7 @@ public class GntpListenerThread extends Thread {
 	private int _resourceIndex = 0;
 	private Map<Integer, Map<String, String>> _notificationsHeaders = new HashMap<Integer, Map<String, String>>();
 	
-	public GntpListenerThread(SocketAcceptor socketAcceptor, long connectionID, IGrowlRegistry registry, SocketChannel channel)
-		throws IllegalCharsetNameException, UnsupportedCharsetException, CharacterCodingException {
-		
+	public GntpListenerThread(SocketAcceptor socketAcceptor, long connectionID, IGrowlRegistry registry, SocketChannel channel) {
 		super("GntpListenerThread");
 
 		_requestStartedMS = System.currentTimeMillis();

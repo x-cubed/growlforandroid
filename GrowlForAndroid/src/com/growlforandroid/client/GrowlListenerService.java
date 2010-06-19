@@ -2,28 +2,21 @@ package com.growlforandroid.client;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
-import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.nio.channels.ServerSocketChannel;
+import java.net.*;
 import java.util.*;
 
 import com.growlforandroid.client.R;
 import com.growlforandroid.common.*;
-import com.growlforandroid.gntp.GntpMessage;
-import com.growlforandroid.gntp.HashAlgorithm;
+import com.growlforandroid.gntp.*;
 
 import android.app.*;
-import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
+import android.content.*;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.os.*;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.widget.RemoteViews;
-import android.widget.Toast;
+import android.widget.*;
 
 public class GrowlListenerService
 	extends Service
@@ -41,8 +34,8 @@ public class GrowlListenerService
 	
 	private final Set<WeakReference<StatusChangedHandler>> _statusChangedHandlers = new HashSet<WeakReference<StatusChangedHandler>>();
 	
+	private ZeroConf _zeroConf;
     private NotificationManager _notifyMgr;
-    private ServerSocketChannel _serverChannel;
     private SocketAcceptor _socketAcceptor;
     private Subscriber _subscriber;
     
@@ -80,25 +73,34 @@ public class GrowlListenerService
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i("GrowlListenerService.onStartCommand", "Received start id " + startId + ": " + intent);
-        if (_serverChannel != null) {
+        if (_socketAcceptor != null) {
         	Log.i("GrowlListenerService.onStartCommand", "Already started");
         	return START_STICKY;
         }
         
+    	// We can only get the Bluetooth adaptor name from a looper thread, so grab it now and save it for later
+    	String deviceName = Utility.getDeviceFriendlyName();
+    	Context context = getBaseContext();
+    	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+    	prefs.edit().putString(GntpMessage.PREFERENCE_DEVICE_NAME, deviceName).commit();
+        
         try {
-        	// We can only get the Bluetooth adaptor name from a looper thread, so grab it now
-        	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-        	prefs.edit().putString(GntpMessage.PREFERENCE_DEVICE_NAME, Utility.getDeviceFriendlyName()).commit();
+        	_zeroConf = ZeroConf.getInstance(getContext());
         	
         	// Start listening on GNTP_PORT, on all interfaces
-        	_serverChannel = ServerSocketChannel.open();
-        	_serverChannel.socket().bind(new InetSocketAddress(GNTP_PORT));
-
-        	// Start accepting connections on another thread
-			_socketAcceptor = new SocketAcceptor(this, _serverChannel);
+        	ISocketThreadFactory factory = new GntpListenerThreadFactory(this);
+			_socketAcceptor = new SocketAcceptor(this, factory, new InetSocketAddress(GNTP_PORT));
 			_socketAcceptor.start();
+	        
+			// Register the GNTP service with Bonjour/ZeroConf
+			String appName = context.getText(R.string.app_name).toString();
+			String format = context.getText(R.string.gntp_zeroconf_name_format).toString();
+			final String serviceName = String.format(format, appName, deviceName);
+			ZeroConf.getInstance(context).registerService(
+					Constants.GNTP_ZEROCONF_SERVICE_TYPE, serviceName, GNTP_PORT, Constants.GNTP_ZEROCONF_TEXT);	
 			
 			// Start subscribing to notifications from other devices
+            Log.i("GrowlListenerService.onStartCommand", "Renewing subscriptions...");
 			final GrowlListenerService service = this;
 			_subscriber = new Subscriber(service) {
 				public void onSubscriptionStatusChanged(long id, String status) {
@@ -129,7 +131,7 @@ public class GrowlListenerService
     }
     
 	public boolean isRunning() {
-    	return _serverChannel != null;
+    	return _socketAcceptor != null;
     }
 	
 	public void subscribeNow() {
@@ -145,6 +147,13 @@ public class GrowlListenerService
     
     @Override
     public void onDestroy() {
+    	stop();
+    	
+        // Tell the user we stopped.
+        Toast.makeText(this, R.string.service_stopped, Toast.LENGTH_SHORT).show();
+    }
+
+    private void stop() {
         // Cancel the persistent notification.
     	_notifyMgr.cancel(SERVICE_NOTIFICATION);
 
@@ -160,23 +169,21 @@ public class GrowlListenerService
 	    		_socketAcceptor.closeConnections();
 	    		_socketAcceptor = null;
 	    	}
-    		
-	    	if (_serverChannel != null) {
-	    		_serverChannel.socket().close();
-	    		_serverChannel.close();
-    			_serverChannel = null;
-	    	}
 		} catch (Exception x) {
-			Log.e("onDestroy", x.toString());
+			Log.e("GrowlListenerService.stop", x.toString());
 		}
 	
 		_database.close();
 		_database = null;
 		
-        // Tell the user we stopped.
-        Toast.makeText(this, R.string.service_stopped, Toast.LENGTH_SHORT).show();
+		_zeroConf.close();
+		_zeroConf = null;
     }
-
+    
+    protected void finalize() {
+    	stop();
+    }
+    
     @Override
     public IBinder onBind(Intent intent) {
         return mBinder;
