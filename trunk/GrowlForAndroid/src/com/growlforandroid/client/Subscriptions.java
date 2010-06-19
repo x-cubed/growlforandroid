@@ -1,9 +1,13 @@
 package com.growlforandroid.client;
 
+import javax.jmdns.*;
+
 import com.growlforandroid.common.Database;
 import com.growlforandroid.common.GrowlApplication;
 import com.growlforandroid.common.GrowlNotification;
 import com.growlforandroid.common.NotificationType;
+import com.growlforandroid.common.ZeroConf;
+import com.growlforandroid.gntp.Constants;
 
 import android.app.*;
 import android.app.AlertDialog.Builder;
@@ -16,12 +20,13 @@ import android.widget.*;
 
 public class Subscriptions
 	extends ListActivity
-	implements GrowlListenerService.StatusChangedHandler {
+	implements ServiceListener, GrowlListenerService.StatusChangedHandler {
 	
 	private final int DIALOG_ADD_SUBSCRIPTION = 0;
 	private final int DIALOG_EDIT_SUBSCRIPTION = 1;
 	private final int DIALOG_ITEM_MENU = 2;
 	
+	private ZeroConf _zeroConf;
 	private ListenerServiceConnection _service;
 	
 	private Database _database;
@@ -34,10 +39,11 @@ public class Subscriptions
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setTitle(R.string.subscriptions_title);
-        
+
+        _zeroConf = ZeroConf.getInstance(this);
         _service = new ListenerServiceConnection(this, this);
         _database = new Database(this);
-        refresh();
+        _cursor = _database.getSubscriptions();
         
         // Use an existing ListAdapter that will map an array
         // of strings to TextViews
@@ -48,11 +54,18 @@ public class Subscriptions
     }
     
     private void refresh() {
-    	if (_cursor == null) {
-    		_cursor = _database.getSubscriptions();
-    	} else {
-    		_cursor.requery();
-    	}
+		_cursor.requery();
+    	
+    	new Thread(new Runnable() {
+    		public void run() {
+    			Log.i("Subscriptions.refresh", "Querying available GNTP services...");
+    			ServiceInfo[] infos = _zeroConf.findServices(Constants.GNTP_ZEROCONF_SERVICE_TYPE);
+    			for (int i=0; i < infos.length; i++) {
+    	            Log.i("Subscriptions.refresh", infos[i].toString());
+    	        }
+    			Log.i("Subscriptions.refresh", "Finished querying");
+    		}
+    	}).start();
     }
     
     private void refreshOnUiThread() {
@@ -67,16 +80,30 @@ public class Subscriptions
     public void onResume() {
     	super.onResume();
     	_service.bind();
+    	
+    	Log.i("Subscriptions.onResume", "Listening for GNTP service announcements...");
+        _zeroConf.addServiceListener(Constants.GNTP_ZEROCONF_SERVICE_TYPE, this);    	
+    	refresh();
     }
     
     @Override
     public void onPause() {
+		Log.i("Subscriptions.onPause", "Stop listening for GNTP service announcements");
+		_zeroConf.removeServiceListener(Constants.GNTP_ZEROCONF_SERVICE_TYPE, this);
+    	
     	_service.unbind();
     	super.onPause();
     }
     
     @Override
     public void onDestroy() {
+    	stop();
+    	super.onDestroy();
+    }
+    
+    private void stop() {
+    	_zeroConf.removeServiceListener(Constants.GNTP_ZEROCONF_SERVICE_TYPE, this);
+    	
     	if (_service != null) {
     		_service.unbind();
     		_service = null;
@@ -91,11 +118,10 @@ public class Subscriptions
     		_database.close();
     		_database = null;
     	}
-    	super.onDestroy();
     }
     
     protected void finalize() throws Throwable {
-    	onDestroy();
+    	stop();
     	super.finalize();
     }
     
@@ -260,6 +286,17 @@ public class Subscriptions
 		}
 	}
     
+    public void serviceAdded(ServiceEvent event) {
+        Log.i("Subscriptions.serviceAdded", "Service added   : " + event.getName() + "." + event.getType());
+    }
+
+    public void serviceRemoved(ServiceEvent event) {
+    	Log.i("Subscriptions.serviceRemoved", "Service removed : " + event.getName() + "." + event.getType());
+    }
+
+    public void serviceResolved(ServiceEvent event) {
+    	Log.i("Subscriptions.serviceResolved", "Service resolved: " + event.getInfo());
+    }	
 
     public void onApplicationRegistered(GrowlApplication app) {
     }

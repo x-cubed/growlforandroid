@@ -25,7 +25,6 @@ public class SubscriberThread extends Thread {
 			request.sendTo(_id, _address);
 			
 		} catch (Exception x) {
-			x.printStackTrace();
 			error = x;
 		}
 		_subscriber.onSubscriptionComplete(this, error);

@@ -1,38 +1,42 @@
-package com.growlforandroid.client;
+package com.growlforandroid.common;
 
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
-import java.util.HashSet;
-import java.util.Set;
-
-import com.growlforandroid.common.IGrowlRegistry;
-import com.growlforandroid.gntp.GntpListenerThread;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.channels.*;
+import java.util.*;
 
 import android.content.Context;
 import android.util.Log;
 
 /**
  * Listens for incoming connections on the specified server socket,
- * then spawns a new GNTPListenerThread to handle each one.
+ * then spawns a new thread to handle each one.
  */
 public class SocketAcceptor extends Thread {
-	private final IGrowlRegistry _registry;
-	private final ServerSocketChannel _channel;
-	private boolean _listening = true;
-	private Set<GntpListenerThread> _activeConnections = new HashSet<GntpListenerThread>();
+	private final Context _context;
+	private final InetSocketAddress _listenAddress;
+	private final ISocketThreadFactory _threadFactory;
+	private ServerSocketChannel _channel;
 	
-	public SocketAcceptor(IGrowlRegistry registry, ServerSocketChannel channel) {
-		_registry = registry;
-		_channel = channel;
+	private boolean _listening = true;
+	private Set<Thread> _activeConnections = new HashSet<Thread>();
+	
+	public SocketAcceptor(Context context, ISocketThreadFactory threadFactory, InetSocketAddress listenAddress) throws IOException {
+		_context = context;
+		_threadFactory = threadFactory;
+		_listenAddress = listenAddress;
+		
+		_channel = ServerSocketChannel.open();
+		_channel.socket().bind(_listenAddress);
 	}
 	
 	public Context getContext() {
-		return _registry.getContext();
+		return _context;
 	}
 	
 	public void run() {
 		_listening = true;
-		Log.i("SocketAcceptor.run", "Started listening for incoming connections...");
+		Log.i("SocketAcceptor.run", "Started listening for incoming connections on " + _listenAddress.toString() + "...");
 		while (_listening) {
 			try {
 				// Wait for an incoming connection
@@ -40,7 +44,7 @@ public class SocketAcceptor extends Thread {
 				
 				// Start a new thread for this connection
 				int connectionID = _activeConnections.size();
-				GntpListenerThread connection = new GntpListenerThread(this, connectionID, _registry, incoming);
+				Thread connection = _threadFactory.createThread(this, connectionID, incoming);
 				connection.start();
 				
 				_activeConnections.add(connection);
@@ -57,9 +61,23 @@ public class SocketAcceptor extends Thread {
 		interrupt();
 	}
 	
+	protected void finalize() {
+		stopListening();
+		closeConnections();
+		
+		try {
+			if (_channel != null) {
+				_channel.close();
+				_channel = null;
+			}
+		} catch (IOException ioe) {
+			Log.e("SocketAcceptor.finalize", ioe.toString());
+		}
+	}
+	
 	public void closeConnections() {
 		// Interrupt all the current connections with an InterruptedException
-		for(GntpListenerThread thread : _activeConnections) {
+		for(Thread thread : _activeConnections) {
 			thread.interrupt();
 		}
 		
@@ -80,7 +98,7 @@ public class SocketAcceptor extends Thread {
 		Log.i("SocketAcceptor.closeConnections", "All connections closed");
 	}
 
-	public void connectionClosed(GntpListenerThread connection) {
+	public void connectionClosed(Thread connection) {
 		_activeConnections.remove(connection);
 	}
 }

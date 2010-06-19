@@ -1,5 +1,8 @@
 package com.growlforandroid.common;
 
+import java.net.*;
+import java.util.Enumeration;
+
 import android.bluetooth.BluetoothAdapter;
 import android.os.Build;
 import android.util.Log;
@@ -92,5 +95,22 @@ public final class Utility {
 			deviceName = Build.DEVICE;
 		}
 		return deviceName;
+	}
+	
+	public static InetAddress getLocalIpAddress() {
+	    try {
+	        for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
+	            NetworkInterface intf = en.nextElement();
+	            for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
+	                InetAddress inetAddress = enumIpAddr.nextElement();
+	                if (!inetAddress.isLoopbackAddress()) {
+	                    return inetAddress;
+	                }
+	            }
+	        }
+	    } catch (SocketException ex) {
+	        Log.e("Utility.getLocalIpAddress", ex.toString());
+	    }
+	    return null;
 	}
 }
