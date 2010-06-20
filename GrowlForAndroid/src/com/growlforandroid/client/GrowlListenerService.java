@@ -21,12 +21,7 @@ import android.widget.*;
 public class GrowlListenerService
 	extends Service
 	implements IGrowlRegistry {
-	
-	private static final int GNTP_PORT = 23053;
-	
-	private static final int LED_COLOUR = 0xffffff00;
-	private static final int LED_OFF_MS = 100;
-	private static final int LED_ON_MS = 900;
+
 	private static final int SERVICE_NOTIFICATION = 0xDEADBEEF;
 	
 	private static Database _database;
@@ -89,7 +84,7 @@ public class GrowlListenerService
         	
         	// Start listening on GNTP_PORT, on all interfaces
         	ISocketThreadFactory factory = new GntpListenerThreadFactory(this);
-			_socketAcceptor = new SocketAcceptor(this, factory, new InetSocketAddress(GNTP_PORT));
+			_socketAcceptor = new SocketAcceptor(this, factory, Constants.GNTP_PORT);
 			_socketAcceptor.start();
 	        
 			// Register the GNTP service with Bonjour/ZeroConf
@@ -97,13 +92,26 @@ public class GrowlListenerService
 			String format = context.getText(R.string.gntp_zeroconf_name_format).toString();
 			final String serviceName = String.format(format, appName, deviceName);
 			ZeroConf.getInstance(context).registerService(
-					Constants.GNTP_ZEROCONF_SERVICE_TYPE, serviceName, GNTP_PORT, Constants.GNTP_ZEROCONF_TEXT);	
+					Constants.GNTP_ZEROCONF_SERVICE_TYPE, serviceName,
+					Constants.GNTP_PORT, Constants.GNTP_ZEROCONF_TEXT);	
 			
 			// Start subscribing to notifications from other devices
             Log.i("GrowlListenerService.onStartCommand", "Renewing subscriptions...");
 			final GrowlListenerService service = this;
 			_subscriber = new Subscriber(service) {
 				public void onSubscriptionStatusChanged(long id, String status) {
+					// Show the number of active subscriptions in the status bar
+					int active = getActiveSubscriptions();
+					String serviceStatus = null;
+					if (active == 1) {
+						serviceStatus = getText(R.string.growl_active_subscription).toString();
+					} else if (active > 1) {
+						String format = getText(R.string.growl_active_subscriptions).toString();
+						serviceStatus = String.format(format, active);
+					}
+					showNotification(serviceStatus);
+					
+					// Notify the Subscriptions activity to update
 					service.onSubscriptionStatusChanged(id, status);
 				}
 			};
@@ -197,8 +205,16 @@ public class GrowlListenerService
      * Show a notification while this service is running.
      */
     private void showNotification() {
+    	showNotification(null);
+    }
+    
+    private void showNotification(String status) {
+    	if (status == null) {
+    		status = getText(R.string.growl_on_status).toString();
+    	}
+    	
         // Set the icon, scrolling text and timestamp
-        Notification notification = new Notification(R.drawable.statusbar_enabled,
+        Notification notification = new Notification(R.drawable.statusbar_disabled,
         		getText(R.string.growl_on_status), System.currentTimeMillis());
 
         // The PendingIntent to launch our activity if the user selects this notification
@@ -207,13 +223,52 @@ public class GrowlListenerService
 
         // Set the info for the views that show in the notification panel.
         notification.flags = Notification.FLAG_ONGOING_EVENT | Notification.FLAG_NO_CLEAR;
-        notification.setLatestEventInfo(this, getText(R.string.app_name),
-        		getText(R.string.growl_on_status), contentIntent);
+        notification.setLatestEventInfo(this, getText(R.string.app_name), status, contentIntent);
 
         // Send the notification.
         _notifyMgr.notify(SERVICE_NOTIFICATION, notification);
     }
 
+    public GrowlDisplayProfile getDisplayProfile(Integer id, int defaultProfileId) {
+    	if (id == null)
+    		return getDisplayProfile(defaultProfileId, 0);
+    	
+    	GrowlDisplayProfile result = null;
+    	Cursor cursor = _database.getDisplayProfile(id);
+    	if (cursor.moveToFirst()) {
+    		final int nameColumn = cursor.getColumnIndex(Database.KEY_NAME);
+    		final int logColumn = cursor.getColumnIndex(Database.KEY_LOG);
+    		final int sbFlagsColumn = cursor.getColumnIndex(Database.KEY_STATUS_BAR_FLAGS);
+    		final int toastColumn = cursor.getColumnIndex(Database.KEY_TOAST_FLAGS);
+    		final int alertColumn = cursor.getColumnIndex(Database.KEY_ALERT_URL);
+    		
+    		String name = cursor.getString(nameColumn);
+    		boolean shouldLog = cursor.getInt(logColumn) != 0;
+    		Integer sbFlags = null;
+    		if (!cursor.isNull(sbFlagsColumn)) {
+    			sbFlags = cursor.getInt(sbFlagsColumn);
+    		}
+    		Integer toastFlags = null;
+    		if (!cursor.isNull(toastColumn)) {
+    			toastFlags = cursor.getInt(toastColumn);
+    		}
+    		
+    		String alert = cursor.getString(alertColumn);
+    		URL alertUrl = null;
+    		if (alert != null) {
+    			try {
+    				alertUrl = new URL(alert);
+    			} catch (MalformedURLException mue) {
+    				Log.e("GrowlListenerService.getDisplayProfile", "Failed to parse alert URL:" + alert, mue);
+    			}
+    		}
+    		
+    		result = new GrowlDisplayProfile(id, name, shouldLog, sbFlags, toastFlags, alertUrl);
+    	}
+    	cursor.close();
+    	return result;
+    }
+    
 	public Drawable getIcon(URL icon) {
 		// TODO Auto-generated method stub
 		return null;
@@ -237,13 +292,18 @@ public class GrowlListenerService
 		GrowlApplication application = null;
 		if (cursor.moveToFirst()) {
 			try {
-				int id = cursor.getInt(0);
-				String name = cursor.getString(1);
-				boolean enabled = cursor.getInt(2) != 0;
-				String icon = cursor.getString(3);
+				int id = cursor.getInt(cursor.getColumnIndex(Database.KEY_ROWID));
+				String name = cursor.getString(cursor.getColumnIndex(Database.KEY_NAME));
+				boolean enabled = cursor.getInt(cursor.getColumnIndex(Database.KEY_ENABLED)) != 0;
+				String icon = cursor.getString(cursor.getColumnIndex(Database.KEY_ICON_URL));
 				URL iconUrl = icon == null ? null : new URL(icon);
 				
-				application = new GrowlApplication(this, id, name, enabled, iconUrl);
+				int displayColumn = cursor.getColumnIndex(Database.KEY_DISPLAY_ID);
+				Integer displayId = null;
+				if (!cursor.isNull(displayColumn))
+					displayId = new Integer(cursor.getInt(displayColumn));
+				
+				application = new GrowlApplication(this, id, name, enabled, iconUrl, displayId);
 				
 				Log.i("GrowlListenerService.loadApplication", "Loaded application \"" + name + "\" with ID = " + id);
 			} catch (MalformedURLException x) {
@@ -266,7 +326,7 @@ public class GrowlListenerService
 		} else {
 			Boolean enabled = true;
 			int id = _database.insertApplication(name, enabled, iconUrl);
-			GrowlApplication newApp = new GrowlApplication(this, id, name, enabled, iconUrl);
+			GrowlApplication newApp = new GrowlApplication(this, id, name, enabled, iconUrl, null);
 			Log.i("GrowlListenerService.registerApplication", "Registered new application \"" + name + "\" with ID = " + newApp.ID);
 			result = newApp;
 		}
@@ -288,43 +348,30 @@ public class GrowlListenerService
 					"of type \"" + type.TypeName + "\" as application is disabled");
 			return;
 		}
-		
+
+		// Get the notification properties
 		String title = notification.getTitle();
 		String message = notification.getMessage();
 		URL iconUrl = notification.getIconUrl();
 		String origin = notification.getOrigin();
+		long receivedAtMS = notification.getReceivedAtMS();
 		
-		_database.insertNotificationHistory(type.ID, title, message, iconUrl, origin);
-		
+		// Determine how the notification should be displayed
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+		int defaultDisplayId = prefs.getInt(Database.PREFERENCE_DEFAULT_DISPLAY_ID, 0);
+		GrowlDisplayProfile displayProfile = getDisplayProfile(type.getDisplayId(), defaultDisplayId);
+
 		Log.i("GrowlListenerService.displayNotification", "Displaying notification from \"" + app.getName() + "\" " +
-				"of type \"" + type.TypeName + "\" with title \"" + title + "\" and message \"" + message + "\"");
-		Notification statusBarPanel = new Notification(R.drawable.statusbar_enabled, message, System.currentTimeMillis());
+				"of type \"" + type.TypeName + "\" with title \"" + title + "\" and message \"" + message + "\" " +
+				"using display profile " + displayProfile.getId());
 		
-        // Set the info for the views that show in the notification panel.
-        statusBarPanel.ledARGB = LED_COLOUR;
-        statusBarPanel.ledOffMS = LED_OFF_MS;
-        statusBarPanel.ledOnMS = LED_ON_MS;
-        statusBarPanel.flags = Notification.FLAG_AUTO_CANCEL | Notification.FLAG_SHOW_LIGHTS;
-        
-        // Use our custom layout for the notification panel, so that we can insert the application icon
-        RemoteViews contentView = new RemoteViews(getPackageName(), R.layout.notification_list_item);
-        contentView.setImageViewResource(R.id.imgNotificationIcon, R.drawable.launcher);
-        contentView.setTextViewText(R.id.txtNotificationTitle, title);
-        contentView.setTextViewText(R.id.txtNotificationMessage, message.replace("\n", " / "));
-        contentView.setTextViewText(R.id.txtNotificationApp, app.getName());
-        statusBarPanel.contentView = contentView;
-
-        // The PendingIntent to launch our activity if the user selects this notification
-        statusBarPanel.contentIntent = PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), 0);
-
-        // Send the notification to the status bar
-        _notifyMgr.notify(app.ID, statusBarPanel);
-        
-        // FIXME: Find a way to enqueue the displaying of the Toast on the UI threads Looper
-        /* final String toastText = "Growl from " + app.Name + "\n\n" + title + "\n" + message;
-        final GrowlListenerService service = this;		
-    	Toast toast = Toast.makeText(service, toastText, Toast.LENGTH_LONG);
-        toast.show(); */	
+		if (displayProfile.shouldLog()) {
+			// Log the message in the history
+			_database.insertNotificationHistory(type.ID, title, message, iconUrl, origin, receivedAtMS);
+		}
+		
+		// Display the notification based on the preferences of the profile, launching MainActivity if it is clicked
+		displayProfile.displayNotification(this, notification, new Intent(this, MainActivity.class));
         
         // Notify the status changed handlers
         onDisplayNotification(notification);
@@ -334,18 +381,23 @@ public class GrowlListenerService
 		NotificationType type = null;
 		Cursor cursor = _database.getNotificationType(application.ID, typeName);
 		if (cursor.moveToFirst()) {
-			int id = cursor.getInt(0);
-			String displayName = cursor.getString(2);
-			boolean enabled = cursor.getInt(3) != 0;
-			String icon = cursor.getString(4);
+			int id = cursor.getInt(cursor.getColumnIndex(Database.KEY_ROWID));
+			String displayName = cursor.getString(cursor.getColumnIndex(Database.KEY_DISPLAY_NAME));
+			boolean enabled = cursor.getInt(cursor.getColumnIndex(Database.KEY_ENABLED)) != 0;
+			String icon = cursor.getString(cursor.getColumnIndex(Database.KEY_ICON_URL));
 			URL iconUrl = null;
 			try {
 				iconUrl = icon == null ? null : new URL(icon);
-			} catch (MalformedURLException e) {
-				e.printStackTrace();
+			} catch (Exception x) {
+				x.printStackTrace();
 			}
 			
-			type = new NotificationType(id, application, typeName, displayName, enabled, iconUrl);
+			int displayColumn = cursor.getColumnIndex(Database.KEY_DISPLAY_ID);
+			Integer displayId = null;
+			if (!cursor.isNull(displayColumn))
+				displayId = new Integer(cursor.getInt(displayColumn));
+			
+			type = new NotificationType(id, application, typeName, displayName, enabled, iconUrl, displayId);
 		}
 		cursor.close();
 		return type;
@@ -355,7 +407,7 @@ public class GrowlListenerService
 		if (displayName == null)
 			displayName = typeName;
 		int id = _database.insertNotificationType(application.ID, typeName, displayName, enabled, iconUrl);
-		NotificationType type = new NotificationType(id, application, typeName, displayName, enabled, iconUrl);
+		NotificationType type = new NotificationType(id, application, typeName, displayName, enabled, iconUrl, null);
 		onNotificationTypeRegistered(type);
 		return type;
 	}

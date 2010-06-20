@@ -5,6 +5,7 @@ import java.net.InetSocketAddress;
 import java.nio.channels.*;
 import java.util.*;
 
+import com.growlforandroid.client.GrowlListenerService;
 import android.content.Context;
 import android.util.Log;
 
@@ -30,6 +31,10 @@ public class SocketAcceptor extends Thread {
 		_channel.socket().bind(_listenAddress);
 	}
 	
+	public SocketAcceptor(GrowlListenerService context,	ISocketThreadFactory factory, int port) throws IOException {
+		this(context, factory, new InetSocketAddress(port));
+	}
+
 	public Context getContext() {
 		return _context;
 	}

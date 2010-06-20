@@ -12,6 +12,7 @@ public final class Constants {
 	public static final String GNTP_PROTOCOL_VERSION = SUPPORTED_PROTOCOL + "/" + SUPPORTED_PROTOCOL_VERSION;
 	public static final String GNTP_ZEROCONF_SERVICE_TYPE = "_gntp._tcp.local";
 	public static final String GNTP_ZEROCONF_TEXT = "platform=android";
+	public static final int GNTP_PORT = 23053;
 	
 	public static final String HEADER_APPLICATION_NAME = "Application-Name";
 	public static final String HEADER_APPLICATION_ICON = "Application-Icon";

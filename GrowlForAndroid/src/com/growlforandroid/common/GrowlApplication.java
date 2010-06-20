@@ -17,13 +17,15 @@ public class GrowlApplication {
 	private final String _name;
 	private Boolean _enabled;
 	private URL _iconUrl;
+	private Integer _displayId;
 	
-	public GrowlApplication(IGrowlRegistry registry, int id, String name, Boolean enabled, URL icon) {
+	public GrowlApplication(IGrowlRegistry registry, int id, String name, Boolean enabled, URL icon, Integer displayId) {
 		ID = id;
 		_registry = registry; 
 		_name = name;
 		_enabled = enabled;
 		_iconUrl = icon;
+		_displayId = displayId;
 	}
 	
 	public boolean isEnabled() {
@@ -32,6 +34,10 @@ public class GrowlApplication {
 	
 	public Drawable getIconUrl() {
 		return _registry.getIcon(_iconUrl);
+	}
+	
+	public Integer getDisplayId() {
+		return _displayId;
 	}
 	
 	public String getName() {

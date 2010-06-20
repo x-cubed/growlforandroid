@@ -148,7 +148,7 @@ public class Subscriber {
 				onSubscriptionStatusChanged(id, STATUS_UNREGISTERED);
 				count ++;
 			} while (subscriptions.moveToNext());
-			Log.i("Subscriber.unsubscribeAll", "Ubsubscribed from " + count + " sources");
+			Log.i("Subscriber.unsubscribeAll", "Unsubscribed from " + count + " sources");
 		}
 		subscriptions.close();
 	}
@@ -159,6 +159,21 @@ public class Subscriber {
 		
 		Thread subscribe = new SubscriberThread(this, id, address, password);
 		subscribe.start();	
+	}
+	
+	public int getActiveSubscriptions() {
+		int active = 0;
+		Cursor cursor = _database.getSubscriptions();
+		final int statusColumn = cursor.getColumnIndex(Database.KEY_STATUS);
+		while (cursor.moveToNext()) {
+			String status = cursor.getString(statusColumn);
+			if (STATUS_REGISTERED.equals(status)) {
+				active++;
+			}
+		}
+		cursor.close();
+		Log.i("Subscriber.getActiveSubscriptions", active + " subscriptions are active");
+		return active;
 	}
 	
 	public void onSubscriptionComplete(SubscriberThread subscribe, Exception error) {

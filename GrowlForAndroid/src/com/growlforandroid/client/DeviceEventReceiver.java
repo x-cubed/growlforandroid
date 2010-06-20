@@ -63,15 +63,16 @@ public class DeviceEventReceiver
 	private void onWifiNetworkStateChanged(Context context, Intent intent, SharedPreferences prefs) throws Exception {
 		NetworkInfo info = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
 		String bssid = intent.getStringExtra(WifiManager.EXTRA_BSSID);
-		/*if (!info.isConnected()) {
+		if (!info.isConnected()) {
 			Log.i("DeviceEventReceiver.onWifiNetworkStateChanged", "Disconnected");
-			stopService(context);
+			// stopService(context);
 		} else {
 			Log.i("DeviceEventReceiver.onWifiNetworkStateChanged", "Connected to " + bssid);
-			startServiceIfWasRunning(context, prefs);
-		}*/
+			// startServiceIfWasRunning(context, prefs);
+		}
 	}
 	
+	@SuppressWarnings("unused")
 	private void startServiceIfWasRunning(Context context, SharedPreferences prefs) throws Exception {
 		boolean wasRunning = prefs.getBoolean(Preferences.WAS_RUNNING, false);
 		if (wasRunning) {
