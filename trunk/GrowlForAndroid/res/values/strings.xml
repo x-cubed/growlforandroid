@@ -39,6 +39,8 @@
 	<string name="application_options_title">Options</string>
 	<string name="application_option_enabled">Enabled</string>
 	<string name="application_option_enabled_summary">Display notifications from this application</string>
+	<string name="application_option_display_title">Default Display</string>
+	<string name="application_option_display_default">(Use global display setting)</string>
 	<string name="application_types_title">Notification Types</string>
 	<string name="passwords_title">Growl - Password Manager</string>
 	<string name="passwords_add_password">Add Password</string>
@@ -68,11 +70,8 @@
 	<string name="type_title">Growl - Notification Type Preferences</string>
 	<string name="type_option_enabled">Enabled</string>
 	<string name="type_option_enabled_summary">Display notifications of this type</string>
-	<string name="type_displays_title">Display Options</string>
-	<string name="type_displays_statusbar_title">Status Bar</string>
-	<string name="type_displays_statusbar_summary">Show a notification panel in the status bar</string>
-	<string name="type_displays_toast_title">Toast</string>
-	<string name="type_displays_toast_summary">Display a notification window on top of any running application</string>
+	<string name="type_display_title">Display</string>
+	<string name="type_display_default">(Use application display setting)</string>
 	<string name="subscriptions_title">Growl - Subscriptions</string>
 	<string name="subscriptions_add_subscription">Add Subscription</string>
 	<string name="subscriptions_subscribe_now">Subscribe now</string>
@@ -89,6 +88,7 @@
 	<string name="subscriptions_add_dialog_title">Add Subscription</string>
 	<string name="subscriptions_edit_dialog_title">Edit Subscription</string>
 	<string name="gntp_zeroconf_name_format">%s on %s</string>
+	<string name="display_profile_default">(Default)</string>
 	<string name="display_profile_ignore">Ignore</string>
 	<string name="display_profile_silent">Silent</string>
 	<string name="display_profile_vibrate">Vibrate</string>

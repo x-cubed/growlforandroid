@@ -36,16 +36,8 @@
     android:gravity="center_vertical"
     android:paddingRight="?android:attr/scrollbarSize"
 	android:layout_height="wrap_content" android:layout_width="fill_parent" />
-<TextView android:id="@+id/lblDisplayOptions" android:layout_height="wrap_content" android:layout_width="fill_parent"
-		style="?android:attr/listSeparatorTextViewStyle" android:paddingLeft="10dip" android:text="@string/type_displays_title"/>
-<com.growlforandroid.client.PreferenceCheckBoxView android:id="@+id/chkStatusBar"
-	app:title="@string/type_displays_statusbar_title" app:summary="@string/type_displays_statusbar_summary"
-	android:minHeight="?android:attr/listPreferredItemHeight"
-    android:gravity="center_vertical"
-    android:paddingRight="?android:attr/scrollbarSize"
-	android:layout_height="wrap_content" android:layout_width="fill_parent" />
-<com.growlforandroid.client.PreferenceCheckBoxView android:id="@+id/chkToast"
-	app:title="@string/type_displays_toast_title" app:summary="@string/type_displays_toast_summary"
+<com.growlforandroid.client.PreferenceDropDownView android:id="@+id/drpDisplayProfile"
+	app:title="@string/type_display_title"
 	android:minHeight="?android:attr/listPreferredItemHeight"
     android:gravity="center_vertical"
     android:paddingRight="?android:attr/scrollbarSize"
