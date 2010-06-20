@@ -88,26 +88,37 @@ public class GrowlDisplayProfile {
 		int flags = _statusBarFlags;
 		boolean defaultLights = (flags & Notification.DEFAULT_LIGHTS) == Notification.DEFAULT_LIGHTS;
 		boolean defaultSound = (flags & Notification.DEFAULT_SOUND) == Notification.DEFAULT_SOUND;
-		
-		if (defaultLights) {
-			// We don't use the default LED settings, we flash in yellow instead
-			flags |= Notification.DEFAULT_LIGHTS;
-			flags &= Notification.FLAG_SHOW_LIGHTS;
+		boolean defaultVibrate = (flags & Notification.DEFAULT_VIBRATE) == Notification.DEFAULT_VIBRATE;
+				
+		if (defaultVibrate) {
+			flags |= Notification.DEFAULT_VIBRATE;
+			statusBarPanel.defaults |= Notification.DEFAULT_VIBRATE;
 		}
+		
 		if (defaultSound) {
+			flags |= Notification.DEFAULT_SOUND;
 			if (_alertUrl == null) {
 				// Use the default alert sound
 				statusBarPanel.defaults |= Notification.DEFAULT_SOUND;
 			} else {
 				// Don't use the default sound, we've got a custom one we can use
-				flags |= Notification.DEFAULT_SOUND;
 				String alertUrl = _alertUrl.toString();
 				Log.i("GrowlDisplayProfile.displayNotificationInStatusBar", "Alert Sound: " + alertUrl);
 				statusBarPanel.sound = Uri.parse(alertUrl);
 			}
 		}
+
+		if (defaultLights) {
+			// We don't use the default LED settings, we flash in yellow instead
+			flags |= Notification.DEFAULT_LIGHTS;
+			flags &= Notification.FLAG_SHOW_LIGHTS;
+		}
+		
 		Log.i("GrowlDisplayProfile.displayNotificationInStatusBar",
-				"Default Lights: " + defaultLights + ", Default Sound: " + defaultSound);
+				"Profile: " + _id + ", " +
+				"Default Lights: " + defaultLights + ", " +
+				"Default Sound: " + defaultSound + ", " +
+				"Default Vibrate: " + defaultVibrate);
 		
 		statusBarPanel.ledARGB = LED_COLOUR;
         statusBarPanel.ledOffMS = LED_OFF_MS;

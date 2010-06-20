@@ -153,11 +153,11 @@ public class Database {
 		insertDisplayProfile(ignore, false);
 		insertDisplayProfile(silent, true);
 		insertDisplayProfile(vibrate, Notification.FLAG_AUTO_CANCEL |
-				Notification.DEFAULT_LIGHTS |	Notification.DEFAULT_VIBRATE, null);
+				Notification.DEFAULT_LIGHTS | Notification.DEFAULT_VIBRATE, null);
 		int defaultProfile = insertDisplayProfile(growl, Notification.FLAG_AUTO_CANCEL |
-				Notification.DEFAULT_LIGHTS |	Notification.DEFAULT_SOUND, null);
+				Notification.DEFAULT_LIGHTS | Notification.DEFAULT_SOUND, null);
 		insertDisplayProfile(growlVibrate, Notification.FLAG_AUTO_CANCEL |
-				Notification.DEFAULT_LIGHTS |	Notification.DEFAULT_SOUND |
+				Notification.DEFAULT_LIGHTS | Notification.DEFAULT_SOUND |
 				Notification.DEFAULT_VIBRATE, null);
 		
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
@@ -189,6 +189,19 @@ public class Database {
 		return db.query(TABLE_DISPLAYS, new String[] {
 				KEY_ROWID, KEY_NAME, KEY_LOG, KEY_STATUS_BAR_FLAGS, KEY_TOAST_FLAGS, KEY_ALERT_URL
 				}, KEY_ROWID + "=" + profile, null, null, null, null);
+	}
+	
+	public String getDisplayProfileName(int profile) {
+		String result = null;
+		Cursor cursor = getDisplayProfile(profile);
+		if (cursor.moveToFirst()) {
+			final int nameColumn = cursor.getColumnIndexOrThrow(KEY_NAME);
+			result = cursor.getString(nameColumn);
+		}
+		cursor.close();
+		
+		Log.i("Database.getDisplayProfileName", "Profile " + profile + " is called " + result);
+		return result;
 	}
 	
 	public Cursor getDisplayProfiles() {
@@ -295,16 +308,39 @@ public class Database {
 		return cursor;
 	}
 	
+	public String getApplicationName(long id) {
+		String name = null;
+		Cursor cursor = getApplication(id);
+		if (cursor.moveToFirst()) {
+			name = cursor.getString(cursor.getColumnIndexOrThrow(KEY_NAME));
+		}
+		cursor.close();
+		return name;
+	}
+	
 	public boolean setApplicationEnabled(long id, boolean isEnabled) {
 		ContentValues args = new ContentValues();
 		args.put(KEY_ENABLED, isEnabled);
 		return db.update(TABLE_APPLICATIONS, args, KEY_ROWID + "=" + id, null) > 0;		
 	}
 
+	public boolean setApplicationDisplay(long id, Integer displayId) {
+		ContentValues args = new ContentValues();
+		args.put(KEY_DISPLAY_ID, displayId);
+		return db.update(TABLE_APPLICATIONS, args, KEY_ROWID + "=" + id, null) > 0;
+	}
+	
 	public boolean setApplicationIcon(long id, URL iconUrl) {
 		ContentValues args = new ContentValues();
 		args.put(KEY_ICON_URL, (iconUrl != null) ? iconUrl.toString() : null);
 		return db.update(TABLE_APPLICATIONS, args, KEY_ROWID + "=" + id, null) > 0;
+	}
+	
+	public Cursor getNotificationType(long id) {
+		Cursor cursor = db.query(true, TABLE_NOTIFICATION_TYPES, new String[] {
+				KEY_ROWID, KEY_APP_ID, KEY_NAME, KEY_DISPLAY_NAME, KEY_ENABLED,	KEY_ICON_URL, KEY_DISPLAY_ID
+				}, KEY_ROWID + "=" + id, null, null, null, null, null);
+		return cursor;
 	}
 	
 	public Cursor getNotificationType(long appId, String typeName) {
@@ -321,6 +357,18 @@ public class Database {
 				}, KEY_APP_ID + "=" + appId,
 				null, null, null, null, null);
 		return cursor;
+	}
+	
+	public boolean setNotificationTypeEnabled(long id, boolean isEnabled) {
+		ContentValues args = new ContentValues();
+		args.put(KEY_ENABLED, isEnabled);
+		return db.update(TABLE_NOTIFICATION_TYPES, args, KEY_ROWID + "=" + id, null) > 0;
+	}
+	
+	public boolean setNotificationTypeDisplay(long id, Integer displayId) {
+		ContentValues args = new ContentValues();
+		args.put(KEY_DISPLAY_ID, displayId);
+		return db.update(TABLE_NOTIFICATION_TYPES, args, KEY_ROWID + "=" + id, null) > 0;
 	}
 	
 	public int insertNotificationType(long appId, String typeName,
