@@ -1,0 +1,7 @@
+#summary Subscribe to notifications from Growl for Windows
+#labels HowTo
+
+= Introduction =
+In this mode of operation, Growl for Android will register itself with an instance of Growl for Windows every minute or so, whenever that instance of GfW is reachable. GfW will then automatically forward any notifications to Growl for Android.
+
+= How To =
