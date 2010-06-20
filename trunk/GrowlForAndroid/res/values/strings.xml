@@ -9,6 +9,8 @@
 	<string name="growl_off">Off</string>
 	<string name="growl_on_status">Growl is running</string>
 	<string name="growl_off_status">Growl is stopped</string>
+	<string name="growl_active_subscription">Subscribed to 1 device</string>
+	<string name="growl_active_subscriptions">Subscribed to %d devices</string>
 	<string name="history_title">Notification History</string>
 	<string name="history_recent_title">Recent Notifications</string>
 	<string name="history_delete_prompt">Are you sure you want to delete your notification history?</string>
@@ -87,4 +89,9 @@
 	<string name="subscriptions_add_dialog_title">Add Subscription</string>
 	<string name="subscriptions_edit_dialog_title">Edit Subscription</string>
 	<string name="gntp_zeroconf_name_format">%s on %s</string>
+	<string name="display_profile_ignore">Ignore</string>
+	<string name="display_profile_silent">Silent</string>
+	<string name="display_profile_vibrate">Vibrate</string>
+	<string name="display_profile_growl">Growl</string>
+	<string name="display_profile_growl_vibrate">Growl &amp; Vibrate</string>
 </resources>

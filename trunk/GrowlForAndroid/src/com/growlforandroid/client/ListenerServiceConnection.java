@@ -94,10 +94,15 @@ public class ListenerServiceConnection implements ServiceConnection {
 			Log.i("ListenerServiceConnection.unbind", "Unbinding from service");
 			_context.unbindService(this);
 			_isBound = false;
-			onServiceDisconnected(null);
+			onServiceStopped();
 		}
 	}
 
+	public void rebind() {
+		unbind();
+		bind();
+	}
+	
 	public void onServiceConnected(ComponentName name, IBinder service) {
 		Log.i("ListenerServiceConnection.onServiceConnected",
 				"Connected to "	+ name);
@@ -111,11 +116,20 @@ public class ListenerServiceConnection implements ServiceConnection {
 		if (_instance != null) {
 			Log.i("ListenerServiceConnection.onServiceDisconnected",
 					"Disconnected from " + name);
-			if (_handler != null)
-				_instance.removeStatusChangedHandler(_handler);
-			_instance = null;
-			onIsRunningChanged(false);
+			onServiceStopped();
 		}
+		
+		rebind();
+	}
+	
+	private void onServiceStopped() {
+		if (_instance == null)
+			return;
+		
+		if (_handler != null)
+			_instance.removeStatusChangedHandler(_handler);
+		_instance = null;
+		onIsRunningChanged(false);
 	}
 	
 	public void subscribeNow() {

@@ -1,12 +1,19 @@
 package com.growlforandroid.common;
 
 import java.net.URL;
+
+import com.growlforandroid.client.R;
+
+import android.app.Notification;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.net.Uri;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 public class Database {
@@ -24,20 +31,28 @@ public class Database {
 	public static final String KEY_ORIGIN = "origin";
 	public static final String KEY_ADDRESS = "address";
 	public static final String KEY_STATUS = "status";
-
-	public static final String KEY_APP_NAME = "appName";
-	public static final String KEY_TYPE_DISPLAY_NAME = "typeName";
-	public static final String KEY_TYPE_LIST = "typeList";
+	public static final String KEY_DISPLAY_ID = "display_id";
+	public static final String KEY_LOG = "log";
+	public static final String KEY_STATUS_BAR_FLAGS = "status_bar_flags";
+	public static final String KEY_TOAST_FLAGS = "toast_flags";
+	public static final String KEY_ALERT_URL = "alert_url";
+	
+	public static final String KEY_APP_NAME = "app_name";
+	public static final String KEY_TYPE_DISPLAY_NAME = "type_name";
+	public static final String KEY_TYPE_LIST = "type_list";
 	
 	public static final String TABLE_APPLICATIONS = "applications";
 	public static final String TABLE_NOTIFICATION_TYPES = "notification_types";
+	public static final String TABLE_DISPLAYS = "displays";
 	public static final String TABLE_PASSWORDS = "passwords";
 	public static final String TABLE_SUBSCRIPTIONS = "subscriptions";
 	public static final String TABLE_NOTIFICATION_HISTORY = "notification_history";
+
+	public static final String PREFERENCE_DEFAULT_DISPLAY_ID = "display_default_id";
 	
 	private static final String DATABASE_NAME = "growl";
 	private static final int DATABASE_VERSION = 1;
-
+	
 	private final Context context;
 
 	private Helper DBHelper;
@@ -47,6 +62,9 @@ public class Database {
 		this.context = ctx;
 		DBHelper = new Helper(context);
 		db = DBHelper.getWritableDatabase();
+		
+		if (!hasDisplayProfiles())
+			createDisplayProfiles(ctx);
 	}
 
 	private class Helper extends SQLiteOpenHelper {
@@ -61,7 +79,9 @@ public class Database {
 					+ "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
 					+ "name TEXT NOT NULL, "
 					+ "enabled INTEGER NOT NULL, "
-					+ "icon_url TEXT);");
+					+ "icon_url TEXT, "
+					+ "display_id INT, "
+					+ "FOREIGN KEY(display_id) REFERENCES displays(id) ON DELETE SET NULL);");
 
 			db.execSQL("CREATE TABLE notification_types ("
 					+ "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -70,7 +90,17 @@ public class Database {
 					+ "display_name TEXT NOT NULL, "
 					+ "enabled INTEGER NOT NULL, "
 					+ "icon_url TEXT, "
-					+ "FOREIGN KEY(app_id) REFERENCES applications(id));");
+					+ "display_id INT, "
+					+ "FOREIGN KEY(app_id) REFERENCES applications(id), "
+					+ "FOREIGN KEY(display_id) REFERENCES displays(id) ON DELETE SET NULL);");
+
+			db.execSQL("CREATE TABLE displays ("
+					+ "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+					+ "name TEXT NOT NULL, "
+					+ "log INTEGER NOT NULL, "
+					+ "status_bar_flags INTEGER, "
+					+ "toast_flags INTEGER, "
+					+ "alert_url TEXT);");
 
 			db.execSQL("CREATE TABLE passwords ("
 					+ "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -113,6 +143,67 @@ public class Database {
 		DBHelper.close();
 	}
 
+	private void createDisplayProfiles(Context context) {
+		String ignore = context.getString(R.string.display_profile_ignore);
+		String silent = context.getString(R.string.display_profile_silent);
+		String vibrate = context.getString(R.string.display_profile_vibrate);
+		String growl = context.getString(R.string.display_profile_growl);
+		String growlVibrate = context.getString(R.string.display_profile_growl_vibrate);
+		
+		insertDisplayProfile(ignore, false);
+		insertDisplayProfile(silent, true);
+		insertDisplayProfile(vibrate, Notification.FLAG_AUTO_CANCEL |
+				Notification.DEFAULT_LIGHTS |	Notification.DEFAULT_VIBRATE, null);
+		int defaultProfile = insertDisplayProfile(growl, Notification.FLAG_AUTO_CANCEL |
+				Notification.DEFAULT_LIGHTS |	Notification.DEFAULT_SOUND, null);
+		insertDisplayProfile(growlVibrate, Notification.FLAG_AUTO_CANCEL |
+				Notification.DEFAULT_LIGHTS |	Notification.DEFAULT_SOUND |
+				Notification.DEFAULT_VIBRATE, null);
+		
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+		prefs.edit().putInt(PREFERENCE_DEFAULT_DISPLAY_ID, defaultProfile).commit();
+	}
+
+	public int insertDisplayProfile(String name, boolean log) {
+		ContentValues initialValues = new ContentValues();
+		initialValues.put(KEY_NAME, name);
+		initialValues.put(KEY_LOG, log);
+		return (int) db.insert(TABLE_DISPLAYS, null, initialValues);
+	}
+	
+	public int insertDisplayProfile(String name, Integer statusBarFlags, Integer toastFlags) {
+		return insertDisplayProfile(name, true, statusBarFlags, toastFlags, null);
+	}
+	
+	public int insertDisplayProfile(String name, boolean log, Integer statusBarFlags, Integer toastFlags, Uri alert) {
+		ContentValues initialValues = new ContentValues();
+		initialValues.put(KEY_NAME, name);
+		initialValues.put(KEY_LOG, log);
+		initialValues.put(KEY_STATUS_BAR_FLAGS, statusBarFlags);
+		initialValues.put(KEY_TOAST_FLAGS, toastFlags);
+		initialValues.put(KEY_ALERT_URL, (alert == null) ? null : alert.toString());
+		return (int) db.insert(TABLE_DISPLAYS, null, initialValues);
+	}
+	
+	public Cursor getDisplayProfile(int profile) {
+		return db.query(TABLE_DISPLAYS, new String[] {
+				KEY_ROWID, KEY_NAME, KEY_LOG, KEY_STATUS_BAR_FLAGS, KEY_TOAST_FLAGS, KEY_ALERT_URL
+				}, KEY_ROWID + "=" + profile, null, null, null, null);
+	}
+	
+	public Cursor getDisplayProfiles() {
+		return db.query(TABLE_DISPLAYS, new String[] {
+				KEY_ROWID, KEY_NAME, KEY_LOG, KEY_STATUS_BAR_FLAGS, KEY_TOAST_FLAGS, KEY_ALERT_URL
+				}, null, null, null, null, null);
+	}
+	
+	public boolean hasDisplayProfiles() {
+		Cursor cursor = getDisplayProfiles();
+		boolean hasProfiles = cursor.moveToFirst();
+		cursor.close();
+		return hasProfiles;
+	}
+	
 	public int insertPassword(String name, String password) {
 		ContentValues initialValues = new ContentValues();
 		initialValues.put(KEY_NAME, name);
@@ -176,7 +267,7 @@ public class Database {
 
 	public Cursor getAllApplications() {
 		return db.query(TABLE_APPLICATIONS, new String[] {
-				KEY_ROWID, KEY_NAME, KEY_ENABLED, KEY_ICON_URL },
+				KEY_ROWID, KEY_NAME, KEY_ENABLED, KEY_ICON_URL, KEY_DISPLAY_ID },
 				null, null, null, null, null);
 	}
 	
@@ -192,14 +283,14 @@ public class Database {
 
 	public Cursor getApplication(long id) throws SQLException {
 		Cursor cursor = db.query(true, TABLE_APPLICATIONS, new String[] {
-				KEY_ROWID, KEY_NAME, KEY_ENABLED, KEY_ICON_URL },
+				KEY_ROWID, KEY_NAME, KEY_ENABLED, KEY_ICON_URL, KEY_DISPLAY_ID },
 				KEY_ROWID + "=" + id, null, null, null, null, null);
 		return cursor;
 	}
 
 	public Cursor getApplication(String name) throws SQLException {
 		Cursor cursor = db.query(true, TABLE_APPLICATIONS, new String[] {
-				KEY_ROWID, KEY_NAME, KEY_ENABLED, KEY_ICON_URL },
+				KEY_ROWID, KEY_NAME, KEY_ENABLED, KEY_ICON_URL, KEY_DISPLAY_ID },
 				KEY_NAME + "=?", new String[] { name }, null, null, null, null);
 		return cursor;
 	}
@@ -218,16 +309,16 @@ public class Database {
 	
 	public Cursor getNotificationType(long appId, String typeName) {
 		Cursor cursor = db.query(true, TABLE_NOTIFICATION_TYPES, new String[] {
-				KEY_ROWID, KEY_NAME, KEY_DISPLAY_NAME, KEY_ENABLED,
-				KEY_ICON_URL }, KEY_APP_ID + "=" + appId + " AND " + KEY_NAME
+				KEY_ROWID, KEY_NAME, KEY_DISPLAY_NAME, KEY_ENABLED,	KEY_ICON_URL, KEY_DISPLAY_ID
+				}, KEY_APP_ID + "=" + appId + " AND " + KEY_NAME
 				+ "=?", new String[] { typeName }, null, null, null, null);
 		return cursor;
 	}
 
 	public Cursor getNotificationTypes(long appId) {
 		Cursor cursor = db.query(true, TABLE_NOTIFICATION_TYPES, new String[] {
-				KEY_ROWID, KEY_NAME, KEY_DISPLAY_NAME, KEY_ENABLED,
-				KEY_ICON_URL }, KEY_APP_ID + "=" + appId,
+				KEY_ROWID, KEY_NAME, KEY_DISPLAY_NAME, KEY_ENABLED,	KEY_ICON_URL, KEY_DISPLAY_ID
+				}, KEY_APP_ID + "=" + appId,
 				null, null, null, null, null);
 		return cursor;
 	}
@@ -252,10 +343,10 @@ public class Database {
 		return history && type;
 	}
 
-	public int insertNotificationHistory(long typeID, String title, String message, URL iconUrl, String origin) {
+	public int insertNotificationHistory(long typeID, String title, String message, URL iconUrl, String origin, long receivedAt) {
 		ContentValues initialValues = new ContentValues();
 		initialValues.put(KEY_TYPE_ID, typeID);
-		initialValues.put(KEY_RECEIVED_AT, System.currentTimeMillis());
+		initialValues.put(KEY_RECEIVED_AT, receivedAt);
 		initialValues.put(KEY_TITLE, title);
 		initialValues.put(KEY_MESSAGE, message);
 

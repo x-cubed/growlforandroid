@@ -10,14 +10,18 @@ public class NotificationType {
 	private String _displayName;
 	private boolean _enabled;
 	private URL _iconUrl;
+	private Integer _displayId;
 	
-	public NotificationType(int id, GrowlApplication application, String typeName, String displayName, boolean enabled, URL iconUrl) {
+	public NotificationType(int id, GrowlApplication application, String typeName, String displayName,
+			boolean enabled, URL iconUrl, Integer displayId) {
+		
 		ID = id;
 		Application = application;
 		TypeName = typeName;
 		_displayName = displayName;
 		_enabled = enabled;
 		_iconUrl = iconUrl;
+		_displayId = displayId;
 	}
 	
 	public String getDisplayName() {
@@ -28,6 +32,12 @@ public class NotificationType {
 		_displayName = displayName;
 	}
 
+	public Integer getDisplayId() {
+		if (_displayId != null)
+			return _displayId;
+		return Application.getDisplayId();
+	}
+	
 	public boolean isEnabled() {
 		return _enabled;
 	}
