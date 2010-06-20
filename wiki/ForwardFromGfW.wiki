@@ -1,0 +1,8 @@
+#summary Forwarding notifications from Growl for Windows
+#labels HowTo
+
+= Introduction =
+In this mode of operation, Growl for Windows will forward notifications from the computer to Growl for Android whenever GfW can contact the Android device.
+
+
+= How To =
