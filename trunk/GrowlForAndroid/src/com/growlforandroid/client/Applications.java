@@ -93,7 +93,7 @@ public class Applications
     	String appName = null;
     	Cursor cursor = _database.getApplication(_appId);
     	if (cursor.moveToFirst()) {
-    		appName = cursor.getString(cursor.getColumnIndex(Database.KEY_NAME));
+    		appName = cursor.getString(cursor.getColumnIndexOrThrow(Database.KEY_NAME));
     		Log.i("Applications.onCreateDialog", "App ID = " + _appId + ", Name = " + appName);
     		dialog.setTitle(appName);
     	}

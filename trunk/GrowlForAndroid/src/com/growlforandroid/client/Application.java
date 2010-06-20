@@ -3,10 +3,13 @@ package com.growlforandroid.client;
 import com.growlforandroid.common.Database;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.CompoundButton;
 import android.widget.ListView;
@@ -15,7 +18,11 @@ import android.widget.TextView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 
-public class Application extends Activity {
+public class Application
+	extends Activity {
+	
+	private static final int DIALOG_CHOOSE_DISPLAY = 0;
+	
 	private long _appId = 1;
 	
 	private Database _database;
@@ -57,8 +64,13 @@ public class Application extends Activity {
     private void refresh() {
     	Cursor appCursor = _database.getApplication(_appId);
     	if (appCursor.moveToFirst()) {
-    		String appName = appCursor.getString(appCursor.getColumnIndex(Database.KEY_NAME));
-    		boolean enabled = appCursor.getInt(appCursor.getColumnIndex(Database.KEY_ENABLED)) != 0;
+    		String appName = appCursor.getString(appCursor.getColumnIndexOrThrow(Database.KEY_NAME));
+    		boolean enabled = appCursor.getInt(appCursor.getColumnIndexOrThrow(Database.KEY_ENABLED)) != 0;
+    		int displayId = appCursor.getInt(appCursor.getColumnIndexOrThrow(Database.KEY_DISPLAY_ID));
+    		String displayName = _database.getDisplayProfileName(displayId);
+    		if (displayName == null) {
+    			displayName = getText(R.string.application_option_display_default).toString();
+    		}
     		
     		TextView txtTitle = (TextView)findViewById(R.id.txtAppName);
     		txtTitle.setText(appName);
@@ -70,6 +82,14 @@ public class Application extends Activity {
 					_database.setApplicationEnabled(_appId, isChecked);
 				}
     		});
+    		
+    		PreferenceDropDownView drpDisplay = (PreferenceDropDownView)findViewById(R.id.drpDisplayProfile);
+    		drpDisplay.setSummary(displayName);
+    		drpDisplay.setOnClickListener(new OnClickListener() {
+				public void onClick(View v) {
+					showDialog(DIALOG_CHOOSE_DISPLAY);
+				}
+    		});
     	}
     	appCursor.close();
     	
@@ -78,6 +98,22 @@ public class Application extends Activity {
     	} else {
     		_cursor.requery();
     	}
+    }
+    
+    
+    @Override
+    public Dialog onCreateDialog(int id) {
+    	switch (id) {
+	    	case DIALOG_CHOOSE_DISPLAY:
+	    		return (new ChooseDisplayDialog(this, _database, true) {
+	    			public void onDisplayChosen(Integer displayId) {
+	    				Log.i("Application.onDisplayChosen", "App Id: " + _appId + ", Display Id: " + displayId);
+	    				_database.setApplicationDisplay(_appId, displayId);
+	    				refresh();
+	    			}
+	    		}).create();
+    	}
+    	return null;
     }
     
     @Override
