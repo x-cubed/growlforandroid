@@ -1,8 +1,31 @@
 #summary Forwarding notifications from Growl for Windows
-#labels HowTo
+#labels HowTo,Forwarding
 
 = Introduction =
 In this mode of operation, Growl for Windows will forward notifications from the computer to Growl for Android whenever GfW can contact the Android device.
 
 
 = How To =
+On your Android device:
+  # Install Growl for Android from the Android Market.
+  # In the main window, press the toggle button to start the Growl listener service.
+  # Press the menu button, then choose Preferences.
+  # Scroll down and select Password Manager. The password list will be empty, as we haven't added any passwords yet.
+  # Press the menu button, the choose Add Password.
+  # Enter any name and value you like for the password.
+  # Press the Add button. The name of your password will appear in the list.
+  # Press the back button twice to return to the main window.
+
+On your computer:
+  # Install [http://growlforwindows.com Growl for Windows].
+  # Open the Growl options dialog, then switch to the Network tab.
+  # Press the Add button below the Forwarding list.
+  # Enter a name of your choosing for the forward.
+  # Enter the domain name or IP address of your Android device.
+  # Leave the Port as 23053 and the Protocol as GNTP.
+  # Press the OK button.
+  # Notifications from Growl should now appear on the main window of Growl for Android.
+
+*Important:* If you already have applications registered with Growl for Windows, you will need to re-register them for them to show up in Growl for Android. Most applications re-register their notifications at startup, so re-starting the application on your computer should make it show up.
+
+To see a list of all registered applications in Growl for Android, press the menu button from the main window and choose Applications.
