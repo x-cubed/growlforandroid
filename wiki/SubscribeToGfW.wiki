@@ -23,3 +23,7 @@ On your Android device:
   # Press the Add button.
   # The list will update to show the status of the connection. If it doesn't show Subscribed after a second or two, check to make sure that the details you entered are correct and you have an active WiFi connection.
   # Your Android device should now be listed in the Forwarding list of Growl for Windows.
+
+*Important:* If you already have applications registered with Growl for Windows, you will need to re-register them for them to show up in Growl for Android. Most applications re-register their notifications at startup, so re-starting the application on your computer should make it show up.
+
+To see a list of all registered applications in Growl for Android, press the menu button from the main window and choose Applications.
