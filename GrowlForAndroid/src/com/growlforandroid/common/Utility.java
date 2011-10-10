@@ -86,13 +86,17 @@ public final class Utility {
 		String deviceName = null;
 
 		// Try to use the name used by Bluetooth
-		BluetoothAdapter bluetooth = BluetoothAdapter.getDefaultAdapter();
-		if (bluetooth != null) {
-			deviceName = bluetooth.getName();
+		try {
+			BluetoothAdapter bluetooth = BluetoothAdapter.getDefaultAdapter();
+			if (bluetooth != null) {
+				deviceName = bluetooth.getName();
+			}
+		} catch (Exception x) {
+			Log.e("Utility.getDeviceFriendlyName", x.toString());
 		}
 		
 		if (deviceName == null) {
-			deviceName = Build.DEVICE;
+			deviceName = Build.MODEL;
 		}
 		return deviceName;
 	}
