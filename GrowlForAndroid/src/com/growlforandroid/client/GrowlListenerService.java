@@ -27,7 +27,8 @@ public class GrowlListenerService
 	private static Database _database;
 	private static GrowlResources _resources;
 	
-	private final Set<WeakReference<StatusChangedHandler>> _statusChangedHandlers = new HashSet<WeakReference<StatusChangedHandler>>();
+	private final Set<WeakReference<StatusChangedHandler>> _statusChangedHandlers =
+			Collections.synchronizedSet(new HashSet<WeakReference<StatusChangedHandler>>());
 	
 	private ZeroConf _zeroConf;
     private NotificationManager _notifyMgr;
@@ -80,20 +81,16 @@ public class GrowlListenerService
     	prefs.edit().putString(GntpMessage.PREFERENCE_DEVICE_NAME, deviceName).commit();
         
         try {
-        	_zeroConf = ZeroConf.getInstance(getContext());
-        	
         	// Start listening on GNTP_PORT, on all interfaces
         	ISocketThreadFactory factory = new GntpListenerThreadFactory(this);
 			_socketAcceptor = new SocketAcceptor(this, factory, Constants.GNTP_PORT);
 			_socketAcceptor.start();
 	        
 			// Register the GNTP service with Bonjour/ZeroConf
-			String appName = context.getText(R.string.app_name).toString();
-			String format = context.getText(R.string.gntp_zeroconf_name_format).toString();
-			final String serviceName = String.format(format, appName, deviceName);
-			ZeroConf.getInstance(context).registerService(
-					Constants.GNTP_ZEROCONF_SERVICE_TYPE, serviceName,
-					Constants.GNTP_PORT, Constants.GNTP_ZEROCONF_TEXT);	
+			if (prefs.getBoolean(Preferences.ANNOUNCE_USING_ZEROCONF, true)) {
+				Log.i("GrowlListenerService.onStartCommand", "Initialising ZeroConf...");
+				initialiseZeroConf(deviceName, context);
+			}
 			
 			// Start subscribing to notifications from other devices
             Log.i("GrowlListenerService.onStartCommand", "Renewing subscriptions...");
@@ -127,6 +124,18 @@ public class GrowlListenerService
         // stopped, so return sticky.
         return START_STICKY;
     }
+
+	private void initialiseZeroConf(String deviceName, Context context) {
+		_zeroConf = ZeroConf.getInstance(context);
+		
+		// Advertise the GNTP service
+		String appName = context.getText(R.string.app_name).toString();
+		String format = context.getText(R.string.gntp_zeroconf_name_format).toString();
+		final String serviceName = String.format(format, appName, deviceName);
+		_zeroConf.registerService(
+				Constants.GNTP_ZEROCONF_SERVICE_TYPE, serviceName,
+				Constants.GNTP_PORT, Constants.GNTP_ZEROCONF_TEXT);
+	}
 
     public Context getContext() {
     	return getBaseContext();
@@ -181,11 +190,16 @@ public class GrowlListenerService
 			Log.e("GrowlListenerService.stop", x.toString());
 		}
 	
-		_database.close();
-		_database = null;
+		if (_database != null) {
+			_database.close();
+			_database = null;
+		}
 		
-		_zeroConf.close();
-		_zeroConf = null;
+		if (_zeroConf != null) {
+			_zeroConf.unregisterAllServices();
+			_zeroConf.close();
+			_zeroConf = null;
+		}
     }
     
     protected void finalize() {

@@ -7,6 +7,11 @@ import android.util.Log;
 
 import com.growlforandroid.client.GrowlListenerService.StatusChangedHandler;
 
+/***
+ * Provides methods for starting, stopping and communicating with the GrowlListenerService
+ * @author Carey Bishop
+ *
+ */
 public class ListenerServiceConnection implements ServiceConnection {
 	private final Context _context;
 	private final Intent _growlListenerService;
@@ -26,6 +31,10 @@ public class ListenerServiceConnection implements ServiceConnection {
 		this(context, null);
 	}
 	
+	/***
+	 * Determines if the service is currently running
+	 * @return true, if the service is running
+	 */
 	public boolean isRunning() {
 		bind();
 		if (_instance != null) {
@@ -34,7 +43,27 @@ public class ListenerServiceConnection implements ServiceConnection {
 			return false;
 		}
 	}
+	
+	/***
+	 * Restarts the service if it's currently running
+	 */
+	public void restart() {
+		if (!isRunning()) {
+			return;
+		}
+		stop(true);
+		
+		try {
+			start();
+		} catch (Exception x) {
+			Log.e("ListenerServiceConnection.restart", x.toString());
+		}
+	}
 
+	/***
+	 * Starts the service
+	 * @throws Exception
+	 */
 	public void start() throws Exception {
 		if (!bind()) {
 			Log.e("ListenerServiceConnection.start", "Unable to bind to service");
@@ -50,10 +79,19 @@ public class ListenerServiceConnection implements ServiceConnection {
 		onIsRunningChanged(true);
 	}
 
+	/***
+	 * Stops the service
+	 * @return true, if the service was stopped successfully
+	 */
 	public boolean stop() {
 		return stop(false);
 	}
 	
+	/***
+	 * Stops the service
+	 * @param automated true, if the service is being stopped without the user's involvement
+	 * @return true, if the service was stopped succcessfully
+	 */
 	public boolean stop(boolean automated) {
 		boolean wasStopped = false;
 		if (!_context.stopService(_growlListenerService)) {
@@ -79,7 +117,11 @@ public class ListenerServiceConnection implements ServiceConnection {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(_context);
 		prefs.edit().putBoolean(Preferences.WAS_RUNNING, wasRunning).commit();
 	}
-	
+
+	/***
+	 * Binds to the GrowlListenerService
+	 * @return true, if the bind was successful
+	 */
 	public boolean bind() {
 		if (_isBound)
 			return _isBound;
@@ -89,6 +131,9 @@ public class ListenerServiceConnection implements ServiceConnection {
 		return _isBound;
 	}
 
+	/***
+	 * Unbinds from the GrowlListenerService
+	 */
 	public void unbind() {
 		if (_isBound) {
 			Log.i("ListenerServiceConnection.unbind", "Unbinding from service");
@@ -98,6 +143,9 @@ public class ListenerServiceConnection implements ServiceConnection {
 		}
 	}
 
+	/***
+	 * Unbinds then binds to the GrowlListenerService
+	 */
 	public void rebind() {
 		unbind();
 		bind();
@@ -131,7 +179,10 @@ public class ListenerServiceConnection implements ServiceConnection {
 		_instance = null;
 		onIsRunningChanged(false);
 	}
-	
+
+	/***
+	 * Renews any subscriptions that the GrowlListenerService has configured
+	 */
 	public void subscribeNow() {
 		_instance.subscribeNow();
 	}

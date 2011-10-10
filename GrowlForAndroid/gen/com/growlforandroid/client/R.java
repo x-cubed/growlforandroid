@@ -140,6 +140,8 @@ containing a value of this type.
         public static final int password_menu_title=0x7f050028;
         public static final int passwords_add_password=0x7f050027;
         public static final int passwords_title=0x7f050026;
+        public static final int preferences_general_announce_using_zeroconf=0x7f050053;
+        public static final int preferences_general_announce_using_zeroconf_summary=0x7f050054;
         public static final int preferences_general_auto_start=0x7f05002b;
         public static final int preferences_general_auto_start_summary=0x7f05002c;
         public static final int preferences_general_title=0x7f05002a;
@@ -182,11 +184,11 @@ containing a value of this type.
     public static final class styleable {
         /** Attributes that can be used with a PreferenceCheckBoxView.
            <p>Includes the following attributes:</p>
-           <table border="2" width="85%" align="center" frame="hsides" rules="all" cellpadding="5">
+           <table>
            <colgroup align="left" />
            <colgroup align="left" />
-           <tr><th>Attribute<th>Summary</tr>
-           <tr><th><code>{@link #PreferenceCheckBoxView_checked com.growlforandroid.client:checked}</code><td></tr>
+           <tr><th>Attribute</th><th>Description</th></tr>
+           <tr><td><code>{@link #PreferenceCheckBoxView_checked com.growlforandroid.client:checked}</code></td><td></td></tr>
            </table>
            @see #PreferenceCheckBoxView_checked
          */
@@ -209,12 +211,12 @@ containing a value of this type.
         public static final int PreferenceCheckBoxView_checked = 0;
         /** Attributes that can be used with a PreferenceView.
            <p>Includes the following attributes:</p>
-           <table border="2" width="85%" align="center" frame="hsides" rules="all" cellpadding="5">
+           <table>
            <colgroup align="left" />
            <colgroup align="left" />
-           <tr><th>Attribute<th>Summary</tr>
-           <tr><th><code>{@link #PreferenceView_summary com.growlforandroid.client:summary}</code><td></tr>
-           <tr><th><code>{@link #PreferenceView_title com.growlforandroid.client:title}</code><td></tr>
+           <tr><th>Attribute</th><th>Description</th></tr>
+           <tr><td><code>{@link #PreferenceView_summary com.growlforandroid.client:summary}</code></td><td></td></tr>
+           <tr><td><code>{@link #PreferenceView_title com.growlforandroid.client:title}</code></td><td></td></tr>
            </table>
            @see #PreferenceView_summary
            @see #PreferenceView_title

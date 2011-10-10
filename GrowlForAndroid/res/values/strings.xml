@@ -87,11 +87,13 @@
 	</string-array>
 	<string name="subscriptions_add_dialog_title">Add Subscription</string>
 	<string name="subscriptions_edit_dialog_title">Edit Subscription</string>
-	<string name="gntp_zeroconf_name_format">%s on %s</string>
+	<string name="gntp_zeroconf_name_format" formatted="false">%s on %s</string>
 	<string name="display_profile_default">(Default)</string>
 	<string name="display_profile_ignore">Ignore</string>
 	<string name="display_profile_silent">Silent</string>
 	<string name="display_profile_vibrate">Vibrate</string>
 	<string name="display_profile_growl">Growl</string>
 	<string name="display_profile_growl_vibrate">Growl &amp; Vibrate</string>
+	<string name="preferences_general_announce_using_zeroconf">Announce to other devices</string>
+	<string name="preferences_general_announce_using_zeroconf_summary">Enables use of Bonjour/ZeroConf to simplify setup</string>
 </resources>
