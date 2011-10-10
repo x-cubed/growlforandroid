@@ -137,7 +137,11 @@ public class ListenerServiceConnection implements ServiceConnection {
 	public void unbind() {
 		if (_isBound) {
 			Log.i("ListenerServiceConnection.unbind", "Unbinding from service");
-			_context.unbindService(this);
+				try {
+					_context.unbindService(this);
+				} catch (Exception x) {
+					Log.e("ListenerServiceConnection.unbind", x.toString());
+				}
 			_isBound = false;
 			onServiceStopped();
 		}
