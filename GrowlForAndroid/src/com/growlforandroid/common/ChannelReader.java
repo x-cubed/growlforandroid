@@ -13,7 +13,7 @@ import android.util.Log;
  * @author Carey Bishop
   */
 public class ChannelReader {
-	protected static final int BUFFER_SIZE = 8192;
+	protected static final int BUFFER_SIZE = 32 * 1024;
 	
 	private static final byte UTF8_MULTI_START = (byte) 0x80;
 	private static final byte UTF8_MULTI_MASK = (byte) 0xC0;
@@ -45,7 +45,7 @@ public class ChannelReader {
 		_buffer.rewind();
 		Log.i("ChannelReader.fillBuffer", "Filling the buffer...");
 		while (_availableBytes == 0) {
-			_availableBytes =_channel.read(_buffer);
+			_availableBytes = _channel.read(_buffer);
 		}
 		Log.i("ChannelReader.fillBuffer", "Read " + _availableBytes + " bytes into the buffer");
 		_buffer.rewind();
@@ -59,9 +59,27 @@ public class ChannelReader {
 	 */
 	public byte[] readBytes(int length) throws IOException {
 		byte[] data = new byte[length];
-		for(int i=0; i < data.length; i++) {
-			data[i] = readByte();
+
+		// Keep reading until we've read 'length' bytes
+		int remaining = length;
+		while (remaining > 0) {
+			// Refill the buffer if we've run out
+			if (_availableBytes == 0) {
+				fillBuffer();
+			}
+			
+			// Determine how much we can read from the buffer
+			int buffered = _availableBytes;
+			if (_availableBytes > remaining) {
+				buffered = remaining;
+			}
+			
+			// Read from the buffer and update our position
+			_buffer.get(data, length - remaining, buffered);
+			_availableBytes -= buffered;
+			remaining -= buffered;
 		}
+
 		return data;
 	}
 	
@@ -71,9 +89,8 @@ public class ChannelReader {
 	 * @throws IOException
 	 */
 	public void skipBytes(int length) throws IOException {
-		for(int i=0; i < length; i++) {
-			readByte();
-		}
+		// FIXME: Ideally this would not process the bytes in any way, but this will do for the moment
+		readBytes(length);
 	}
 	
 	/**
