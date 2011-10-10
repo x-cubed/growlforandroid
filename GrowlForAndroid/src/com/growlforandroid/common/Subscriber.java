@@ -82,9 +82,15 @@ public class Subscriber {
 		return Utility.getDeviceFriendlyName();
 	}
 
+	private Database getDatabase() {
+		if (_database == null) {
+			_database = new Database(_context);
+		}
+		return _database;
+	}
+	
 	public void start() {
 		Log.i("Subscriber.start", "Starting the subscriber " + _id + "...");
-		_database = new Database(_context);
 		_timer = new Timer();
 		_timer.scheduleAtFixedRate(new TimerTask() {
 			@Override
@@ -105,16 +111,18 @@ public class Subscriber {
 			_timer.purge();
 			_timer = null;
 
-			// Marker all subscriptions as unregistered
+			// Mark all subscriptions as unregistered
 			unsubscribeAll();
-			
+		}
+		
+		if (_database != null) {
 			_database.close();
 			_database = null;
 		}
 	}
 	
 	public void subscribeNow() {
-		Cursor subscriptions = _database.getSubscriptions();
+		Cursor subscriptions = getDatabase().getSubscriptions();
 		if (subscriptions.moveToFirst()) {
 			final int ID_COLUMN = subscriptions.getColumnIndex(Database.KEY_ROWID);
 			final int ADDRESS_COLUMN = subscriptions.getColumnIndex(Database.KEY_ADDRESS);
@@ -138,13 +146,13 @@ public class Subscriber {
 	}
 	
 	public void unsubscribeAll() {
-		Cursor subscriptions = _database.getSubscriptions();
+		Cursor subscriptions = getDatabase().getSubscriptions();
 		if (subscriptions.moveToFirst()) {
 			final int ID_COLUMN = subscriptions.getColumnIndex(Database.KEY_ROWID);		
 			int count = 0;
 			do {
 				long id = subscriptions.getLong(ID_COLUMN);
-				_database.updateSubscription(id, STATUS_UNREGISTERED);
+				getDatabase().updateSubscription(id, STATUS_UNREGISTERED);
 				onSubscriptionStatusChanged(id, STATUS_UNREGISTERED);
 				count ++;
 			} while (subscriptions.moveToNext());
@@ -154,7 +162,7 @@ public class Subscriber {
 	}
 	
 	public void startSubscription(long id, String address, String password) {
-		_database.updateSubscription(id, STATUS_REGISTERING);
+		getDatabase().updateSubscription(id, STATUS_REGISTERING);
 		onSubscriptionStatusChanged(id, STATUS_REGISTERING);
 		
 		Thread subscribe = new SubscriberThread(this, id, address, password);
@@ -163,7 +171,7 @@ public class Subscriber {
 	
 	public int getActiveSubscriptions() {
 		int active = 0;
-		Cursor cursor = _database.getSubscriptions();
+		Cursor cursor = getDatabase().getSubscriptions();
 		final int statusColumn = cursor.getColumnIndex(Database.KEY_STATUS);
 		while (cursor.moveToNext()) {
 			String status = cursor.getString(statusColumn);
@@ -198,9 +206,7 @@ public class Subscriber {
 			Log.i("Subscriber.onSubscriptionComplete", "Subscription " + id + " failed: " + error.toString());
 		}
 		
-		if (_database != null) {
-			_database.updateSubscription(id, status);
-		}
+		getDatabase().updateSubscription(id, status);
 		
 		onSubscriptionStatusChanged(id, status);
 	}
