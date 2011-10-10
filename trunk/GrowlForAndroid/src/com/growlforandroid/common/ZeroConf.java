@@ -11,15 +11,11 @@ import android.net.wifi.WifiManager;
 import android.util.Log;
 
 public class ZeroConf {
-	private static final boolean USE_ZEROCONF = false;
-	
 	private static ZeroConf _instance;
 	private JmDNS _jmDNS;
 	private WifiManager.MulticastLock _mcLock;
 	
 	private ZeroConf(Context context) {
-		if (!USE_ZEROCONF)
-			return;
 		initialise(context);
 	}
 	
@@ -90,6 +86,12 @@ public class ZeroConf {
 				}
 			}            
 		}).start();
+	}
+	
+	public void unregisterAllServices() {
+		if (_jmDNS != null) {
+			_jmDNS.unregisterAllServices();
+		}
 	}
 
 	public void addServiceListener(String type, ServiceListener serviceListener) {

@@ -7,6 +7,7 @@
 		        android:key="start_automatically"
 		        android:title="@string/preferences_general_auto_start"
 		        android:summary="@string/preferences_general_auto_start_summary" android:defaultValue="true"/>
+		<CheckBoxPreference android:key="announce_using_zeroconf" android:title="@string/preferences_general_announce_using_zeroconf" android:summary="@string/preferences_general_announce_using_zeroconf_summary" android:defaultValue="true"></CheckBoxPreference>
 	</PreferenceCategory>
   
 	<PreferenceCategory
