@@ -16,9 +16,6 @@ import android.util.Log;
  * IGrowlRegistry about each message.
  */
 public class GntpListenerThread extends Thread {
-	/** If true, skips over the embedded resources in a message and doesn't cache them locally */
-	private static final boolean SKIP_LOADING_RESOURCES = true;
-	
 	private final SocketAcceptor _acceptor;
 	private final long _connectionID;
 	private final Socket _socket;
@@ -237,27 +234,20 @@ public class GntpListenerThread extends Thread {
 		// Read the bytes directly from the stream
 		int length = _currentResource.getLength();
 		
-		if (SKIP_LOADING_RESOURCES) {
-			Log.i("GntpListenerThread.readResourceData[" + _connectionID + "]",
-					"Skipping " + length + " bytes of resource data");
-			_socketReader.skipBytes(length);
-			
-		} else {
-			Log.i("GntpListenerThread.readResourceData[" + _connectionID + "]",
-					"Reading " + length + " bytes of resource data");
+		Log.i("GntpListenerThread.readResourceData[" + _connectionID + "]",
+				"Reading " + length + " bytes of resource data");
 
-			// Read in the file data, decrypt it and save it to a temporary location
-			File cacheFolder = _registry.getCacheDir();
-			File tempResource = _socketReader.readAndDecryptBytesToTempFile(length, _encryptionType, _initVector, _key, cacheFolder);
-			Log.i("GntpListenerThread.readResourceData[" + _connectionID + "]", "Created " +
-					tempResource.getAbsolutePath() + " as resource (" + tempResource.length() + ")");
-			
-			// Link the source file to the resource, register the resource and link the resource to the notification
-			_currentResource.setSourceFile(tempResource);
-			_registry.registerResource(_currentResource);
-			_resources.put(_currentResource.getIdentifier(), _currentResource);
-			_currentResource = null;
-		}
+		// Read in the file data, decrypt it and save it to a temporary location
+		File cacheFolder = _registry.getCacheDir();
+		File tempResource = _socketReader.readAndDecryptBytesToTempFile(length, _encryptionType, _initVector, _key, cacheFolder);
+		Log.i("GntpListenerThread.readResourceData[" + _connectionID + "]", "Created " +
+				tempResource.getAbsolutePath() + " as resource (" + tempResource.length() + ")");
+		
+		// Link the source file to the resource, register the resource and link the resource to the notification
+		_currentResource.setSourceFile(tempResource);
+		_registry.registerResource(_currentResource);
+		_resources.put(_currentResource.getIdentifier(), _currentResource);
+		_currentResource = null;
 		
 		_resourceIndex ++;
 		if (_resourceIndex >= _resources.size()) {
