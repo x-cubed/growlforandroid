@@ -6,8 +6,6 @@ import java.nio.channels.SocketChannel;
 
 import com.growlforandroid.gntp.Constants;
 
-import android.util.Log;
-
 /**
  * Reads byte and UTF-8 character data from a channel
  * @author Carey Bishop
@@ -43,11 +41,11 @@ public class ChannelReader {
 	 */
 	private void fillBuffer() throws IOException {
 		_buffer.rewind();
-		Log.i("ChannelReader.fillBuffer", "Filling the buffer...");
+		// Log.i("ChannelReader.fillBuffer", "Filling the buffer...");
 		while (_availableBytes == 0) {
 			_availableBytes = _channel.read(_buffer);
 		}
-		Log.i("ChannelReader.fillBuffer", "Read " + _availableBytes + " bytes into the buffer");
+		// Log.i("ChannelReader.fillBuffer", "Read " + _availableBytes + " bytes into the buffer");
 		_buffer.rewind();
 	}
 	
