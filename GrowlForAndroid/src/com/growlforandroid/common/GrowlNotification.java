@@ -17,6 +17,8 @@ import com.growlforandroid.client.R;
 import com.growlforandroid.gntp.Constants;
 
 public class GrowlNotification {
+	private final static int MAX_ICON_SIZE = 100;
+	
 	private final NotificationType _type;
 	private final String _id;
 	private final String _title;
@@ -96,10 +98,14 @@ public class GrowlNotification {
 			Log.d("GrowlNotification.getIcon", "Loading icon from: " + name);
 			stream = source.openStream();
 			icon = new BitmapDrawable(stream).getBitmap();
-			Log.d("GrowlNotification.getIcon", "Size: " + icon.getWidth() + " x " + icon.getHeight());
 			
-			if (icon.getWidth() > 100) {
-				Bitmap scaledIcon = Bitmap.createScaledBitmap(icon, 100, 100, true);
+			// Ensure that the icon isn't too big to display
+			int width = icon.getWidth();
+			int height = icon.getHeight();			
+			Log.d("GrowlNotification.getIcon", "Size: " + width + " x " + height);
+			if ((width > MAX_ICON_SIZE) || (height > MAX_ICON_SIZE)) {
+				// Reduce the size of the icon to something reasonable
+				Bitmap scaledIcon = Bitmap.createScaledBitmap(icon, MAX_ICON_SIZE, MAX_ICON_SIZE, true);
 				icon = scaledIcon;
 				Log.d("GrowlNotification.getIcon", "Scaled to: " + icon.getWidth() + " x " + icon.getHeight());
 			}
