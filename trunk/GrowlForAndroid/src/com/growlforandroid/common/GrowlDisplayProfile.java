@@ -79,8 +79,6 @@ public class GrowlDisplayProfile {
 		String title = notification.getTitle();
 		String message = notification.getMessage();
 		long receivedAtMS = notification.getReceivedAtMS();
-		// URL iconUrl = notification.getIconUrl();
-		// String origin = notification.getOrigin();
 		
 		Notification statusBarPanel = new Notification(R.drawable.statusbar_enabled, message, receivedAtMS);
 		
@@ -127,7 +125,7 @@ public class GrowlDisplayProfile {
         
         // Use our custom layout for the notification panel, so that we can insert the application icon
         RemoteViews contentView = new RemoteViews(context.getPackageName(), R.layout.notification_list_item);
-        contentView.setImageViewResource(R.id.imgNotificationIcon, R.drawable.launcher);
+        contentView.setImageViewBitmap(R.id.imgNotificationIcon, notification.getIcon(context));
         contentView.setTextViewText(R.id.txtNotificationTitle, title);
         contentView.setTextViewText(R.id.txtNotificationMessage, message.replace("\n", " / "));
         contentView.setTextViewText(R.id.txtNotificationApp, app.getName());

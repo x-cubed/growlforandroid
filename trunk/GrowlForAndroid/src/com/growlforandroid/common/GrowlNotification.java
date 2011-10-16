@@ -1,11 +1,17 @@
 package com.growlforandroid.common;
 
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
+import android.util.Log;
 
 import com.growlforandroid.client.R;
 import com.growlforandroid.gntp.Constants;
@@ -80,10 +86,35 @@ public class GrowlNotification {
 		_resources.put(resource.getIdentifier(), resource);
 	}
 	
-	public Drawable getIcon(Context context) {
-		//URL source = _iconUrl != null ? _iconUrl : _type.getIconUrl();
-		// FIXME: resolve source
-		return context.getResources().getDrawable(R.drawable.icon);
+	public Bitmap getIcon(Context context) {
+		URL source = (_iconUrl != null) ? _iconUrl : _type.getIconUrl();
+		
+		String name = source.toExternalForm();
+		InputStream stream = null;
+		Bitmap icon;
+		try {
+			Log.d("GrowlNotification.getIcon", "Loading icon from: " + name);
+			stream = source.openStream();
+			icon = new BitmapDrawable(stream).getBitmap();
+			Log.d("GrowlNotification.getIcon", "Size: " + icon.getWidth() + " x " + icon.getHeight());
+			
+			if (icon.getWidth() > 100) {
+				Bitmap scaledIcon = Bitmap.createScaledBitmap(icon, 100, 100, true);
+				icon = scaledIcon;
+				Log.d("GrowlNotification.getIcon", "Scaled to: " + icon.getWidth() + " x " + icon.getHeight());
+			}
+			
+		} catch (Exception x) {
+			Log.e("GrowlNotification.getIcon", "Unable to load source: " + name + "\n" + x.toString());
+			icon = BitmapFactory.decodeResource(context.getResources(), R.drawable.icon);
+		}
+		if (stream != null) {
+			try {
+				stream.close();
+			} catch (Exception x) {
+			}
+		}
+		return icon;
 	}
 
 	public String getOrigin() {
