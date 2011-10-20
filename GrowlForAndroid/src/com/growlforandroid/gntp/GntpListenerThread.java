@@ -304,8 +304,11 @@ public class GntpListenerThread extends Thread {
 	private RequestState parseRequestLine(String inputLine)
 		throws GntpException, IOException, DecryptionException {
 		
+		// Line can end with extraneous whitespace
+		String requestLine = inputLine.trim();
+		
 		// GNTP/<version> <messagetype> <encryptionAlgorithmID>[:<ivValue>][ <keyHashAlgorithmID>:<keyHash>.<salt>]
-		String[] component = inputLine.split(Constants.FIELD_DELIMITER);
+		String[] component = requestLine.split(Constants.FIELD_DELIMITER);
 		if ((component.length < 3) || (component.length > 4))
 			throw new GntpException(GntpError.InvalidRequest, "Expected 3 or 4 fields, found " + component.length + " fields");
 		
