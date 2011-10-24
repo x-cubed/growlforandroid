@@ -1,11 +1,16 @@
 package com.growlforandroid.client;
 
+import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.jmdns.*;
 
 import com.growlforandroid.common.Database;
 import com.growlforandroid.common.GrowlApplication;
 import com.growlforandroid.common.GrowlNotification;
 import com.growlforandroid.common.NotificationType;
+import com.growlforandroid.common.Subscription;
 import com.growlforandroid.common.ZeroConf;
 import com.growlforandroid.gntp.Constants;
 
@@ -30,45 +35,97 @@ public class Subscriptions
 	private ListenerServiceConnection _service;
 	
 	private Database _database;
-	private Cursor _cursor;
+	private SubscriptionListAdapter _adapter;
 	private MenuItem _mniAddSubscription;
 	private MenuItem _mniSubscribeNow;
-	private long _itemId = -1;
+	private int _position = -1;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setTitle(R.string.subscriptions_title);
+        
+        // Enable use of a spinner to show loading progress
+        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+        setProgressBarIndeterminate(true);
 
         _zeroConf = ZeroConf.getInstance(this);
         _service = new ListenerServiceConnection(this, this);
         _database = new Database(this);
-        _cursor = _database.getSubscriptions();
-        
-        // Use an existing ListAdapter that will map an array
-        // of strings to TextViews
-        setListAdapter(new SimpleCursorAdapter(this,
-        		R.layout.history_list_item, _cursor,
-                new String[] { Database.KEY_NAME, Database.KEY_STATUS, Database.KEY_ADDRESS },
-                new int[] { R.id.txtNotificationTitle, R.id.txtNotificationMessage, R.id.txtNotificationApp }));
+        _adapter = new SubscriptionListAdapter();
+        setListAdapter(_adapter);
     }
     
     private void refresh() {
-		_cursor.requery();
+    	final ArrayList<Subscription> subscriptions = new ArrayList<Subscription>();
     	
+    	// Add the subscriptions from the database
+    	Cursor cursor = _database.getSubscriptions();
+    	int idIndex = cursor.getColumnIndex(Database.KEY_ROWID);
+    	int nameIndex = cursor.getColumnIndex(Database.KEY_NAME);
+		int statusIndex = cursor.getColumnIndex(Database.KEY_STATUS);
+		int addressIndex = cursor.getColumnIndex(Database.KEY_ADDRESS);
+		int passwordIndex = cursor.getColumnIndex(Database.KEY_PASSWORD);
+    	while (cursor.moveToNext()) {
+    		int id = cursor.getInt(idIndex);
+    		String name = cursor.getString(nameIndex);
+    		String status = cursor.getString(statusIndex);
+    		String address = cursor.getString(addressIndex);
+    		String password = cursor.getString(passwordIndex);
+    		Subscription subscription = new Subscription(id, name, status, address, password, true);
+    		subscriptions.add(subscription);
+    	}
+    	_adapter.update(subscriptions);
+    	
+    	findZeroConfServices(subscriptions);
+    }
+    
+    private void findZeroConfServices(final ArrayList<Subscription> existing) {
+    	final String statusAvailable = this.getResources().getString(R.string.subscriptions_status_available);
+    	final Subscriptions activity = this;
+    	activity.setProgressBarIndeterminateVisibility(true);
+
+    	// Spawn a background thread to look for GNTP services on the network
     	new Thread(new Runnable() {
     		public void run() {
+    			// Query the available services using ZeroConf
+    			int added = 0;
     			Log.i("Subscriptions.refresh", "Querying available GNTP services...");
-    			ServiceInfo[] infos = _zeroConf.findServices(Constants.GNTP_ZEROCONF_SERVICE_TYPE);
-    			for (int i=0; i < infos.length; i++) {
-    	            Log.i("Subscriptions.refresh", infos[i].toString());
-    	        }
-    			Log.i("Subscriptions.refresh", "Finished querying");
+    			final ServiceInfo[] services = _zeroConf.findServices(Constants.GNTP_ZEROCONF_SERVICE_TYPE);
+    			Log.i("Subscriptions.refresh", "Found " + services.length + " available GNTP services");
+    	    	for (int i=0; i < services.length; i++) {
+    	    		ServiceInfo service = services[i];
+
+    	    		InetAddress[] addresses = service.getInetAddresses();
+    	    		if ((addresses != null) && (addresses.length > 0)) {
+	    	            Log.d("Subscriptions.refresh", "\"" + service.getName() + "\" at " +
+	    	            		addresses[0] + ":" + service.getPort());
+	    	            existing.add(new Subscription(service, statusAvailable, false));
+	    	            added++;
+    	    		}
+    	    	}
+    	    	Log.i("Subscriptions.refresh", "Finished querying");
+    	    	
+    	    	// Switch back to the UI thread to update the list view
+    	    	final boolean modified = (added > 0);
+    	    	activity.runOnUiThread(new Runnable() {
+    	    		public void run() {
+    	    			if (modified) {
+    	    				_adapter.update(existing);
+    	    			}
+    	    	    	activity.setProgressBarIndeterminateVisibility(false);
+    	    		}
+    	    	});
     		}
     	}).start();
     }
     
-    private void refreshOnUiThread() {
+    private static void setText(View child, int viewId, String text) {
+    	TextView textView = (TextView) child.findViewById(viewId);
+    	textView.setText(text);
+	}
+    
+	private void refreshOnUiThread() {
     	this.runOnUiThread(new Runnable() {
 			public void run() {
 				refresh();
@@ -80,17 +137,14 @@ public class Subscriptions
     public void onResume() {
     	super.onResume();
     	_service.bind();
+    	_zeroConf.addServiceListener(Constants.GNTP_ZEROCONF_SERVICE_TYPE, this);
     	
-    	Log.i("Subscriptions.onResume", "Listening for GNTP service announcements...");
-        _zeroConf.addServiceListener(Constants.GNTP_ZEROCONF_SERVICE_TYPE, this);    	
     	refresh();
     }
     
     @Override
     public void onPause() {
-		Log.i("Subscriptions.onPause", "Stop listening for GNTP service announcements");
-		_zeroConf.removeServiceListener(Constants.GNTP_ZEROCONF_SERVICE_TYPE, this);
-    	
+    	_zeroConf.removeServiceListener(Constants.GNTP_ZEROCONF_SERVICE_TYPE, this);
     	_service.unbind();
     	super.onPause();
     }
@@ -101,17 +155,10 @@ public class Subscriptions
     	super.onDestroy();
     }
     
-    private void stop() {
-    	_zeroConf.removeServiceListener(Constants.GNTP_ZEROCONF_SERVICE_TYPE, this);
-    	
+    private void stop() { 	
     	if (_service != null) {
     		_service.unbind();
     		_service = null;
-    	}
-    	
-    	if (_cursor != null) {
-    		_cursor.close();
-    		_cursor = null;
     	}
     	
     	if (_database != null) {
@@ -148,27 +195,32 @@ public class Subscriptions
     
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
-    	_itemId = id;
-    	showDialog(DIALOG_ITEM_MENU);
+    	_position = position;
+    	Subscription subscription = (Subscription)_adapter.getItem(_position);
+    	if (subscription.isSubscribed()) {
+    		showDialog(DIALOG_ITEM_MENU);
+    	} else {
+    		showDialog(DIALOG_ADD_SUBSCRIPTION);
+    	}
     }
     
     @Override
     public Dialog onCreateDialog(int id) {
+    	final Subscription selected = (Subscription) _adapter.getItem(_position);
+    	
     	switch (id) {
 	    	case DIALOG_ADD_SUBSCRIPTION:
-	    		return new EditDialog(this).create();
+	    		if ((selected != null) && !selected.isSubscribed()) {
+	    			// Add from Bonjour
+	    			return new AddEditDialog(this, selected.getName(), selected.getAddress()).create();
+	    		} else {
+	    			// Add manually
+	    			return new AddEditDialog(this).create();
+	    		}
 	        
 	    	case DIALOG_EDIT_SUBSCRIPTION:
-	    		Cursor subscription = _database.getSubscription(_itemId);
-	    		if (subscription.moveToFirst()) {
-		    		String name = subscription.getString(subscription.getColumnIndex(Database.KEY_NAME));
-		        	String address = subscription.getString(subscription.getColumnIndex(Database.KEY_ADDRESS));
-		        	String password = subscription.getString(subscription.getColumnIndex(Database.KEY_PASSWORD));
-		    		subscription.close();
-		        	return new EditDialog(this, _itemId, name, address, password).create();
-	    		}
-	    		subscription.close();
-	    		break;
+	        	return new AddEditDialog(this, selected.getId(), selected.getName(),
+	        			selected.getAddress(), selected.getPassword()).create();
 		    	
 	    		
 	    	case DIALOG_ITEM_MENU:
@@ -181,7 +233,7 @@ public class Subscriptions
 	                    		showDialog(DIALOG_EDIT_SUBSCRIPTION);
 	                    	} else if (which == 1) {
 	                    		// Delete
-	                    		_database.deleteSubscription(_itemId);
+	                    		_database.deleteSubscription(selected.getId());
 		                    	refresh();	
 	                    	} else {
 	                    		Log.w("Subscriptions.ItemMenu.onClick", "Unknown option " + which);
@@ -194,7 +246,59 @@ public class Subscriptions
     	return null;
     }
 
-	private class EditDialog {
+    private class SubscriptionListAdapter extends BaseAdapter implements ListAdapter {
+    	private List<Subscription> _subscriptions;
+    	
+    	public SubscriptionListAdapter() {
+    		_subscriptions = new ArrayList<Subscription>();
+    	}
+    	
+    	public void update(ArrayList<Subscription> subscriptions) {
+    		synchronized (_subscriptions) {
+	    		notifyDataSetInvalidated();
+	    		_subscriptions = subscriptions;
+	    		notifyDataSetChanged();
+    		}
+    	}
+    	
+		public int getCount() {
+			return _subscriptions.size();
+		}
+
+		public Object getItem(int position) {
+			synchronized (_subscriptions) {
+				if (position < 0 || position >= _subscriptions.size()) {
+					return null;
+				}
+				return _subscriptions.get(position);
+			}
+		}
+
+		public long getItemId(int position) {
+			synchronized (_subscriptions) {
+				Subscription subscription = _subscriptions.get(position);
+				return subscription.getId();
+			}
+		}
+
+		public View getView(int position, View convertView, ViewGroup viewGroup) {
+			View child;
+			if (convertView != null) {
+				child = convertView;
+			} else {
+				child = getLayoutInflater().inflate(R.layout.history_list_item, viewGroup, false);
+			}
+			
+			Subscription subscription = _subscriptions.get(position);
+			setText(child, R.id.txtNotificationTitle, subscription.getName());
+            setText(child, R.id.txtNotificationMessage, subscription.getStatus());
+            setText(child, R.id.txtNotificationApp, subscription.getAddress());
+            
+            return child;
+		}
+    }
+    
+	private class AddEditDialog {
 		private final Context _context;
 		private LayoutInflater _factory;
 		private View _textEntryView;
@@ -206,7 +310,7 @@ public class Subscriptions
 
 		private long _id;
 		
-		public EditDialog(Context context) {
+		public AddEditDialog(Context context) {
 			_context = context;
 			initialise();
 			
@@ -233,7 +337,16 @@ public class Subscriptions
 		    });
 		}
 		
-		public EditDialog(Context context, long id, String name, String address, String password) {
+		public AddEditDialog(Context context, String name, String address) {
+			this(context);
+			
+			_txtName.setText(name);
+			_txtName.setEnabled(false);
+			_txtAddress.setText(address);
+			_txtAddress.setEnabled(false);
+		}
+		
+		public AddEditDialog(Context context, long id, String name, String address, String password) {
 			_context = context;
 			_id = id;
 			initialise();
@@ -264,7 +377,7 @@ public class Subscriptions
 		        }
 		    });
 		}
-		
+
 		private void initialise() {
 			_factory = LayoutInflater.from(_context);
 			_textEntryView = _factory.inflate(R.layout.add_subscription_dialog, null);
@@ -287,7 +400,13 @@ public class Subscriptions
 	}
     
     public void serviceAdded(ServiceEvent event) {
-        Log.i("Subscriptions.serviceAdded", "Service added   : " + event.getName() + "." + event.getType());
+    	try {
+	        Log.i("Subscriptions.serviceAdded", "Service added   : " + event.getName() + "." + event.getType());
+	        ServiceInfo service = _zeroConf.getServiceInfo(event.getType(), event.getName());
+	        dumpServiceInfo("Subscriptions.serviceAdded", service);
+    	} catch (Exception x) {
+    		Log.e("Subscriptions.serviceAdded", x.toString());
+    	}
     }
 
     public void serviceRemoved(ServiceEvent event) {
@@ -295,7 +414,21 @@ public class Subscriptions
     }
 
     public void serviceResolved(ServiceEvent event) {
-    	Log.i("Subscriptions.serviceResolved", "Service resolved: " + event.getInfo());
+    	try {
+	    	ServiceInfo service = event.getInfo();
+	    	dumpServiceInfo("Subscriptions.serviceResolved", service);
+    	} catch (Exception x) {
+    		Log.e("Subscriptions.serviceAdded", x.toString());
+    	}
+    }
+    
+    private void dumpServiceInfo(String tag, ServiceInfo service) {
+    	if (service == null) {
+    		Log.i(tag, "No service information");
+    		return;
+    	}
+    	
+    	Log.d(tag, "\"" + service.getName() + "\" on " + service.getInetAddresses()[0].toString() + " port " + service.getPort());
     }	
 
     public void onApplicationRegistered(GrowlApplication app) {
