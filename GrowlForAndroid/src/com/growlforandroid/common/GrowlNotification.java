@@ -110,7 +110,7 @@ public class GrowlNotification {
 			
 		} catch (Exception x) {
 			Log.e("GrowlNotification.getIcon", "Unable to load source: " + name + "\n" + x.toString());
-			icon = BitmapFactory.decodeResource(context.getResources(), R.drawable.icon);
+			icon = BitmapFactory.decodeResource(context.getResources(), R.drawable.launcher);
 		}
 		if (stream != null) {
 			try {
