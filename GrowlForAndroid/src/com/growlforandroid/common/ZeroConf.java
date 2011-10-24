@@ -1,5 +1,6 @@
 package com.growlforandroid.common;
 
+import java.io.IOException;
 import java.net.InetAddress;
 
 import javax.jmdns.JmDNS;
@@ -11,6 +12,8 @@ import android.net.wifi.WifiManager;
 import android.util.Log;
 
 public class ZeroConf {
+	private static final int TIMEOUT = 2000;
+	
 	private static ZeroConf _instance;
 	private JmDNS _jmDNS;
 	private WifiManager.MulticastLock _mcLock;
@@ -42,13 +45,19 @@ public class ZeroConf {
 	}
 
 	public void close() {
-		finalize();
 		_instance = null;
+		finalize();
 	}
 	
 	protected void finalize() {
+		Log.i("ZeroConf.finalize", "Finalizing");
 		if (_jmDNS != null) {
-			_jmDNS.close();
+			try {
+				_jmDNS.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			_jmDNS = null;
 		}
 		
@@ -95,22 +104,24 @@ public class ZeroConf {
 	}
 
 	public void addServiceListener(String type, ServiceListener serviceListener) {
-		if (_jmDNS != null) {
-			_jmDNS.addServiceListener(type, serviceListener);
-		}
+		Log.i("ZeroConf.addServiceListener", "Adding listener " + serviceListener.getClass().getName());
+		_jmDNS.addServiceListener(type, serviceListener);
 	}
 
 	public ServiceInfo[] findServices(String type) {
-		if (_jmDNS != null) {
-			return _jmDNS.list(type);
-		} else {
-			return new ServiceInfo[0];
-		}
+		return _jmDNS.list(type, TIMEOUT);
 	}
 
 	public void removeServiceListener(String type, ServiceListener serviceListener) {
-		if (_jmDNS != null) {
+		if (_jmDNS == null) {
+			Log.i("ZeroConf.removeServiceListener", "Unable to remove listener " + serviceListener.getClass().getName());
+		} else {
+			Log.i("ZeroConf.removeServiceListener", "Removing listener " + serviceListener.getClass().getName());
 			_jmDNS.removeServiceListener(type, serviceListener);
 		}
+	}
+
+	public ServiceInfo getServiceInfo(String type, String name) {
+		return _jmDNS.getServiceInfo(type, name);
 	}
 }

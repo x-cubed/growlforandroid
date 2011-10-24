@@ -75,6 +75,7 @@
 	<string name="subscriptions_title">Growl - Subscriptions</string>
 	<string name="subscriptions_add_subscription">Add Subscription</string>
 	<string name="subscriptions_subscribe_now">Subscribe now</string>
+	<string name="subscriptions_status_available">Available</string>
 	<string name="subscriptions_status_unregistered">Not subscribed</string>
 	<string name="subscriptions_status_registering">Subscribing...</string>
 	<string name="subscriptions_status_registered">Subscribed</string>
