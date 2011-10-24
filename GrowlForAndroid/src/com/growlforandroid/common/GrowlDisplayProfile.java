@@ -75,8 +75,6 @@ public class GrowlDisplayProfile {
 	}
 	
 	private void displayNotificationInStatusBar(Context context, GrowlNotification notification, Intent intent) {		
-		GrowlApplication app = notification.getType().Application;
-		String title = notification.getTitle();
 		String message = notification.getMessage();
 		long receivedAtMS = notification.getReceivedAtMS();
 		
@@ -124,19 +122,38 @@ public class GrowlDisplayProfile {
         statusBarPanel.flags = flags;
         
         // Use our custom layout for the notification panel, so that we can insert the application icon
-        RemoteViews contentView = new RemoteViews(context.getPackageName(), R.layout.notification_list_item);
-        contentView.setImageViewBitmap(R.id.imgNotificationIcon, notification.getIcon(context));
-        contentView.setTextViewText(R.id.txtNotificationTitle, title);
-        contentView.setTextViewText(R.id.txtNotificationMessage, message.replace("\n", " / "));
-        contentView.setTextViewText(R.id.txtNotificationApp, app.getName());
-        statusBarPanel.contentView = contentView;
+        statusBarPanel.contentView = createNotificationView(context, notification);
 
         // The PendingIntent to launch our activity if the user selects this notification
         statusBarPanel.contentIntent = PendingIntent.getActivity(context, 0, intent, 0);
 
         // Send the notification to the status bar
+        GrowlApplication app = notification.getType().Application;
         NotificationManager notifyMgr = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
         notifyMgr.notify(app.ID, statusBarPanel);
+	}
+
+	private RemoteViews createNotificationView(Context context, GrowlNotification notification) {
+		GrowlApplication app = notification.getType().Application;
+		
+		RemoteViews contentView = new RemoteViews(context.getPackageName(), R.layout.notification_list_item);
+        contentView.setImageViewBitmap(R.id.imgNotificationIcon, notification.getIcon(context));
+        
+        // Title
+        contentView.setTextViewText(R.id.txtNotificationTitle, notification.getTitle());
+        contentView.setTextColor(R.id.txtNotificationTitle, AndroidNotificationStyle.getTitleTextColor());
+        contentView.setFloat(R.id.txtNotificationTitle, "setTextSize", AndroidNotificationStyle.getTitleTextSize());
+        
+        // Message
+        contentView.setTextViewText(R.id.txtNotificationMessage, notification.getMessage().replace("\n", " / "));
+        contentView.setTextColor(R.id.txtNotificationMessage, AndroidNotificationStyle.getMessageTextColor());
+        contentView.setFloat(R.id.txtNotificationTitle, "setTextSize", AndroidNotificationStyle.getMessageTextSize());
+        
+        // Application Name
+        contentView.setTextViewText(R.id.txtNotificationApp, app.getName());
+        contentView.setTextColor(R.id.txtNotificationApp, AndroidNotificationStyle.getMessageTextColor());
+        contentView.setFloat(R.id.txtNotificationTitle, "setTextSize", AndroidNotificationStyle.getMessageTextSize());
+		return contentView;
 	}
 
 	private void displayNotificationAsToast(Context context, GrowlNotification notification) {
@@ -149,4 +166,5 @@ public class GrowlDisplayProfile {
        	Toast toast = Toast.makeText(context, toastText, Toast.LENGTH_LONG);
         toast.show();	
 	}
+
 }

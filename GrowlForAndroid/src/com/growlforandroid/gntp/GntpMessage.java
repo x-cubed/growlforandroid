@@ -42,7 +42,7 @@ public abstract class GntpMessage {
 	
 	public void addCommonHeaders(Context context) throws Exception {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-		String deviceName = prefs.getString(PREFERENCE_DEVICE_NAME, Build.DEVICE);
+		String deviceName = prefs.getString(PREFERENCE_DEVICE_NAME, Build.MODEL);
 		addHeader(Constants.HEADER_ORIGIN_MACHINE_NAME, deviceName);
 		addHeader(Constants.HEADER_ORIGIN_SOFTWARE_NAME, "Growl for Android");
 		addHeader(Constants.HEADER_ORIGIN_SOFTWARE_VERSION, "0.9");

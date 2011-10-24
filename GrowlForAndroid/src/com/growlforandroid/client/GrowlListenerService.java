@@ -11,12 +11,12 @@ import com.growlforandroid.gntp.*;
 
 import android.app.*;
 import android.content.*;
+import android.content.SharedPreferences.Editor;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.os.*;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.widget.*;
 
 public class GrowlListenerService
 	extends Service
@@ -74,12 +74,21 @@ public class GrowlListenerService
         	return START_STICKY;
         }
         
-    	// We can only get the Bluetooth adaptor name from a looper thread, so grab it now and save it for later
-    	String deviceName = Utility.getDeviceFriendlyName();
-    	Context context = getBaseContext();
+    	// Determine the device name to use
+        Context context = getBaseContext();
     	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-    	prefs.edit().putString(GntpMessage.PREFERENCE_DEVICE_NAME, deviceName).commit();
+        String deviceName = prefs.getString(GntpMessage.PREFERENCE_DEVICE_NAME, "");
+    	if (deviceName == "") {
+    		// Use the model name by default
+    		deviceName = Build.MODEL;
+        	Editor editor = prefs.edit();
+        	editor.putString(GntpMessage.PREFERENCE_DEVICE_NAME, deviceName);
+        	editor.commit();
+    	}
         
+    	// Determine the text size and color to use in the status bar
+    	AndroidNotificationStyle.grabNotificationStyle(context);
+    	
         try {
         	// Start listening on GNTP_PORT, on all interfaces
         	ISocketThreadFactory factory = new GntpListenerThreadFactory(this);
@@ -165,9 +174,6 @@ public class GrowlListenerService
     @Override
     public void onDestroy() {
     	stop();
-    	
-        // Tell the user we stopped.
-        Toast.makeText(this, R.string.service_stopped, Toast.LENGTH_SHORT).show();
     }
 
     private void stop() {

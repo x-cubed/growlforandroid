@@ -6,12 +6,14 @@ import java.util.*;
 import com.growlforandroid.client.R;
 import com.growlforandroid.gntp.GntpError;
 import com.growlforandroid.gntp.GntpException;
+import com.growlforandroid.gntp.GntpMessage;
 import com.growlforandroid.gntp.SubscriberThread;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.database.Cursor;
+import android.os.Build;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -29,6 +31,7 @@ public class Subscriber {
 
 	private final Context _context;
 	private final UUID _id;
+	private final String _deviceName;
 	private Database _database;
 	private Timer _timer;
 	
@@ -42,8 +45,11 @@ public class Subscriber {
 		STATUS_NOT_AUTHORIZED = _context.getText(R.string.subscriptions_status_not_authorized).toString();
 		STATUS_UNKNOWN_HOST = _context.getText(R.string.subscriptions_status_unknown_host).toString();
 		
-		// Determine the subscriber ID to use
+		// Load the preferences
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(_context);
+		_deviceName = prefs.getString(GntpMessage.PREFERENCE_DEVICE_NAME, Build.MODEL);
+
+		// Determine the subscriber ID to use
 		String uuid = prefs.getString(PREFERENCE_SUBSCRIBER_ID, null);
 		UUID id = null;
 		if (uuid != null) {
@@ -79,7 +85,7 @@ public class Subscriber {
 	 * @return the name to be displayed
 	 */
 	public String getName() {
-		return Utility.getDeviceFriendlyName();
+		return _deviceName;
 	}
 
 	private Database getDatabase() {
