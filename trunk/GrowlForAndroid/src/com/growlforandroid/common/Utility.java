@@ -3,8 +3,6 @@ package com.growlforandroid.common;
 import java.net.*;
 import java.util.Enumeration;
 
-import android.bluetooth.BluetoothAdapter;
-import android.os.Build;
 import android.util.Log;
 
 public final class Utility {
@@ -80,25 +78,6 @@ public final class Utility {
 			int blockLength = remaining > BLOCK_SIZE ? BLOCK_SIZE : remaining;
 			Log.i(tag, getHexStringFromByteArray(data, offset, blockLength));
 		}		
-	}
-
-	public static String getDeviceFriendlyName() {
-		String deviceName = null;
-
-		// Try to use the name used by Bluetooth
-		try {
-			BluetoothAdapter bluetooth = BluetoothAdapter.getDefaultAdapter();
-			if (bluetooth != null) {
-				deviceName = bluetooth.getName();
-			}
-		} catch (Exception x) {
-			Log.e("Utility.getDeviceFriendlyName", x.toString());
-		}
-		
-		if (deviceName == null) {
-			deviceName = Build.MODEL;
-		}
-		return deviceName;
 	}
 	
 	public static InetAddress getLocalIpAddress() {
