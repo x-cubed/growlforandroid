@@ -180,7 +180,7 @@ public class ChannelReader {
 	 */
 	private char readTwoByteChar(byte firstByte) throws IOException {
 		byte secondByte = readUTF8MultiByte();
-		int data = ((firstByte & 0x1C) << 8) | (secondByte & 0x3F);
+		int data = ((firstByte & 0x1F) << 6) | (secondByte & 0x3F);
 		return (char)data;
 	}
 	
