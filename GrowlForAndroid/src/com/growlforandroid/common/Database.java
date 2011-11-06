@@ -33,6 +33,7 @@ public class Database {
 	public static final String KEY_STATUS = "status";
 	public static final String KEY_DISPLAY_ID = "display_id";
 	public static final String KEY_LOG = "log";
+	public static final String KEY_STATUS_BAR_DEFAULTS = "status_bar_defaults";
 	public static final String KEY_STATUS_BAR_FLAGS = "status_bar_flags";
 	public static final String KEY_TOAST_FLAGS = "toast_flags";
 	public static final String KEY_ALERT_URL = "alert_url";
@@ -51,20 +52,21 @@ public class Database {
 	public static final String PREFERENCE_DEFAULT_DISPLAY_ID = "display_default_id";
 	
 	private static final String DATABASE_NAME = "growl";
-	private static final int DATABASE_VERSION = 1;
+	private static final int DATABASE_VERSION = 2;
 	
-	private final Context context;
+	private final Context _context;
 
 	private Helper DBHelper;
 	private SQLiteDatabase db;
 
-	public Database(Context ctx) {
-		this.context = ctx;
-		DBHelper = new Helper(context);
+	public Database(Context context) {
+		_context = context;
+		DBHelper = new Helper(_context);
 		db = DBHelper.getWritableDatabase();
 		
-		if (!hasDisplayProfiles())
-			createDisplayProfiles(ctx);
+		if (!hasDisplayProfiles()) {
+			createDisplayProfiles();
+		}
 	}
 
 	private class Helper extends SQLiteOpenHelper {
@@ -98,6 +100,7 @@ public class Database {
 					+ "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
 					+ "name TEXT NOT NULL, "
 					+ "log INTEGER NOT NULL, "
+					+ "status_bar_defaults INTEGER, "
 					+ "status_bar_flags INTEGER, "
 					+ "toast_flags INTEGER, "
 					+ "alert_url TEXT);");
@@ -127,15 +130,32 @@ public class Database {
 
 		@Override
 		public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-			Log.w("Database", "Upgrading database from version "
-							+ oldVersion + " to " + newVersion
-							+ ", which will destroy all old data");
-			db.execSQL("DROP TABLE IF EXISTS " + TABLE_APPLICATIONS + ";");
-			db.execSQL("DROP TABLE IF EXISTS " + TABLE_NOTIFICATION_TYPES + ";");
-			db.execSQL("DROP TABLE IF EXISTS " + TABLE_PASSWORDS + ";");
-			db.execSQL("DROP TABLE IF EXISTS " + TABLE_SUBSCRIPTIONS + ";");
-			db.execSQL("DROP TABLE IF EXISTS " + TABLE_NOTIFICATION_HISTORY + ";");
-			onCreate(db);
+			if (oldVersion == 1) {
+				Log.w("Database.onUpgrade", "Upgrading database from version 1 to " + newVersion);
+				upgradeDisplayProfilesFrom1To2(db);
+			} else {
+				Log.w("Database.onUpgrade", "Upgrading database from version " + oldVersion +
+						" to " + newVersion + ", which will destroy all old data");
+				db.execSQL("DROP TABLE IF EXISTS " + TABLE_APPLICATIONS + ";");
+				db.execSQL("DROP TABLE IF EXISTS " + TABLE_NOTIFICATION_TYPES + ";");
+				db.execSQL("DROP TABLE IF EXISTS " + TABLE_DISPLAYS + ";");
+				db.execSQL("DROP TABLE IF EXISTS " + TABLE_PASSWORDS + ";");
+				db.execSQL("DROP TABLE IF EXISTS " + TABLE_SUBSCRIPTIONS + ";");
+				db.execSQL("DROP TABLE IF EXISTS " + TABLE_NOTIFICATION_HISTORY + ";");
+				onCreate(db);
+			}
+		}
+
+		/***
+		 * Status bar defaults and flags were mistakenly stored in the same column in DB version 1,
+		 * when their values can collide. These are split in version 2.
+		 * @param db
+		 */
+		private void upgradeDisplayProfilesFrom1To2(SQLiteDatabase db) {
+			// Delete the existing profiles, they'll be replaced in the Database constructor
+			db.execSQL("DELETE FROM " + TABLE_DISPLAYS);
+			db.execSQL("ALTER TABLE " + TABLE_DISPLAYS + " " +
+					"ADD COLUMN " + KEY_STATUS_BAR_DEFAULTS + " INTEGER;");
 		}
 	}
 
@@ -143,24 +163,25 @@ public class Database {
 		DBHelper.close();
 	}
 
-	private void createDisplayProfiles(Context context) {
-		String ignore = context.getString(R.string.display_profile_ignore);
-		String silent = context.getString(R.string.display_profile_silent);
-		String vibrate = context.getString(R.string.display_profile_vibrate);
-		String growl = context.getString(R.string.display_profile_growl);
-		String growlVibrate = context.getString(R.string.display_profile_growl_vibrate);
+	private void createDisplayProfiles() {
+		Log.i("Database.createDisplayProfiles", "Creating default display profiles...");
+		String ignore = _context.getString(R.string.display_profile_ignore);
+		String silent = _context.getString(R.string.display_profile_silent);
+		String vibrate = _context.getString(R.string.display_profile_vibrate);
+		String growl = _context.getString(R.string.display_profile_growl);
+		String growlVibrate = _context.getString(R.string.display_profile_growl_vibrate);
 		
 		insertDisplayProfile(ignore, false);
 		insertDisplayProfile(silent, true);
-		insertDisplayProfile(vibrate, Notification.FLAG_AUTO_CANCEL |
-				Notification.DEFAULT_LIGHTS | Notification.DEFAULT_VIBRATE, null);
-		int defaultProfile = insertDisplayProfile(growl, Notification.FLAG_AUTO_CANCEL |
-				Notification.DEFAULT_LIGHTS | Notification.DEFAULT_SOUND, null);
-		insertDisplayProfile(growlVibrate, Notification.FLAG_AUTO_CANCEL |
-				Notification.DEFAULT_LIGHTS | Notification.DEFAULT_SOUND |
-				Notification.DEFAULT_VIBRATE, null);
+		insertDisplayProfile(vibrate, Notification.DEFAULT_LIGHTS | Notification.DEFAULT_VIBRATE,
+				Notification.FLAG_AUTO_CANCEL, null);
+		int defaultProfile = insertDisplayProfile(growl, Notification.DEFAULT_LIGHTS | Notification.DEFAULT_SOUND,
+				Notification.FLAG_AUTO_CANCEL, null);
+		insertDisplayProfile(growlVibrate,
+				Notification.DEFAULT_LIGHTS | Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE,
+				Notification.FLAG_AUTO_CANCEL, null);
 		
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(_context);
 		prefs.edit().putInt(PREFERENCE_DEFAULT_DISPLAY_ID, defaultProfile).commit();
 	}
 
@@ -171,14 +192,15 @@ public class Database {
 		return (int) db.insert(TABLE_DISPLAYS, null, initialValues);
 	}
 	
-	public int insertDisplayProfile(String name, Integer statusBarFlags, Integer toastFlags) {
-		return insertDisplayProfile(name, true, statusBarFlags, toastFlags, null);
+	public int insertDisplayProfile(String name, Integer statusBarDefaults, Integer statusBarFlags, Integer toastFlags) {
+		return insertDisplayProfile(name, true, statusBarDefaults, statusBarFlags, toastFlags, null);
 	}
 	
-	public int insertDisplayProfile(String name, boolean log, Integer statusBarFlags, Integer toastFlags, Uri alert) {
+	public int insertDisplayProfile(String name, boolean log, Integer statusBarDefaults, Integer statusBarFlags, Integer toastFlags, Uri alert) {
 		ContentValues initialValues = new ContentValues();
 		initialValues.put(KEY_NAME, name);
 		initialValues.put(KEY_LOG, log);
+		initialValues.put(KEY_STATUS_BAR_DEFAULTS, statusBarDefaults);
 		initialValues.put(KEY_STATUS_BAR_FLAGS, statusBarFlags);
 		initialValues.put(KEY_TOAST_FLAGS, toastFlags);
 		initialValues.put(KEY_ALERT_URL, (alert == null) ? null : alert.toString());

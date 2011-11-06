@@ -258,12 +258,17 @@ public class GrowlListenerService
     	if (cursor.moveToFirst()) {
     		final int nameColumn = cursor.getColumnIndex(Database.KEY_NAME);
     		final int logColumn = cursor.getColumnIndex(Database.KEY_LOG);
+    		final int sbDefaultsColumn = cursor.getColumnIndex(Database.KEY_STATUS_BAR_DEFAULTS);
     		final int sbFlagsColumn = cursor.getColumnIndex(Database.KEY_STATUS_BAR_FLAGS);
     		final int toastColumn = cursor.getColumnIndex(Database.KEY_TOAST_FLAGS);
     		final int alertColumn = cursor.getColumnIndex(Database.KEY_ALERT_URL);
     		
     		String name = cursor.getString(nameColumn);
     		boolean shouldLog = cursor.getInt(logColumn) != 0;
+    		Integer sbDefaults = null;
+    		if (!cursor.isNull(sbDefaultsColumn)) {
+    			sbDefaults = cursor.getInt(sbDefaultsColumn);
+    		}
     		Integer sbFlags = null;
     		if (!cursor.isNull(sbFlagsColumn)) {
     			sbFlags = cursor.getInt(sbFlagsColumn);
@@ -283,7 +288,7 @@ public class GrowlListenerService
     			}
     		}
     		
-    		result = new GrowlDisplayProfile(id, name, shouldLog, sbFlags, toastFlags, alertUrl);
+    		result = new GrowlDisplayProfile(id, name, shouldLog, sbDefaults, sbFlags, toastFlags, alertUrl);
     	}
     	cursor.close();
     	return result;

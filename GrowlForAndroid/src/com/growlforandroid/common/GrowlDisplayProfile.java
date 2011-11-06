@@ -18,14 +18,16 @@ public class GrowlDisplayProfile {
 	private final int _id;
 	private final String _name;
 	private final boolean _shouldLog;
+	private final Integer _statusBarDefaults;
 	private final Integer _statusBarFlags;
 	private final Integer _toastFlags;
 	private final URL _alertUrl;
 	
-	public GrowlDisplayProfile(int id, String name, boolean shouldLog, Integer statusBarFlags, Integer toastFlags, URL alert) {
+	public GrowlDisplayProfile(int id, String name, boolean shouldLog, Integer statusBarDefaults, Integer statusBarFlags, Integer toastFlags, URL alert) {
 		_id = id;
 		_name = name;
 		_shouldLog = shouldLog;
+		_statusBarDefaults = statusBarDefaults;
 		_statusBarFlags = statusBarFlags;
 		_toastFlags = toastFlags;
 		_alertUrl = alert;
@@ -81,18 +83,18 @@ public class GrowlDisplayProfile {
 		Notification statusBarPanel = new Notification(R.drawable.statusbar_enabled, message, receivedAtMS);
 		
         // Determine the display options
-		int flags = _statusBarFlags;
-		boolean defaultLights = (flags & Notification.DEFAULT_LIGHTS) == Notification.DEFAULT_LIGHTS;
-		boolean defaultSound = (flags & Notification.DEFAULT_SOUND) == Notification.DEFAULT_SOUND;
-		boolean defaultVibrate = (flags & Notification.DEFAULT_VIBRATE) == Notification.DEFAULT_VIBRATE;
+		int defaults = _statusBarDefaults;
+		boolean defaultLights = (defaults & Notification.DEFAULT_LIGHTS) == Notification.DEFAULT_LIGHTS;
+		boolean defaultSound = (defaults & Notification.DEFAULT_SOUND) == Notification.DEFAULT_SOUND;
+		boolean defaultVibrate = (defaults & Notification.DEFAULT_VIBRATE) == Notification.DEFAULT_VIBRATE;
 				
 		if (defaultVibrate) {
-			flags |= Notification.DEFAULT_VIBRATE;
+			defaults |= Notification.DEFAULT_VIBRATE;
 			statusBarPanel.defaults |= Notification.DEFAULT_VIBRATE;
 		}
 		
 		if (defaultSound) {
-			flags |= Notification.DEFAULT_SOUND;
+			defaults |= Notification.DEFAULT_SOUND;
 			if (_alertUrl == null) {
 				// Use the default alert sound
 				statusBarPanel.defaults |= Notification.DEFAULT_SOUND;
@@ -106,8 +108,8 @@ public class GrowlDisplayProfile {
 
 		if (defaultLights) {
 			// We don't use the default LED settings, we flash in yellow instead
-			flags |= Notification.DEFAULT_LIGHTS;
-			flags &= Notification.FLAG_SHOW_LIGHTS;
+			defaults |= Notification.DEFAULT_LIGHTS;
+			defaults &= Notification.FLAG_SHOW_LIGHTS;
 		}
 		
 		Log.i("GrowlDisplayProfile.displayNotificationInStatusBar",
@@ -119,7 +121,7 @@ public class GrowlDisplayProfile {
 		statusBarPanel.ledARGB = LED_COLOUR;
         statusBarPanel.ledOffMS = LED_OFF_MS;
         statusBarPanel.ledOnMS = LED_ON_MS;
-        statusBarPanel.flags = flags;
+        statusBarPanel.flags = _statusBarFlags;
         
         // Use our custom layout for the notification panel, so that we can insert the application icon
         statusBarPanel.contentView = createNotificationView(context, notification);
