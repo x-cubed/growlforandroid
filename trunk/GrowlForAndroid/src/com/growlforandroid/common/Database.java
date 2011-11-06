@@ -209,7 +209,7 @@ public class Database {
 	
 	public Cursor getDisplayProfile(int profile) {
 		return db.query(TABLE_DISPLAYS, new String[] {
-				KEY_ROWID, KEY_NAME, KEY_LOG, KEY_STATUS_BAR_FLAGS, KEY_TOAST_FLAGS, KEY_ALERT_URL
+				KEY_ROWID, KEY_NAME, KEY_LOG, KEY_STATUS_BAR_DEFAULTS, KEY_STATUS_BAR_FLAGS, KEY_TOAST_FLAGS, KEY_ALERT_URL
 				}, KEY_ROWID + "=" + profile, null, null, null, null);
 	}
 	
