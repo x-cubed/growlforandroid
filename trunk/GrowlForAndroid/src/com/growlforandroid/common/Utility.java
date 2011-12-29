@@ -96,4 +96,12 @@ public final class Utility {
 	    }
 	    return null;
 	}
+	
+	public static void dumpThreadStack(String tag) {
+		Thread currentThread = Thread.currentThread();
+		Log.d(tag, "Thread ID: " + currentThread.getId());
+		for( StackTraceElement ste : currentThread.getStackTrace() ) {
+		  Log.d(tag, ste + "\n" );
+		}
+	}
 }
