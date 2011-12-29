@@ -14,20 +14,14 @@ import android.util.Log;
 import com.growlforandroid.gntp.*;
 
 public class EncryptedChannelReader extends ChannelReader {
-
-	private static final String TEMP_FILE_PREFIX = "GFA";
-
 	private static final byte[] END_OF_LINE = new byte[] { 0x0D, 0x0A };
-	private static final byte[] END_OF_BLOCK = new byte[] { 0x0D, 0x0A, 0x0D,
-			0x0A };
+	private static final byte[] END_OF_BLOCK = new byte[] { 0x0D, 0x0A, 0x0D, 0x0A };
 
 	public EncryptedChannelReader(SocketChannel channel) {
 		super(channel);
 	}
 
-	private byte[] decrypt(byte[] encrypted, EncryptionType type, byte[] iv,
-			byte[] key) throws DecryptionException {
-
+	private byte[] decrypt(byte[] encrypted, EncryptionType type, byte[] iv, byte[] key) throws DecryptionException {
 		try {
 			Cipher decryptor = type.createDecryptor(iv, key);
 			byte[] decrypted = decryptor.doFinal(encrypted);
@@ -55,8 +49,7 @@ public class EncryptedChannelReader extends ChannelReader {
 	 * @throws IllegalBlockSizeException
 	 * @throws BadPaddingException
 	 */
-	public void decryptNextBlock(EncryptionType type, byte[] iv, byte[] key)
-			throws IOException, DecryptionException {
+	public void decryptNextBlock(EncryptionType type, byte[] iv, byte[] key) throws IOException, DecryptionException {
 
 		// If we aren't dealing with encrypted content, we're already decrypted
 		if (type == EncryptionType.None)
@@ -72,8 +65,7 @@ public class EncryptedChannelReader extends ChannelReader {
 		// the end of the data
 		ByteBuffer encryptedBuffer = readBytesUntil(END_OF_BLOCK);
 		int encryptedLength = encryptedBuffer.position() - END_OF_BLOCK.length;
-		Log.i("EncryptedChannelReader.decryptNextBlock", "Encrypted data ("
-				+ encryptedLength + " bytes)");
+		Log.i("EncryptedChannelReader.decryptNextBlock", "Encrypted data (" + encryptedLength + " bytes)");
 		encryptedBuffer.rewind();
 		byte[] encrypted = new byte[encryptedLength];
 		encryptedBuffer.get(encrypted, 0, encrypted.length);
@@ -87,8 +79,7 @@ public class EncryptedChannelReader extends ChannelReader {
 		// decrypted);
 
 		// Grab any remaining data out of the buffer
-		Log.i("EncryptedChannelReader.decryptNextBlock",
-				"Old available bytes: " + _availableBytes);
+		Log.i("EncryptedChannelReader.decryptNextBlock", "Old available bytes: " + _availableBytes);
 		byte[] buffered = new byte[_availableBytes];
 		if (_availableBytes != 0) {
 			_buffer.get(buffered, 0, buffered.length);
@@ -100,8 +91,7 @@ public class EncryptedChannelReader extends ChannelReader {
 
 		// Create a new buffer containing the decrypted data followed by what
 		// was left in the old buffer
-		int newBufferSize = decrypted.length + END_OF_LINE.length
-				+ buffered.length;
+		int newBufferSize = decrypted.length + END_OF_LINE.length + buffered.length;
 		ByteBuffer newBuffer = ByteBuffer.allocate(newBufferSize);
 		newBuffer.put(decrypted);
 		newBuffer.put(END_OF_LINE);
@@ -112,8 +102,7 @@ public class EncryptedChannelReader extends ChannelReader {
 		// methods work seamlessly
 		_buffer = newBuffer;
 		_availableBytes = newBufferSize;
-		Log.i("EncryptedChannelReader.decryptNextBlock",
-				"New available bytes: " + _availableBytes);
+		Log.i("EncryptedChannelReader.decryptNextBlock", "New available bytes: " + _availableBytes);
 	}
 
 	/**
@@ -124,7 +113,7 @@ public class EncryptedChannelReader extends ChannelReader {
 	 * @param type
 	 *            The encryption type to use when decrypting
 	 * @param iv
-	 *            The initialisation vector
+	 *            The initialization vector
 	 * @param key
 	 *            The decryption key
 	 * @return
@@ -136,25 +125,23 @@ public class EncryptedChannelReader extends ChannelReader {
 	 * @throws IllegalBlockSizeException
 	 * @throws BadPaddingException
 	 */
-	public byte[] readAndDecryptBytes(int length, EncryptionType type,
-			byte[] iv, byte[] key) throws IOException, DecryptionException {
+	public byte[] readAndDecryptBytes(int length, EncryptionType type, byte[] iv, byte[] key) throws IOException,
+			DecryptionException {
 
 		byte[] encrypted = readBytes(length);
 		return decrypt(encrypted, type, iv, key);
 	}
 
-	public File readAndDecryptBytesToTempFile(int length, EncryptionType type,
-			byte[] iv, byte[] key, File folder) throws IOException,
-			DecryptionException {
+	public File readAndDecryptBytesToCacheFile(int length, EncryptionType type, byte[] iv, byte[] key, File folder,
+			String fileName) throws IOException, DecryptionException {
 
-		File tempFile = null;
+		File cacheFile = null;
 		FileOutputStream output = null;
 		try {
 			// Create a new file and marker it for deletion when we exit
-			tempFile = File.createTempFile(TEMP_FILE_PREFIX, "", folder);
-			tempFile.deleteOnExit();
-			
-			output = new FileOutputStream(tempFile);
+			cacheFile = new File(folder, fileName);
+			Log.d("EncryptedChannelReader.readAndDecryptBytesToCacheFile", "Saving to " + cacheFile.getPath());
+			output = new FileOutputStream(cacheFile);
 
 			boolean isFinalBlock = false;
 			int blockLength = BUFFER_SIZE;
@@ -171,7 +158,7 @@ public class EncryptedChannelReader extends ChannelReader {
 					output.write(raw);
 				} else {
 					// Source is encrypted, decrypt it first
-					byte[] decrypted = (isFinalBlock) ? decryptor.doFinal(raw) : decryptor.update(raw);				
+					byte[] decrypted = (isFinalBlock) ? decryptor.doFinal(raw) : decryptor.update(raw);
 					output.write(decrypted);
 				}
 			}
@@ -194,7 +181,7 @@ public class EncryptedChannelReader extends ChannelReader {
 				output.close();
 			}
 		}
-		return tempFile;
+		return cacheFile;
 	}
 
 	public class DecryptionException extends Exception {
@@ -205,8 +192,7 @@ public class EncryptedChannelReader extends ChannelReader {
 		}
 
 		public DecryptionException(Exception innerException) {
-			super("Decryption failed: " + innerException.getMessage(),
-					innerException);
+			super("Decryption failed: " + innerException.getMessage(), innerException);
 		}
 	}
 }
