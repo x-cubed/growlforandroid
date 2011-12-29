@@ -5,6 +5,7 @@ import com.growlforandroid.common.Database;
 import com.growlforandroid.common.GrowlApplication;
 import com.growlforandroid.common.GrowlNotification;
 import com.growlforandroid.common.NotificationType;
+import com.growlforandroid.common.Utility;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -39,6 +40,7 @@ public class Applications
         super.onCreate(savedInstanceState);
 
         setTitle(R.string.applications_title);
+        Utility.setEmptyLabel(this, R.string.applications_empty_label);
 
         _service = new ListenerServiceConnection(this, this);
         _database = new Database(this);
