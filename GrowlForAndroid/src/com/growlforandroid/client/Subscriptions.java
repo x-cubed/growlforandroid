@@ -10,7 +10,6 @@ import com.growlforandroid.common.*;
 import com.growlforandroid.gntp.Constants;
 
 import android.app.*;
-import android.app.AlertDialog.Builder;
 import android.content.*;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -18,13 +17,13 @@ import android.util.Log;
 import android.view.*;
 import android.widget.*;
 
-public class Subscriptions extends ListActivity implements ZeroConf.Listener,
+public class Subscriptions extends ListActivity implements SubscriptionDialog.Listener, ZeroConf.Listener,
 		GrowlListenerService.StatusChangedHandler {
 
 	private final int DIALOG_ADD_SUBSCRIPTION = 0;
 	private final int DIALOG_EDIT_SUBSCRIPTION = 1;
 	private final int DIALOG_ITEM_MENU = 2;
-	
+
 	private final int ZEROCONF_TIMEOUT_MS = 100;
 
 	private ZeroConf _zeroConf;
@@ -84,7 +83,8 @@ public class Subscriptions extends ListActivity implements ZeroConf.Listener,
 			String status = cursor.getString(statusIndex);
 			String address = cursor.getString(addressIndex);
 			String password = cursor.getString(passwordIndex);
-			Subscription subscription = new Subscription(id, name, status, address, password, true);
+			Subscription subscription = new Subscription(id, name, status, address, password, false, true);
+			Log.d("Subscriptions.refresh", "Subscription " + id + ": " + name);
 			subscriptions.add(subscription);
 		}
 		Log.i("Subscriptions.refresh", "Updating adapter");
@@ -94,8 +94,7 @@ public class Subscriptions extends ListActivity implements ZeroConf.Listener,
 	}
 
 	private void findZeroConfServices() {
-		final String statusAvailable = this.getResources().getString(
-				R.string.subscriptions_status_available);
+		final String statusAvailable = this.getResources().getString(R.string.subscriptions_status_available);
 		final Subscriptions activity = this;
 		activity.setProgressBarIndeterminateVisibility(true);
 
@@ -104,9 +103,9 @@ public class Subscriptions extends ListActivity implements ZeroConf.Listener,
 			public void run() {
 				// Query the available services using ZeroConf
 				Log.i("Subscriptions.findZeroConfServices", "Querying available GNTP services...");
-				final ServiceInfo[] services = _zeroConf.findServices(Constants.GNTP_ZEROCONF_SERVICE_TYPE, ZEROCONF_TIMEOUT_MS);
-				Log.i("Subscriptions.findZeroConfServices", "Found " + services.length
-						+ " available GNTP services");
+				final ServiceInfo[] services = _zeroConf.findServices(
+						Constants.GNTP_ZEROCONF_SERVICE_TYPE, ZEROCONF_TIMEOUT_MS);
+				Log.i("Subscriptions.findZeroConfServices", "Found " + services.length + " available GNTP services");
 
 				// Switch back to the UI thread to update the list view
 				activity.runOnUiThread(new Runnable() {
@@ -135,7 +134,6 @@ public class Subscriptions extends ListActivity implements ZeroConf.Listener,
 	@Override
 	public void onResume() {
 		super.onResume();
-		Log.d("Subscriptions.onResume", "Resuming...");
 
 		_service.bind();
 		_zeroConf.addServiceListener(Constants.GNTP_ZEROCONF_SERVICE_TYPE, this);
@@ -202,7 +200,7 @@ public class Subscriptions extends ListActivity implements ZeroConf.Listener,
 		if (subscription.isSubscribed()) {
 			showDialog(DIALOG_ITEM_MENU);
 		} else {
-			showDialog(DIALOG_ADD_SUBSCRIPTION);
+			showDialog(DIALOG_EDIT_SUBSCRIPTION);
 		}
 	}
 
@@ -212,19 +210,20 @@ public class Subscriptions extends ListActivity implements ZeroConf.Listener,
 
 		switch (id) {
 		case DIALOG_ADD_SUBSCRIPTION:
-			if ((selected != null) && !selected.isSubscribed()) {
-				// Add from Bonjour
-				return new AddEditDialog(this, selected.getName(), selected.getAddress()).create();
-			} else {
-				// Add manually
-				return new AddEditDialog(this).create();
-			}
+			return SubscriptionDialog.createAddDialog(this, this);
 
 		case DIALOG_EDIT_SUBSCRIPTION:
-			return new AddEditDialog(this, selected.getId(), selected.getName(),
-					selected.getAddress(), selected.getPassword()).create();
+			if (selected == null) {
+				return null;
+			}
+			Log.d("Subscriptions.onCreateDialog", "Edit subscription " + selected.getId() + ": " + selected.getName());
+			return SubscriptionDialog.createEditDialog(this, this, selected);
 
 		case DIALOG_ITEM_MENU:
+			if (selected == null) {
+				return null;
+			}
+			Log.d("Subscriptions.onCreateDialog", "Subscription menu " + selected.getId() + ": " + selected.getName());
 			return new AlertDialog.Builder(this).setTitle(R.string.subscriptions_menu_title)
 					.setItems(R.array.subscriptions_menu, new DialogInterface.OnClickListener() {
 						public void onClick(DialogInterface dialog, int which) {
@@ -245,6 +244,26 @@ public class Subscriptions extends ListActivity implements ZeroConf.Listener,
 		return null;
 	}
 
+	public void addSubscription(String name, String address, String password) {
+		String unregistered = getText(R.string.subscriptions_status_unregistered).toString();
+		_database.insertSubscription(name, address, password, unregistered);
+
+		refresh();
+		if (_service.isRunning()) {
+			_service.subscribeNow();
+		}
+	}
+
+	public void updateSubscription(long id, String name, String address, String password) {
+		String unregistered = getText(R.string.subscriptions_status_unregistered).toString();
+		_database.updateSubscription(id, name, address, password, unregistered);
+
+		refresh();
+		if (_service.isRunning()) {
+			_service.subscribeNow();
+		}
+	}
+
 	private class SubscriptionListAdapter extends BaseAdapter implements ListAdapter {
 		private List<Subscription> _subscriptions;
 
@@ -262,12 +281,12 @@ public class Subscriptions extends ListActivity implements ZeroConf.Listener,
 			Subscription subscription = new Subscription(service, status, false);
 			if (subscription.isValid()) {
 				InetAddress[] addresses = subscription.getInetAddresses();
-
+				
 				boolean isUnique = true;
 				for (Subscription previouslySeen : _subscriptions) {
 					if (previouslySeen.matchesAny(addresses)) {
-						Log.d("Subscriptions.findZeroConfServices", "Subscription to "
-								+ subscription.getName() + " has already been seen");
+						Log.d("SubscriptionListAdapter.addService", "Subscription to " + subscription.getName()
+								+ " has already been seen");
 						isUnique = false;
 						break;
 					}
@@ -275,6 +294,18 @@ public class Subscriptions extends ListActivity implements ZeroConf.Listener,
 
 				if (isUnique) {
 					addSubscription(subscription);
+				}
+			}
+		}
+		
+		public void removeService(ServiceInfo service) {
+			synchronized (_subscriptions) {
+				for(Subscription subscription:_subscriptions) {
+					if (!subscription.isSubscribed() && subscription.matchesService(service)) {
+						_subscriptions.remove(subscription);
+						notifyDataSetChanged();
+						return;
+					}
 				}
 			}
 		}
@@ -292,7 +323,7 @@ public class Subscriptions extends ListActivity implements ZeroConf.Listener,
 				notifyDataSetChanged();
 			}
 		}
-
+		
 		public int getCount() {
 			return _subscriptions.size();
 		}
@@ -330,112 +361,9 @@ public class Subscriptions extends ListActivity implements ZeroConf.Listener,
 		}
 	}
 
-	private class AddEditDialog {
-		private final Context _context;
-		private LayoutInflater _factory;
-		private View _textEntryView;
-		private EditText _txtName;
-		private EditText _txtAddress;
-		private EditText _txtPassword;
-
-		private Builder _builder;
-
-		private long _id;
-
-		public AddEditDialog(Context context) {
-			_context = context;
-			initialise();
-
-			_builder.setTitle(R.string.subscriptions_add_dialog_title);
-			_builder.setPositiveButton(R.string.dialog_add, new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog, int whichButton) {
-					// Get the field values from the dialog
-					String name = _txtName.getText().toString();
-					String address = _txtAddress.getText().toString();
-					String password = _txtPassword.getText().toString();
-					String status = getText(R.string.subscriptions_status_unregistered).toString();
-					if (name.equals("") || address.equals("") || password.equals("")) {
-						return;
-					}
-
-					// Add the subscription to the database, then refresh the
-					// list
-					_database.insertSubscription(name, address, password, status);
-					refresh();
-
-					// Get the service to subscribe now
-					if (_service.isRunning())
-						_service.subscribeNow();
-				}
-			});
-		}
-
-		public AddEditDialog(Context context, String name, String address) {
-			this(context);
-
-			_txtName.setText(name);
-			_txtName.setEnabled(false);
-			_txtAddress.setText(address);
-			_txtAddress.setEnabled(false);
-		}
-
-		public AddEditDialog(Context context, long id, String name, String address, String password) {
-			_context = context;
-			_id = id;
-			initialise();
-
-			_txtName.setText(name);
-			_txtAddress.setText(address);
-			_txtPassword.setText(password);
-
-			_builder.setTitle(R.string.subscriptions_edit_dialog_title);
-			_builder.setPositiveButton(R.string.dialog_save, new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog, int whichButton) {
-					// Get the field values from the dialog
-					String name = _txtName.getText().toString();
-					String address = _txtAddress.getText().toString();
-					String password = _txtPassword.getText().toString();
-					String status = getText(R.string.subscriptions_status_unregistered).toString();
-					if (name.equals("") || address.equals("") || password.equals("")) {
-						return;
-					}
-
-					// Add the subscription to the database, then refresh the
-					// list
-					_database.updateSubscription(_id, name, address, password, status);
-					refresh();
-
-					// Get the service to subscribe now
-					if (_service.isRunning())
-						_service.subscribeNow();
-				}
-			});
-		}
-
-		private void initialise() {
-			_factory = LayoutInflater.from(_context);
-			_textEntryView = _factory.inflate(R.layout.add_subscription_dialog, null);
-			_txtName = (EditText) _textEntryView.findViewById(R.id.txtSubscriptionName);
-			_txtAddress = (EditText) _textEntryView.findViewById(R.id.txtSubscriptionAddress);
-			_txtPassword = (EditText) _textEntryView.findViewById(R.id.txtSubscriptionPassword);
-
-			_builder = new AlertDialog.Builder(_context).setView(_textEntryView).setNegativeButton(
-					R.string.dialog_cancel, new DialogInterface.OnClickListener() {
-						public void onClick(DialogInterface dialog, int whichButton) {
-							/* User clicked cancel so don't do anything */
-						}
-					});
-		}
-
-		public Dialog create() {
-			return _builder.create();
-		}
-	}
-
 	public void serviceAdded(ServiceInfo serviceInfo, ServiceEvent event) {
 		try {
-			Log.i("Subscriptions.serviceAdded", "Service added   : " + event.getName() + "."
-					+ event.getType());
+			Log.i("Subscriptions.serviceAdded", "Service added   : " + event.getName() + "." + event.getType());
 			final ServiceInfo service = serviceInfo;
 			final String statusAvailable = this.getResources().getString(R.string.subscriptions_status_available);
 			runOnUiThread(new Runnable() {
@@ -448,9 +376,14 @@ public class Subscriptions extends ListActivity implements ZeroConf.Listener,
 		}
 	}
 
-	public void serviceRemoved(ServiceInfo service, ServiceEvent event) {
-		Log.i("Subscriptions.serviceRemoved",
-				"Service removed : " + event.getName() + "." + event.getType());
+	public void serviceRemoved(ServiceInfo serviceInfo, ServiceEvent event) {
+		Log.i("Subscriptions.serviceRemoved", "Service removed : " + event.getName() + "." + event.getType());
+		final ServiceInfo service = serviceInfo;
+		runOnUiThread(new Runnable() {
+			public void run() {
+				_adapter.removeService(service);
+			}
+		});
 	}
 
 	public void onApplicationRegistered(GrowlApplication app) {

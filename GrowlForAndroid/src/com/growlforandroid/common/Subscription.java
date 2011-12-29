@@ -5,6 +5,8 @@ import java.net.UnknownHostException;
 
 import javax.jmdns.ServiceInfo;
 
+import android.util.Log;
+
 public class Subscription {
 	private final int _id;
 	private final String _name;
@@ -12,24 +14,28 @@ public class Subscription {
 	private final String _address;
 	private final InetAddress[] _ipAddresses;
 	private final String _password;
+	private final boolean _zeroConf;
 	private final boolean _subscribed;
-	
-	public Subscription(int id, String name, String status, String address, String password, boolean subscribed) {
-		this(0, name, status, address, lookupInetAddress(address), password, subscribed);
+
+	public Subscription(int id, String name, String status, String address, String password, boolean zeroConf,
+			boolean subscribed) {
+		this(id, name, status, address, lookupInetAddress(address), password, zeroConf, subscribed);
 	}
-	
-	public Subscription(int id, String name, String status, String address, InetAddress[] ipAddresses, String password, boolean subscribed) {
+
+	public Subscription(int id, String name, String status, String address, InetAddress[] ipAddresses, String password,
+			boolean zeroConf, boolean subscribed) {
 		_id = id;
 		_name = name;
 		_status = status;
 		_address = address;
 		_ipAddresses = ipAddresses;
 		_password = password;
+		_zeroConf = zeroConf;
 		_subscribed = subscribed;
 	}
-	
+
 	public Subscription(ServiceInfo service, String status, boolean subscribed) {
-		this(0, service.getName(), status, service.getServer(), service.getInetAddresses(), "", subscribed);
+		this(0, service.getName(), status, service.getServer(), service.getInetAddresses(), "", true, subscribed);
 	}
 
 	private static InetAddress[] lookupInetAddress(String address) {
@@ -39,37 +45,42 @@ public class Subscription {
 			return new InetAddress[0];
 		}
 	}
-	
+
 	public int getId() {
 		return _id;
 	}
-	
+
 	public String getName() {
 		return _name;
 	}
-	
+
 	public String getStatus() {
 		return _status;
 	}
-	
+
 	public String getAddress() {
 		return _address;
 	}
-	
+
 	public InetAddress[] getInetAddresses() {
 		return _ipAddresses;
 	}
-	
+
 	public String getPassword() {
 		return _password;
 	}
-	
+
+	public boolean isZeroConf() {
+		return _zeroConf;
+	}
+
 	public boolean isSubscribed() {
 		return _subscribed;
 	}
-	
+
 	/***
 	 * True, if the subscription can be resolved to an IP address
+	 * 
 	 * @return
 	 */
 	public boolean isValid() {
@@ -78,13 +89,17 @@ public class Subscription {
 	}
 
 	public boolean matchesAny(InetAddress[] addresses) {
-		for(InetAddress ipAddress:_ipAddresses) {
-			for(InetAddress address:addresses) {
+		for (InetAddress ipAddress : _ipAddresses) {
+			for (InetAddress address : addresses) {
 				if (address.equals(ipAddress)) {
 					return true;
 				}
 			}
 		}
 		return false;
+	}
+
+	public boolean matchesService(ServiceInfo service) {
+		return _zeroConf && (_name == service.getServer());
 	}
 }
