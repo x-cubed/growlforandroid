@@ -239,7 +239,9 @@ public class GntpListenerThread extends Thread {
 
 		// Read in the file data, decrypt it and save it to a temporary location
 		File cacheFolder = _registry.getCacheDir();
-		File tempResource = _socketReader.readAndDecryptBytesToTempFile(length, _encryptionType, _initVector, _key, cacheFolder);
+		byte[] idHash = HashAlgorithm.MD5.calculateHash(_currentResource.getIdentifier().getBytes());
+		String fileName = Utility.getHexStringFromByteArray(idHash);
+		File tempResource = _socketReader.readAndDecryptBytesToCacheFile(length, _encryptionType, _initVector, _key, cacheFolder, fileName);
 		Log.i("GntpListenerThread.readResourceData[" + _connectionID + "]", "Created " +
 				tempResource.getAbsolutePath() + " as resource (" + tempResource.length() + ")");
 		
