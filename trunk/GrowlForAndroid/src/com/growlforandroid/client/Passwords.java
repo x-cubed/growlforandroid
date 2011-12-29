@@ -1,6 +1,7 @@
 package com.growlforandroid.client;
 
 import com.growlforandroid.common.Database;
+import com.growlforandroid.common.Utility;
 
 import android.app.*;
 import android.content.DialogInterface;
@@ -22,6 +23,9 @@ public class Passwords extends ListActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setTitle(R.string.passwords_title);
+        
+		// Show a label if there's nothing listed
+		Utility.setEmptyLabel(this, R.string.passwords_empty_label);
         
         _database = new Database(this);
         refresh();

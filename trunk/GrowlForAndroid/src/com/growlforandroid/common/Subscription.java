@@ -5,8 +5,6 @@ import java.net.UnknownHostException;
 
 import javax.jmdns.ServiceInfo;
 
-import android.util.Log;
-
 public class Subscription {
 	private final int _id;
 	private final String _name;

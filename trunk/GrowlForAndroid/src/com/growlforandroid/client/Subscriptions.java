@@ -60,6 +60,9 @@ public class Subscriptions extends ListActivity implements SubscriptionDialog.Li
 		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 		setProgressBarIndeterminate(true);
 
+		// Show a label if there's nothing listed
+		Utility.setEmptyLabel(this, R.string.subscriptions_empty_label);
+		
 		_zeroConf = ZeroConf.getInstance(this);
 		_service = new ListenerServiceConnection(this, this);
 		_database = new Database(this);
