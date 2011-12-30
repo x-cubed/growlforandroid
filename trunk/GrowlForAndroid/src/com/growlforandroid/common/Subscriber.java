@@ -1,13 +1,13 @@
 package com.growlforandroid.common;
 
+import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
 
+import javax.jmdns.*;
+
 import com.growlforandroid.client.R;
-import com.growlforandroid.gntp.GntpError;
-import com.growlforandroid.gntp.GntpException;
-import com.growlforandroid.gntp.GntpMessage;
-import com.growlforandroid.gntp.SubscriberThread;
+import com.growlforandroid.gntp.*;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -17,11 +17,12 @@ import android.os.Build;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-public class Subscriber {
+public class Subscriber implements ZeroConf.Listener {
 	public static final String PREFERENCE_SUBSCRIBER_ID = "subscriber_id";
 	
-	private final int MINUTES = 60 * 1000; // in milliseconds
-	private final int SUBSCRIPTION_INTERVAL_MS = (int)(1.5 * MINUTES);
+	private final int MINUTES_MS = 60 * 1000;
+	private final int SUBSCRIPTION_INTERVAL_MS = (int)(1.5 * MINUTES_MS);
+	private final int ZERO_CONF_TIMEOUT_MS = 100;
 	
 	private final String STATUS_UNREGISTERED;
 	private final String STATUS_REGISTERING;
@@ -34,6 +35,7 @@ public class Subscriber {
 	private final String _deviceName;
 	private Database _database;
 	private Timer _timer;
+	private ZeroConf _zeroConf;
 	
 	public Subscriber(Context context) {
 		_context = context;
@@ -96,7 +98,14 @@ public class Subscriber {
 	}
 	
 	public void start() {
+		if (isRunning()) {
+			Log.w("Subscriber.start", "Subscriber already started");
+			return;
+		}
+		
 		Log.i("Subscriber.start", "Starting the subscriber " + _id + "...");
+		
+		// Setup up the subscription renewal timer
 		_timer = new Timer();
 		_timer.scheduleAtFixedRate(new TimerTask() {
 			@Override
@@ -104,6 +113,10 @@ public class Subscriber {
 				subscribeNow();
 			}
 		}, 0, SUBSCRIPTION_INTERVAL_MS);
+		
+		// Subscribe to ZeroConf service announcements
+		_zeroConf = ZeroConf.getInstance(_context);
+		_zeroConf.addServiceListener(Constants.GNTP_ZEROCONF_SERVICE_TYPE, this);
 	}
 	
 	public boolean isRunning() {
@@ -125,10 +138,22 @@ public class Subscriber {
 			_database.close();
 			_database = null;
 		}
+		
+		if (_zeroConf != null) {
+			_zeroConf.removeServiceListener(Constants.GNTP_ZEROCONF_SERVICE_TYPE, this);
+			_zeroConf = null;
+		}
 	}
 	
 	public void subscribeNow() {
-		Cursor subscriptions = getDatabase().getSubscriptions();
+		Log.d("Subscriber.subscribeNow", "Subscribing...");
+		subscribeToManualHosts();
+		subscribeToZeroConfServices();
+		Log.d("Subscriber.subscribeNow", "Done");
+	}
+	
+	private void subscribeToManualHosts() {
+		Cursor subscriptions = getDatabase().getManualSubscriptions();
 		if (subscriptions.moveToFirst()) {
 			final int ID_COLUMN = subscriptions.getColumnIndex(Database.KEY_ROWID);
 			final int ADDRESS_COLUMN = subscriptions.getColumnIndex(Database.KEY_ADDRESS);
@@ -142,13 +167,16 @@ public class Subscriber {
 				startSubscription(id, address, password);
 				count ++;
 			} while (subscriptions.moveToNext());
-			Log.i("Subscriber.subscribeNow", "Subscribing to " + count + " sources");
-		} else {
-			// No current subscriptions
-			Log.i("Subscriber.subscribeNow", "No current subscriptions, stopping");
-			stop();
+			Log.i("Subscriber.subscribeNow", "Subscribing to " + count + " manual sources");
 		}
 		subscriptions.close();
+	}
+	
+	private void subscribeToZeroConfServices() {
+		ServiceInfo[] services = _zeroConf.findServices(Constants.GNTP_ZEROCONF_SERVICE_TYPE, ZERO_CONF_TIMEOUT_MS);
+		for(ServiceInfo service:services) {
+			subscribeToService(service);
+		}
 	}
 	
 	public void unsubscribeAll() {
@@ -168,11 +196,51 @@ public class Subscriber {
 	}
 	
 	public void startSubscription(long id, String address, String password) {
+		startSubscription(SubscriberThread.create(this, id, address, password));
+	}
+	
+	public void startSubscription(long id, InetAddress[] addresses, int port, String password) {		
+		startSubscription(new SubscriberThread(this, id, addresses, port, password));
+	}
+	
+	private void startSubscription(SubscriberThread subscriber) {
+		long id = subscriber.getSubscriptionId();
 		getDatabase().updateSubscription(id, STATUS_REGISTERING);
 		onSubscriptionStatusChanged(id, STATUS_REGISTERING);
 		
-		Thread subscribe = new SubscriberThread(this, id, address, password);
-		subscribe.start();	
+		subscriber.start();
+	}
+	
+	private void subscribeToService(ServiceInfo service) {
+		String name = service.getName();
+		InetAddress[] addresses = service.getInetAddresses();
+		if (addresses.length == 0) {
+			return;
+		}
+		Cursor cursor = getDatabase().getZeroConfSubscription(name);
+		if (cursor.moveToFirst()) {
+			// We have an active subscription to this service
+			final int ID_COLUMN = cursor.getColumnIndex(Database.KEY_ROWID);			
+			final int PASSWORD_COLUMN = cursor.getColumnIndex(Database.KEY_PASSWORD);
+			long id = cursor.getLong(ID_COLUMN);
+			String password = cursor.getString(PASSWORD_COLUMN);
+			Log.i("Subscriber.subscribeToService", "Subscribing to ZeroConf service " +
+					"\"" + name + "\" with subscription ID " + id);
+			startSubscription(id, addresses, service.getPort(), password);
+		}
+		cursor.close();
+	}
+	 
+	private void unsubscribeFromService(ServiceInfo service) {
+		String name = service.getName();
+		Cursor cursor = getDatabase().getZeroConfSubscription(name);
+		if (cursor.moveToFirst()) {
+			// We have an active subscription to this service
+			final int ID_COLUMN = cursor.getColumnIndex(Database.KEY_ROWID);
+			int id = cursor.getInt(ID_COLUMN);
+			getDatabase().updateSubscription(id, STATUS_UNREGISTERED);
+		}
+		cursor.close();
 	}
 	
 	public int getActiveSubscriptions() {
@@ -223,5 +291,15 @@ public class Subscriber {
 	protected void finalize() throws Throwable {
 		stop();
 		super.finalize();
+	}
+
+	public void serviceAdded(ServiceInfo service, ServiceEvent event) {
+		Log.d("Subscriber.serviceAdded", "Service: " + service.getName());
+		subscribeToService(service);
+	}
+
+	public void serviceRemoved(ServiceInfo service, ServiceEvent event) {
+		Log.d("Subscriber.serviceRemoved", "Service: " + service.getName());
+		unsubscribeFromService(service);
 	}
 }

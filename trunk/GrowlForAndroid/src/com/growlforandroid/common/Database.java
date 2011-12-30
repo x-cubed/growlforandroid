@@ -30,6 +30,7 @@ public class Database {
 	public static final String KEY_MESSAGE = "message";
 	public static final String KEY_ORIGIN = "origin";
 	public static final String KEY_ADDRESS = "address";
+	public static final String KEY_ZERO_CONF = "zero_conf";
 	public static final String KEY_STATUS = "status";
 	public static final String KEY_DISPLAY_ID = "display_id";
 	public static final String KEY_LOG = "log";
@@ -48,11 +49,11 @@ public class Database {
 	public static final String TABLE_PASSWORDS = "passwords";
 	public static final String TABLE_SUBSCRIPTIONS = "subscriptions";
 	public static final String TABLE_NOTIFICATION_HISTORY = "notification_history";
-
+	
 	public static final String PREFERENCE_DEFAULT_DISPLAY_ID = "display_default_id";
 	
 	private static final String DATABASE_NAME = "growl";
-	private static final int DATABASE_VERSION = 2;
+	private static final int DATABASE_VERSION = 3;
 	
 	private final Context _context;
 
@@ -115,6 +116,7 @@ public class Database {
 					+ "name TEXT NOT NULL, "
 					+ "address TEXT NOT NULL, "
 					+ "password TEXT NOT NULL, "
+					+ "zero_conf INTEGER NOT NULL DEFAULT 0, "
 					+ "status TEXT NOT NULL);");
 			
 			db.execSQL("CREATE TABLE notification_history ("
@@ -130,19 +132,15 @@ public class Database {
 
 		@Override
 		public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-			if (oldVersion == 1) {
-				Log.w("Database.onUpgrade", "Upgrading database from version 1 to " + newVersion);
+			Log.w("Database.onUpgrade", "Upgrading database from version " + oldVersion + " to " + newVersion);
+			if (oldVersion <= 1) {
+				Log.i("Database.onUpgrade", "Upgrading display profiles from version 1");
 				upgradeDisplayProfilesFrom1To2(db);
-			} else {
-				Log.w("Database.onUpgrade", "Upgrading database from version " + oldVersion +
-						" to " + newVersion + ", which will destroy all old data");
-				db.execSQL("DROP TABLE IF EXISTS " + TABLE_APPLICATIONS + ";");
-				db.execSQL("DROP TABLE IF EXISTS " + TABLE_NOTIFICATION_TYPES + ";");
-				db.execSQL("DROP TABLE IF EXISTS " + TABLE_DISPLAYS + ";");
-				db.execSQL("DROP TABLE IF EXISTS " + TABLE_PASSWORDS + ";");
-				db.execSQL("DROP TABLE IF EXISTS " + TABLE_SUBSCRIPTIONS + ";");
-				db.execSQL("DROP TABLE IF EXISTS " + TABLE_NOTIFICATION_HISTORY + ";");
-				onCreate(db);
+			}
+			
+			if (oldVersion <= 2) {
+				Log.i("Database.onUpgrade", "Upgrading subscriptions from version 2");
+				updateSubscriptionsFrom2To3(db);
 			}
 		}
 
@@ -156,6 +154,11 @@ public class Database {
 			db.execSQL("DELETE FROM " + TABLE_DISPLAYS);
 			db.execSQL("ALTER TABLE " + TABLE_DISPLAYS + " " +
 					"ADD COLUMN " + KEY_STATUS_BAR_DEFAULTS + " INTEGER;");
+		}
+		
+		private void updateSubscriptionsFrom2To3(SQLiteDatabase db) {
+			db.execSQL("ALTER TABLE " + TABLE_SUBSCRIPTIONS + " " +
+					"ADD COLUMN " + KEY_ZERO_CONF + " INTEGER NOT NULL DEFAULT 0;");
 		}
 	}
 
@@ -449,11 +452,12 @@ public class Database {
 		db.delete(TABLE_NOTIFICATION_HISTORY, null, null);
 	}
 	
-	public long insertSubscription(String name, String address, String password, String status) {
+	public long insertSubscription(String name, String address, String password, boolean isZeroConf, String status) {
 		ContentValues initialValues = new ContentValues();
 		initialValues.put(KEY_NAME, name);
 		initialValues.put(KEY_ADDRESS, address);
 		initialValues.put(KEY_PASSWORD, password);
+		initialValues.put(KEY_ZERO_CONF, isZeroConf);
 		initialValues.put(KEY_STATUS, status);
 		return db.insert(TABLE_SUBSCRIPTIONS, null, initialValues);
 	}
@@ -462,7 +466,7 @@ public class Database {
 		ContentValues args = new ContentValues();
 		args.put(KEY_NAME, name);
 		args.put(KEY_ADDRESS, address);
-		args.put(KEY_PASSWORD, password);
+		args.put(KEY_PASSWORD, password);		
 		args.put(KEY_STATUS, status);
 		return db.update(TABLE_SUBSCRIPTIONS, args, KEY_ROWID + "=" + id, null) > 0;
 	}
@@ -480,14 +484,28 @@ public class Database {
 
 	public Cursor getSubscriptions() {
 		return db.query(TABLE_SUBSCRIPTIONS, new String[] {
-				KEY_ROWID, KEY_NAME, KEY_ADDRESS, KEY_PASSWORD, KEY_STATUS },
+				KEY_ROWID, KEY_NAME, KEY_ADDRESS, KEY_PASSWORD, KEY_ZERO_CONF, KEY_STATUS },
 				null, null, null, null, null);
 	}
 
+	public Cursor getManualSubscriptions() {
+		return db.query(TABLE_SUBSCRIPTIONS, new String[] {
+				KEY_ROWID, KEY_NAME, KEY_ADDRESS, KEY_PASSWORD, KEY_ZERO_CONF, KEY_STATUS },
+				KEY_ZERO_CONF + "=0", null, null, null, null);
+	}
+	
 	public Cursor getSubscription(long id) {
 		Cursor cursor = db.query(true, TABLE_SUBSCRIPTIONS, new String[] {
-				KEY_ROWID, KEY_NAME, KEY_ADDRESS, KEY_PASSWORD, KEY_STATUS },
+				KEY_ROWID, KEY_NAME, KEY_ADDRESS, KEY_PASSWORD, KEY_ZERO_CONF, KEY_STATUS },
 				KEY_ROWID + "=" + id, null, null, null, null, null);
+		return cursor;
+	}
+	
+	public Cursor getZeroConfSubscription(String name) {
+		Cursor cursor = db.query(true, TABLE_SUBSCRIPTIONS, new String[] {
+				KEY_ROWID, KEY_NAME, KEY_ADDRESS, KEY_PASSWORD, KEY_ZERO_CONF, KEY_STATUS },
+				KEY_NAME + "=? AND " + KEY_ZERO_CONF + "!=0",
+				new String[] { name }, null, null, null, null);
 		return cursor;
 	}
 }
