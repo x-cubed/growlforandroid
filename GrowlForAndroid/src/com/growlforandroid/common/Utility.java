@@ -6,6 +6,7 @@ import java.util.Enumeration;
 import android.app.ListActivity;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.ListView;
@@ -110,6 +111,11 @@ public final class Utility {
 		}
 	}
 
+	public static void setText(View child, int viewId, String text) {
+		TextView textView = (TextView) child.findViewById(viewId);
+		textView.setText(text);
+	}
+	
 	/***
 	 * Displays a label when a ListActivity is empty
 	 * 
