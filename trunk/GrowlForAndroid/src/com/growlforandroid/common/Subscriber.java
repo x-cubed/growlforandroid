@@ -224,7 +224,6 @@ public class Subscriber implements ZeroConf.Listener {
 			}
 		}
 		cursor.close();
-		Log.i("Subscriber.getActiveSubscriptions", active + " subscriptions are active");
 		return active;
 	}
 	

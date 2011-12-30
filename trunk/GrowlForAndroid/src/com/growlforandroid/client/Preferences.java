@@ -15,6 +15,7 @@ public class Preferences extends PreferenceActivity {
 	public static final String ANNOUNCE_USING_ZEROCONF = "announce_using_zeroconf";
 	public static final String DEVICE_NAME = "device_name";
 	public static final String SUBSCRIBER_ID = "subscriber_id";
+	public static final String PASSWORDS_REQUIRED = "security_require_passwords";
 	
 	private ListenerServiceConnection _service;
 	private boolean _oldAnnounceUsingZeroConf;
@@ -95,7 +96,6 @@ public class Preferences extends PreferenceActivity {
  			// We have a subscriber ID from last time
  			try {
  				id = UUID.fromString(uuid);
- 				Log.i("Preferences.getSubscriberId", "Using existing subscriber ID: " + id.toString());
  			} catch (IllegalArgumentException iae) {
  			}
  		}
@@ -105,8 +105,11 @@ public class Preferences extends PreferenceActivity {
  			Editor editor = prefs.edit();
  			editor.putString(SUBSCRIBER_ID, id.toString());
  			editor.commit();
- 			Log.i("Preferences.getSubscriberId", "Created new subscriber ID: " + id.toString());
  		}
  		return id;
     }
+    
+	public static boolean getPasswordsRequired(SharedPreferences prefs) {
+		return prefs.getBoolean(PASSWORDS_REQUIRED, true);
+	}
 }

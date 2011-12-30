@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-import android.util.Log;
-
 import com.growlforandroid.common.Subscriber;
 
 public class SubscriberThread extends Thread {
@@ -60,15 +58,12 @@ public class SubscriberThread extends Thread {
 		for(InetAddress ipAddress:addresses) {
 			try {
 				String address = ipAddress.getHostAddress();
-				Log.d("SubscriberThread[" + _id + "].send", "Sending subscribe request to " + address + ":" + _port + "...");
 				request.sendTo(_id, address, _port);
-				Log.d("SubscriberThread[" + _id + "].send", "Success");
 				return;
 			} catch (UnknownHostException e) {
 			} catch (IOException e) {
 			}
 		}
-		Log.d("SubscriberThread[" + _id + "].send", "Failed to send to any of the " + addresses.length + " addresses");
 		throw new UnknownHostException("Unable to connect to any of the host addresses");
 	}
 	

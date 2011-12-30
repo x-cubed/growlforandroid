@@ -66,7 +66,6 @@ public abstract class GntpMessage {
 
 	public void write(ChannelWriter writer) throws IOException {
 		String leaderLine = getLeaderLine();
-		Log.i("GntpMessage.write", leaderLine);
 		writer.write(leaderLine + Constants.END_OF_LINE);
 		writeHeaders(writer);
 		writer.write(Constants.END_OF_LINE);
@@ -82,7 +81,6 @@ public abstract class GntpMessage {
 
 	protected static void writeHeader(ChannelWriter writer, String key, String value) throws IOException {
 		String header = key + ": " + value;
-		Log.i("GntpMessage.writeHeader", header);
 		writer.write(header + Constants.END_OF_LINE);
 	}
 
@@ -98,7 +96,6 @@ public abstract class GntpMessage {
 	protected void readHeaders(EncryptedChannelReader reader) throws IOException {
 		String line = reader.readLine();
 		while ((line != null) && !line.equals("")) {
-			Log.i("GntpMessage.readHeaders", line);
 			addHeader(line);
 			line = reader.readLine();
 		}
