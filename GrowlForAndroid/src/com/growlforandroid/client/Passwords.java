@@ -38,25 +38,26 @@ public class Passwords extends ListActivity {
                 new int[] { R.id.lblPasswordName, R.id.lblPasswordText}));
     }
     
-    private void refresh() {
-    	if (_cursor == null) {
-    		_cursor = _database.getPasswordsAndNames();
-    	} else {
-    		_cursor.requery();
-    	}
-    }
-    
-    protected void finalize() throws Throwable {
+    @Override
+    public void onPause() {
+    	super.onPause();
     	if (_cursor != null) {
     		_cursor.close();
+    		_cursor = null;
     	}
     	
     	if (_database != null) {
     		_database.close();
     		_database = null;
     	}
-    	
-    	super.finalize();
+    }
+    
+    private void refresh() {
+    	if (_cursor == null) {
+    		_cursor = _database.getPasswordsAndNames();
+    	} else {
+    		_cursor.requery();
+    	}
     }
     
     @Override
