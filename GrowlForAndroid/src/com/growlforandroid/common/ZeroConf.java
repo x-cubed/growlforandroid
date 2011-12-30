@@ -23,19 +23,17 @@ public class ZeroConf {
 
 	private void initialise(Context context) {
 		try {
-			Log.i("ZeroConf.initialise", "Getting a multicast lock...");
 			WifiManager wifiMgr = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
 			_mcLock = wifiMgr.createMulticastLock("GrowlSubscriptions");
 			_mcLock.setReferenceCounted(true);
 			_mcLock.acquire();
 		} catch (Exception x) {
-			Log.i("ZeroConf.initialise", "Failed to get a multicast lock: " + x.toString());
+			Log.e("ZeroConf.initialise", "Failed to get a multicast lock: " + x.toString());
 		}
 
 		try {
 			InetAddress announceAddr = Utility.getLocalIpAddress();
 			if (announceAddr != null) {
-				Log.i("ZeroConf", "Initialising ZeroConf on " + announceAddr);
 				_jmDNS = JmDNS.create(announceAddr);
 			}
 		} catch (Exception x) {
@@ -49,7 +47,6 @@ public class ZeroConf {
 	}
 
 	protected void finalize() {
-		Log.i("ZeroConf.finalize", "Finalizing");
 		if (_jmDNS != null) {
 			try {
 				_jmDNS.close();
@@ -63,10 +60,9 @@ public class ZeroConf {
 		if (_mcLock != null) {
 			if (_mcLock.isHeld()) {
 				try {
-					Log.i("ZeroConf", "Releasing multicast lock...");
 					_mcLock.release();
 				} catch (Exception x) {
-					Log.i("ZeroConf", "Failed to release the multicast lock: " + x.toString());
+					Log.e("ZeroConf", "Failed to release the multicast lock: " + x.toString());
 				}
 			}
 			_mcLock = null;
@@ -74,8 +70,9 @@ public class ZeroConf {
 	}
 
 	public static synchronized ZeroConf getInstance(Context context) {
-		if (_instance == null)
+		if (_instance == null) {
 			_instance = new ZeroConf(context);
+		}
 		return _instance;
 	}
 
@@ -83,8 +80,6 @@ public class ZeroConf {
 		final ServiceInfo service = ServiceInfo.create(type, name, port, text);
 		new Thread(new Runnable() {
 			public void run() {
-				Log.i("ZeroConf.registerService", "Registering service \"" + service.getName()
-						+ "\" with ZeroConf");
 				try {
 					if (_jmDNS != null) {
 						_jmDNS.registerService(service);
@@ -143,7 +138,6 @@ public class ZeroConf {
 
 
 	public void addServiceListener(String type, final Listener listener) {
-		Log.i("ZeroConf.addServiceListener", "Adding listener "	+ listener.getClass().getName());
 		ListenerWrapper wrapper = new ListenerWrapper(type, listener);
 		_wrappers.add(wrapper);
 		_jmDNS.addServiceListener(type, wrapper);
@@ -158,7 +152,6 @@ public class ZeroConf {
 			if (wrapper.getType().equals(type) && (wrapper.getListener() == listener)) {
 				_wrappers.remove(wrapper);
 				_jmDNS.removeServiceListener(type, wrapper);
-				Log.i("ZeroConf.removeServiceListener", "Removed listener " + listener.getClass().getName());
 				return true;
 			}
 		}

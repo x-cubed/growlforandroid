@@ -41,7 +41,6 @@ public class SocketAcceptor extends Thread {
 	
 	public void run() {
 		_listening = true;
-		Log.i("SocketAcceptor.run", "Started listening for incoming connections on " + _listenAddress.toString() + "...");
 		while (_listening) {
 			try {
 				// Wait for an incoming connection
@@ -53,12 +52,16 @@ public class SocketAcceptor extends Thread {
 				connection.start();
 				
 				_activeConnections.add(connection);
+				
+			} catch (ClosedByInterruptException x) {
+				// stopListening was called
+				_listening = false;
+				
 			} catch (Exception x) {
 				Log.e("SocketAcceptor.run", x.toString());
 				_listening = false;
 			}
 		}
-		Log.i("SocketAcceptor.run", "Stopped listening for incoming connections");
 	}
 	
 	public void stopListening() {
@@ -91,7 +94,6 @@ public class SocketAcceptor extends Thread {
 		int size = _activeConnections.size();
 		while (size > 0) {
 			if (lastSize != size) {
-				Log.i("SocketAcceptor.closeConnections", "Waiting for " + size + " connections to close...");
 				lastSize = size;
 			}
 			try {
@@ -100,7 +102,6 @@ public class SocketAcceptor extends Thread {
 			}
 			size = _activeConnections.size();
 		}
-		Log.i("SocketAcceptor.closeConnections", "All connections closed");
 	}
 
 	public void connectionClosed(Thread connection) {

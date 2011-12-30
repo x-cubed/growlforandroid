@@ -51,24 +51,20 @@ public class AndroidNotificationStyle {
 	}
 	
 	private static void recurseGroup(Context context, ViewGroup gp) {
-		Log.i("AndroidNotificationStyle.recurseGroup", "Starting");
 	    final int count = gp.getChildCount();
 	    for (int i = 0; i < count; ++i) {
 	        if (gp.getChildAt(i) instanceof TextView) {
 	            final TextView text = (TextView) gp.getChildAt(i);
 	            final String szText = text.getText().toString();
-	            Log.i("AndroidNotificationStyle.recurseGroup", "Found \"" + szText + "\" at " + i);
 	            if (TITLE_TEXT.equals(szText)) {
 	            	_titleTextColor = text.getTextColors().getDefaultColor();
 	            	_titleTypeface = text.getTypeface();
 	            	_titleTextSize = getScaledTextSize(context, text);
-	            	Log.i("AndroidNotificationStyle.recurseGroup", "Title text size: " + _titleTextSize);
 	            	
 	            } else if (MESSAGE_TEXT.equals(szText)) {
 	            	_messageTextColor = text.getTextColors().getDefaultColor();
 	            	_messageTypeface = text.getTypeface();
 	            	_messageTextSize = getScaledTextSize(context, text);
-	            	Log.i("AndroidNotificationStyle.recurseGroup", "Title text size: " + _messageTextSize);
 	            }
 	            
 	        } else if (gp.getChildAt(i) instanceof ViewGroup) {
