@@ -60,7 +60,7 @@ public class Subscriptions extends ListActivity implements SubscriptionDialog.Li
 
 		// Show a label if there's nothing listed
 		Utility.setEmptyLabel(this, R.string.subscriptions_empty_label);
-		
+
 		_zeroConf = ZeroConf.getInstance(this);
 		_service = new ListenerServiceConnection(this, this);
 		_database = new Database(this);
@@ -87,10 +87,8 @@ public class Subscriptions extends ListActivity implements SubscriptionDialog.Li
 			boolean isZeroConf = cursor.getInt(ZERO_CONF_COLUMN) != 0;
 			String password = cursor.getString(PASSWORD_COLUMN);
 			Subscription subscription = new Subscription(id, name, status, address, password, isZeroConf, true);
-			Log.d("Subscriptions.refresh", "Subscription " + id + ": " + name);
 			subscriptions.add(subscription);
 		}
-		Log.i("Subscriptions.refresh", "Updating adapter");
 		_adapter.replace(subscriptions);
 
 		findZeroConfServices();
@@ -106,8 +104,8 @@ public class Subscriptions extends ListActivity implements SubscriptionDialog.Li
 			public void run() {
 				// Query the available services using ZeroConf
 				Log.i("Subscriptions.findZeroConfServices", "Querying available GNTP services...");
-				final ServiceInfo[] services = _zeroConf.findServices(
-						Constants.GNTP_ZEROCONF_SERVICE_TYPE, ZEROCONF_TIMEOUT_MS);
+				final ServiceInfo[] services = _zeroConf.findServices(Constants.GNTP_ZEROCONF_SERVICE_TYPE,
+						ZEROCONF_TIMEOUT_MS);
 				Log.i("Subscriptions.findZeroConfServices", "Found " + services.length + " available GNTP services");
 
 				// Switch back to the UI thread to update the list view

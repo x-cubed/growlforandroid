@@ -10,16 +10,10 @@ import com.growlforandroid.client.R;
 import com.growlforandroid.gntp.*;
 
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.database.Cursor;
-import android.os.Build;
-import android.preference.PreferenceManager;
 import android.util.Log;
 
 public class Subscriber implements ZeroConf.Listener {
-	public static final String PREFERENCE_SUBSCRIBER_ID = "subscriber_id";
-	
 	private final int MINUTES_MS = 60 * 1000;
 	private final int SUBSCRIPTION_INTERVAL_MS = (int)(1.5 * MINUTES_MS);
 	private final int ZERO_CONF_TIMEOUT_MS = 100;
@@ -37,8 +31,10 @@ public class Subscriber implements ZeroConf.Listener {
 	private Timer _timer;
 	private ZeroConf _zeroConf;
 	
-	public Subscriber(Context context) {
+	public Subscriber(Context context, UUID id, String deviceName) {
 		_context = context;
+		_id = id;
+		_deviceName = deviceName;
 
 		// Cache the status labels
 		STATUS_UNREGISTERED = _context.getText(R.string.subscriptions_status_unregistered).toString();
@@ -46,32 +42,6 @@ public class Subscriber implements ZeroConf.Listener {
 		STATUS_REGISTERED = _context.getText(R.string.subscriptions_status_registered).toString();
 		STATUS_NOT_AUTHORIZED = _context.getText(R.string.subscriptions_status_not_authorized).toString();
 		STATUS_UNKNOWN_HOST = _context.getText(R.string.subscriptions_status_unknown_host).toString();
-		
-		// Load the preferences
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(_context);
-		_deviceName = prefs.getString(GntpMessage.PREFERENCE_DEVICE_NAME, Build.MODEL);
-
-		// Determine the subscriber ID to use
-		String uuid = prefs.getString(PREFERENCE_SUBSCRIBER_ID, null);
-		UUID id = null;
-		if (uuid != null) {
-			// We have a subscriber ID from last time
-			try {
-				id = UUID.fromString(uuid);
-				Log.i("Subscriber.ctor", "Using existing subscriber ID: " + id.toString());
-			} catch (IllegalArgumentException iae) {
-			}
-		}
-		if (id == null) {
-			// Generate a new subscriber ID and save it in the preferences for next time
-			id = UUID.randomUUID();
-			Editor editor = prefs.edit();
-			editor.putString(PREFERENCE_SUBSCRIBER_ID, id.toString());
-			editor.commit();
-			Log.i("Subscriber.ctor", "Created new subscriber ID: " + id.toString());
-		}
-		
-		_id = id;
 	}
 	
 	public Context getContext() {

@@ -6,66 +6,64 @@ import java.util.*;
 import com.growlforandroid.common.*;
 
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.os.Build;
-import android.preference.PreferenceManager;
 import android.util.Log;
 
 /**
  * Represents a basic GNTP message (currently either a Request or Response),
- * which is made up of a leader line followed by zero or more headers 
+ * which is made up of a leader line followed by zero or more headers
+ * 
  * @author Carey
- *
+ * 
  */
 public abstract class GntpMessage {
-	public static final String PREFERENCE_DEVICE_NAME = "device_name";
-	
 	protected final int CONNECTION_TIMEOUT_MS = 10000;
 	protected final int READ_TIMEOUT_MS = 10000;
-	
+
+	private final static ArrayList<String> _commonHeaderOrder = new ArrayList<String>();
+	private final static Map<String, String> _commonHeaders = new HashMap<String, String>();
+
 	private ArrayList<String> _headerOrder = new ArrayList<String>();
 	private Map<String, String> _headers = new HashMap<String, String>();
-	
+
 	public void addHeader(String keyAndValue) {
 		String[] parts = keyAndValue.split(":");
 		addHeader(parts[0].trim(), parts[1].trim());
 	}
-	
+
 	public void addHeader(String key, String value) {
 		_headerOrder.add(key);
 		_headers.put(key, escapeGntpString(value));
 	}
-	
+
 	public void addHeader(String key, int value) {
 		addHeader(key, Integer.toString(value));
 	}
-	
+
 	public void addCommonHeaders(Context context) throws Exception {
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-		String deviceName = prefs.getString(PREFERENCE_DEVICE_NAME, Build.MODEL);
-		addHeader(Constants.HEADER_ORIGIN_MACHINE_NAME, deviceName);
-		addHeader(Constants.HEADER_ORIGIN_SOFTWARE_NAME, "Growl for Android");
-		addHeader(Constants.HEADER_ORIGIN_SOFTWARE_VERSION, "0.9");
-		addHeader(Constants.HEADER_ORIGIN_PLATFORM_NAME, Build.DISPLAY);
-		addHeader(Constants.HEADER_ORIGIN_PLATFORM_VERSION, Build.VERSION.RELEASE);
+		synchronized (_commonHeaders) {
+			for (String key : _commonHeaderOrder) {
+				String value = _commonHeaders.get(key);
+				addHeader(key, value);
+			}
+		}
 	}
-	
+
 	public String getHeaderString(String key) {
 		return _headers.get(key);
 	}
-	
+
 	public int getHeaderInt(String key, int defaultValue) {
 		String value = getHeaderString(key);
 		int result = defaultValue;
 		try {
 			result = Integer.parseInt(value);
 		} catch (NumberFormatException nfe) {
-			Log.e("GntpMessage.getHeaderInt",
-				"Header \"" + key + "\" has value \"" + value + "\" that can't be parsed as an int");
+			Log.e("GntpMessage.getHeaderInt", "Header \"" + key + "\" has value \"" + value
+					+ "\" that can't be parsed as an int");
 		}
 		return result;
 	}
-	
+
 	public void write(ChannelWriter writer) throws IOException {
 		String leaderLine = getLeaderLine();
 		Log.i("GntpMessage.write", leaderLine);
@@ -75,9 +73,9 @@ public abstract class GntpMessage {
 	}
 
 	protected abstract String getLeaderLine() throws IOException;
-	
+
 	protected void writeHeaders(ChannelWriter writer) throws IOException {
-		for(String key: _headerOrder) {
+		for (String key : _headerOrder) {
 			writeHeader(writer, key, getHeaderString(key));
 		}
 	}
@@ -87,12 +85,14 @@ public abstract class GntpMessage {
 		Log.i("GntpMessage.writeHeader", header);
 		writer.write(header + Constants.END_OF_LINE);
 	}
-	
-	
+
 	/**
 	 * Reads a series of key/value pair headers from the specified source, until
-	 * the end of the stream or a blank line is reached, calling addHeader on each item
-	 * @param reader		The source to read from
+	 * the end of the stream or a blank line is reached, calling addHeader on
+	 * each item
+	 * 
+	 * @param reader
+	 *            The source to read from
 	 * @throws Exception
 	 */
 	protected void readHeaders(EncryptedChannelReader reader) throws IOException {
@@ -106,5 +106,19 @@ public abstract class GntpMessage {
 
 	protected static String escapeGntpString(String source) {
 		return source.replace('\r', '\n');
+	}
+
+	public static void clearCommonHeaders() {
+		synchronized (_commonHeaders) {
+			_commonHeaderOrder.clear();
+			_commonHeaders.clear();
+		}
+	}
+
+	public static void addCommonHeader(String key, String value) {
+		synchronized (_commonHeaders) {
+			_commonHeaderOrder.add(key);
+			_commonHeaders.put(key, value);
+		}
 	}
 }

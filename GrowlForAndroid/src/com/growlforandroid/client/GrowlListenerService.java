@@ -11,7 +11,6 @@ import com.growlforandroid.gntp.*;
 
 import android.app.*;
 import android.content.*;
-import android.content.SharedPreferences.Editor;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.os.*;
@@ -23,6 +22,7 @@ public class GrowlListenerService
 	implements IGrowlRegistry {
 
 	private static final int SERVICE_NOTIFICATION = 0xDEADBEEF;
+	private static final String PLATFORM_NAME = "Google Android";
 	
 	private static Database _database;
 	private static GrowlResources _resources;
@@ -60,12 +60,35 @@ public class GrowlListenerService
     		}
     	}
     	
+    	initializeCommonHeaders();
+    	
     	_notifyMgr = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
     	
         // Display a notification about us starting.  We put an icon in the status bar.
         showNotification();
     }
-
+    
+    /**
+     * Initialize the headers sent in all GNTP messages
+     */
+    private void initializeCommonHeaders() {
+    	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+    	GntpMessage.clearCommonHeaders();
+    	
+    	String deviceName = Preferences.getDeviceName(prefs);
+		GntpMessage.addCommonHeader(Constants.HEADER_ORIGIN_MACHINE_NAME, deviceName);
+		
+		String softwareName = getText(R.string.app_name).toString();
+		GntpMessage.addCommonHeader(Constants.HEADER_ORIGIN_SOFTWARE_NAME, softwareName);
+		
+		String softwareVersion = getText(R.string.app_version).toString();
+		GntpMessage.addCommonHeader(Constants.HEADER_ORIGIN_SOFTWARE_VERSION, softwareVersion);
+		
+		String platformName = PLATFORM_NAME + " " + Build.VERSION.SDK + " (" + Build.DISPLAY + ")";
+		GntpMessage.addCommonHeader(Constants.HEADER_ORIGIN_PLATFORM_NAME, platformName);
+		GntpMessage.addCommonHeader(Constants.HEADER_ORIGIN_PLATFORM_VERSION, Build.VERSION.RELEASE);
+    }
+    
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i("GrowlListenerService.onStartCommand", "Received start id " + startId + ": " + intent);
@@ -75,19 +98,12 @@ public class GrowlListenerService
         }
         
     	// Determine the device name to use
-        Context context = getBaseContext();
-    	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        String deviceName = prefs.getString(GntpMessage.PREFERENCE_DEVICE_NAME, "");
-    	if (deviceName == "") {
-    		// Use the model name by default
-    		deviceName = Build.MODEL;
-        	Editor editor = prefs.edit();
-        	editor.putString(GntpMessage.PREFERENCE_DEVICE_NAME, deviceName);
-        	editor.commit();
-    	}
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        String deviceName = Preferences.getDeviceName(prefs);
+    	UUID subscriberId = Preferences.getSubscriberId(prefs); 		
         
     	// Determine the text size and color to use in the status bar
-    	AndroidNotificationStyle.grabNotificationStyle(context);
+    	AndroidNotificationStyle.grabNotificationStyle(this);
     	
         try {
         	// Start listening on GNTP_PORT, on all interfaces
@@ -98,13 +114,13 @@ public class GrowlListenerService
 			// Register the GNTP service with Bonjour/ZeroConf
 			if (prefs.getBoolean(Preferences.ANNOUNCE_USING_ZEROCONF, true)) {
 				Log.i("GrowlListenerService.onStartCommand", "Initialising ZeroConf...");
-				initialiseZeroConf(deviceName, context);
+				initialiseZeroConf(deviceName, this);
 			}
 			
 			// Start subscribing to notifications from other devices
             Log.i("GrowlListenerService.onStartCommand", "Renewing subscriptions...");
 			final GrowlListenerService service = this;
-			_subscriber = new Subscriber(service) {
+			_subscriber = new Subscriber(service, subscriberId, deviceName) {
 				public void onSubscriptionStatusChanged(long id, String status) {
 					// Show the number of active subscriptions in the status bar
 					int active = getActiveSubscriptions();
