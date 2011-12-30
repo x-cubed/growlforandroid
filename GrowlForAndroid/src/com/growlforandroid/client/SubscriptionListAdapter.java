@@ -37,11 +37,16 @@ public class SubscriptionListAdapter  extends BaseAdapter implements ListAdapter
 		if (subscription.isValid()) {
 			InetAddress[] addresses = subscription.getInetAddresses();
 			
-			boolean isUnique = true;
+			boolean isUnique = true;			
 			for (Subscription previouslySeen : _subscriptions) {
-				if (previouslySeen.matchesAny(addresses)) {
+				if (previouslySeen.isZeroConf() && previouslySeen.getName().equals(subscription.getName())) {
 					Log.d("SubscriptionListAdapter.addService", "Subscription to " + subscription.getName()
-							+ " has already been seen");
+							+ " matches existing ZeroConf subscription");
+					isUnique = false;
+					break;
+				} else if (previouslySeen.matchesAny(addresses)) {
+					Log.d("SubscriptionListAdapter.addService", "Subscription to " + subscription.getName()
+							+ " matches existing manual subscription");
 					isUnique = false;
 					break;
 				}

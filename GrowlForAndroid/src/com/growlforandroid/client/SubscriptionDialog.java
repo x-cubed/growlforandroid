@@ -13,13 +13,14 @@ import android.widget.EditText;
 
 /**
  * The Add/Edit Subscription dialog
+ * 
  * @author Carey
- *
+ * 
  */
 public class SubscriptionDialog {
 	private final Context _context;
 	private final Listener _listener;
-	
+
 	private LayoutInflater _factory;
 	private View _textEntryView;
 	private EditText _txtName;
@@ -33,7 +34,7 @@ public class SubscriptionDialog {
 	private SubscriptionDialog(Context context, Listener listener) {
 		_context = context;
 		_listener = listener;
-	
+
 		_factory = LayoutInflater.from(_context);
 		_textEntryView = _factory.inflate(R.layout.add_subscription_dialog, null);
 		_txtName = (EditText) _textEntryView.findViewById(R.id.txtSubscriptionName);
@@ -41,30 +42,30 @@ public class SubscriptionDialog {
 		_txtPassword = (EditText) _textEntryView.findViewById(R.id.txtSubscriptionPassword);
 
 		_builder = new AlertDialog.Builder(_context).setView(_textEntryView).setNegativeButton(R.string.dialog_cancel,
-			new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog, int whichButton) {
-					/* User clicked cancel so don't do anything */
-				}
-			});
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int whichButton) {
+						/* User clicked cancel so don't do anything */
+					}
+				});
 	}
 
 	public Dialog create() {
 		return _builder.create();
 	}
-	
+
 	public void updateFields(String name, String address, boolean editable, String password) {
 		_txtName.setText(name);
 		_txtName.setEnabled(editable);
 		_txtName.setFocusable(editable);
-		
+
 		_txtAddress.setText(address);
 		_txtAddress.setEnabled(editable);
 		_txtAddress.setFocusable(editable);
-		
+
 		_txtPassword.setText(password);
 	}
-	
-	public void populateAddDialog() {
+
+	public void populateAddDialog(final boolean isZeroConf) {
 		_builder.setTitle(R.string.subscriptions_add_dialog_title);
 		_builder.setPositiveButton(R.string.dialog_add, new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int whichButton) {
@@ -75,19 +76,19 @@ public class SubscriptionDialog {
 				if (name.equals("") || address.equals("") || password.equals("")) {
 					return;
 				}
-				_listener.addSubscription(name, address, password);
+				_listener.addSubscription(name, address, password, isZeroConf);
 			}
 		});
 	}
-	
+
 	public static Dialog createAddDialog(Context context, Listener listener) {
 		SubscriptionDialog builder = new SubscriptionDialog(context, listener);
 		builder.updateFields("", "", true, "");
-		builder.populateAddDialog();
+		builder.populateAddDialog(false);
 		return builder.create();
 	}
 
-	public void populateEditDialog(long id) {	
+	public void populateEditDialog(long id) {
 		_builder.setTitle(R.string.subscriptions_edit_dialog_title);
 		_builder.setPositiveButton(R.string.dialog_save, new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int whichButton) {
@@ -102,28 +103,22 @@ public class SubscriptionDialog {
 			}
 		});
 	}
-	
+
 	public static Dialog createEditDialog(Context context, Listener listener, Subscription subscription) {
 		SubscriptionDialog builder = new SubscriptionDialog(context, listener);
-		boolean newZeroConf = subscription.isZeroConf() && !subscription.isSubscribed();		
-		builder.updateFields(subscription.getName(), subscription.getAddress(), !newZeroConf, subscription.getPassword());
+		boolean newZeroConf = subscription.isZeroConf() && !subscription.isSubscribed();
+		builder.updateFields(subscription.getName(), subscription.getAddress(), !newZeroConf,
+				subscription.getPassword());
 		if (newZeroConf) {
-			builder.populateAddDialog();
+			builder.populateAddDialog(newZeroConf);
 		} else {
-			builder.populateEditDialog(subscription.getId());	
+			builder.populateEditDialog(subscription.getId());
 		}
 		return builder.create();
 	}
-	
-	public static Dialog createEditDialog(Context context, Listener listener,
-			long id, String name, String address, String password) {
-		SubscriptionDialog builder = new SubscriptionDialog(context, listener);
-		
-		return builder.create();
-	}
-	
+
 	public interface Listener {
-		public void addSubscription(String name, String address, String password);
+		public void addSubscription(String name, String address, String password, boolean isZeroConf);
 		public void updateSubscription(long id, String name, String address, String password);
 	}
 }

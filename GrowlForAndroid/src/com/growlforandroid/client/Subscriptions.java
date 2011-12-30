@@ -73,18 +73,20 @@ public class Subscriptions extends ListActivity implements SubscriptionDialog.Li
 
 		// Add the subscriptions from the database
 		Cursor cursor = _database.getSubscriptions();
-		int idIndex = cursor.getColumnIndex(Database.KEY_ROWID);
-		int nameIndex = cursor.getColumnIndex(Database.KEY_NAME);
-		int statusIndex = cursor.getColumnIndex(Database.KEY_STATUS);
-		int addressIndex = cursor.getColumnIndex(Database.KEY_ADDRESS);
-		int passwordIndex = cursor.getColumnIndex(Database.KEY_PASSWORD);
+		final int ID_COLUMN = cursor.getColumnIndex(Database.KEY_ROWID);
+		final int NAME_COLUMN = cursor.getColumnIndex(Database.KEY_NAME);
+		final int STATUS_COLUMN = cursor.getColumnIndex(Database.KEY_STATUS);
+		final int ADDRESS_COLUMN = cursor.getColumnIndex(Database.KEY_ADDRESS);
+		final int ZERO_CONF_COLUMN = cursor.getColumnIndex(Database.KEY_ZERO_CONF);
+		final int PASSWORD_COLUMN = cursor.getColumnIndex(Database.KEY_PASSWORD);
 		while (cursor.moveToNext()) {
-			int id = cursor.getInt(idIndex);
-			String name = cursor.getString(nameIndex);
-			String status = cursor.getString(statusIndex);
-			String address = cursor.getString(addressIndex);
-			String password = cursor.getString(passwordIndex);
-			Subscription subscription = new Subscription(id, name, status, address, password, false, true);
+			int id = cursor.getInt(ID_COLUMN);
+			String name = cursor.getString(NAME_COLUMN);
+			String status = cursor.getString(STATUS_COLUMN);
+			String address = cursor.getString(ADDRESS_COLUMN);
+			boolean isZeroConf = cursor.getInt(ZERO_CONF_COLUMN) != 0;
+			String password = cursor.getString(PASSWORD_COLUMN);
+			Subscription subscription = new Subscription(id, name, status, address, password, isZeroConf, true);
 			Log.d("Subscriptions.refresh", "Subscription " + id + ": " + name);
 			subscriptions.add(subscription);
 		}
@@ -240,9 +242,9 @@ public class Subscriptions extends ListActivity implements SubscriptionDialog.Li
 		return null;
 	}
 
-	public void addSubscription(String name, String address, String password) {
+	public void addSubscription(String name, String address, String password, boolean isZeroConf) {
 		String unregistered = getText(R.string.subscriptions_status_unregistered).toString();
-		_database.insertSubscription(name, address, password, unregistered);
+		_database.insertSubscription(name, address, password, isZeroConf, unregistered);
 
 		refresh();
 		if (_service.isRunning()) {

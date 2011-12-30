@@ -47,19 +47,6 @@ public class Request
 		byte[] hash = _hashAlgorithm.calculateHash(password, salt);
 		_hash = Utility.getHexStringFromByteArray(hash);
 	}
-
-	public void sendTo(long connectionID, String hostAndPort) throws GntpException, UnknownHostException, IOException {
-		String host = hostAndPort;
-		int port = 23053;
-		
-		int colon = hostAndPort.indexOf(':');
-		if (colon >= 0) {
-			port = Integer.parseInt(hostAndPort.substring(colon));
-			host = hostAndPort.substring(0, colon);
-		}
-		
-		sendTo(connectionID, host, port);
-	}
 	
 	public void sendTo(long connectionID, String host, int port) throws GntpException, UnknownHostException, IOException {
 		SocketChannel channel = null;
