@@ -33,7 +33,7 @@ public class SubscriptionListAdapter  extends BaseAdapter implements ListAdapter
 	}
 
 	public void addService(ServiceInfo service, String status) {
-		Subscription subscription = new Subscription(service, status, false);
+		Subscription subscription = new Subscription(service, status);
 		if (subscription.isValid()) {
 			InetAddress[] addresses = subscription.getInetAddresses();
 			

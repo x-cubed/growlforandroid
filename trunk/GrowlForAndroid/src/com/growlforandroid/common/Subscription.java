@@ -1,7 +1,6 @@
 package com.growlforandroid.common;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.net.*;
 
 import javax.jmdns.ServiceInfo;
 
@@ -10,14 +9,14 @@ public class Subscription {
 	private final String _name;
 	private final String _status;
 	private final String _address;
-	private final InetAddress[] _ipAddresses;
 	private final String _password;
 	private final boolean _zeroConf;
 	private final boolean _subscribed;
+	private InetAddress[] _ipAddresses;
 
 	public Subscription(int id, String name, String status, String address, String password, boolean zeroConf,
 			boolean subscribed) {
-		this(id, name, status, address, lookupInetAddress(address), password, zeroConf, subscribed);
+		this(id, name, status, address, null, password, zeroConf, subscribed);
 	}
 
 	public Subscription(int id, String name, String status, String address, InetAddress[] ipAddresses, String password,
@@ -32,16 +31,8 @@ public class Subscription {
 		_subscribed = subscribed;
 	}
 
-	public Subscription(ServiceInfo service, String status, boolean subscribed) {
-		this(0, service.getName(), status, service.getServer(), service.getInetAddresses(), "", true, subscribed);
-	}
-
-	private static InetAddress[] lookupInetAddress(String address) {
-		try {
-			return InetAddress.getAllByName(address);
-		} catch (UnknownHostException e) {
-			return new InetAddress[0];
-		}
+	public Subscription(ServiceInfo service, String status) {
+		this(0, service.getName(), status, service.getServer(), service.getInetAddresses(), "", true, false);
 	}
 
 	public int getId() {
@@ -61,6 +52,13 @@ public class Subscription {
 	}
 
 	public InetAddress[] getInetAddresses() {
+		if (_ipAddresses == null) {
+			try {
+				_ipAddresses = InetAddress.getAllByName(_address);
+			} catch (UnknownHostException e) {
+				_ipAddresses = new InetAddress[0];
+			}
+		}
 		return _ipAddresses;
 	}
 
@@ -87,7 +85,7 @@ public class Subscription {
 	}
 
 	public boolean matchesAny(InetAddress[] addresses) {
-		for (InetAddress ipAddress : _ipAddresses) {
+		for (InetAddress ipAddress : getInetAddresses()) {
 			for (InetAddress address : addresses) {
 				if (address.equals(ipAddress)) {
 					return true;
