@@ -106,11 +106,11 @@ public class SubscriptionDialog {
 
 	public static Dialog createEditDialog(Context context, Listener listener, Subscription subscription) {
 		SubscriptionDialog builder = new SubscriptionDialog(context, listener);
-		boolean newZeroConf = subscription.isZeroConf() && !subscription.isSubscribed();
-		builder.updateFields(subscription.getName(), subscription.getAddress(), !newZeroConf,
+		builder.updateFields(subscription.getName(), subscription.getAddress(), !subscription.isZeroConf(),
 				subscription.getPassword());
+		boolean newZeroConf = subscription.isZeroConf() && !subscription.isSubscribed();
 		if (newZeroConf) {
-			builder.populateAddDialog(newZeroConf);
+			builder.populateAddDialog(subscription.isZeroConf());
 		} else {
 			builder.populateEditDialog(subscription.getId());
 		}
