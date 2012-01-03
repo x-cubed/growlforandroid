@@ -183,9 +183,6 @@ public class GrowlListenerService extends Service implements IGrowlRegistry {
 	}
 
 	private void stop() {
-		// Cancel the persistent notification.
-		_notifyMgr.cancel(SERVICE_NOTIFICATION);
-
 		// Stop listening for TCP connections
 		try {
 			if (_subscriber != null) {
@@ -219,6 +216,9 @@ public class GrowlListenerService extends Service implements IGrowlRegistry {
 				}
 			}).start();
 		}
+		
+		// Cancel the persistent notification.
+		_notifyMgr.cancel(SERVICE_NOTIFICATION);
 	}
 
 	protected void finalize() {
