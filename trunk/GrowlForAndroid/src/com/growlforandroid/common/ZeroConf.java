@@ -2,7 +2,10 @@ package com.growlforandroid.common;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
 
 import javax.jmdns.*;
 
@@ -116,20 +119,37 @@ public class ZeroConf {
 		return results;
 	}
 
-	private boolean isLocalService(ServiceInfo service) {
-		InetAddress localAddress;
+	public static List<InetAddress> getLocalAddresses() {
+		ArrayList<InetAddress> allAddresses = new ArrayList<InetAddress>();
 		try {
-			localAddress = _jmDNS.getInterface();
+			Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+			while(interfaces.hasMoreElements()) {
+				NetworkInterface iface = interfaces.nextElement();
+				Enumeration<InetAddress> addresses = iface.getInetAddresses();
+				while (addresses.hasMoreElements()) {
+					InetAddress address = addresses.nextElement();
+					allAddresses.add(address);
+				}
+			}
 		} catch (Exception x) {
-			localAddress = null;
+			Log.w("ZeroConf.getLocalAddresses", x.toString());
 		}
-		
+		return allAddresses;
+	}
+	
+	private boolean isLocalService(ServiceInfo service) {	
 		boolean isLocal = false;
+		List<InetAddress> localAddresses = getLocalAddresses();
 		for(InetAddress serviceAddress:service.getInetAddresses()) {
-			if (serviceAddress.equals(localAddress)) {
-				Log.d("ZeroConf.findServices", "Ignoring service " + service.getName()
-						+ " because it's local");
-				isLocal = true;
+			for(InetAddress localAddress:localAddresses) {
+				if (serviceAddress.equals(localAddress)) {
+					Log.d("ZeroConf.findServices", "Ignoring service " + service.getName()
+							+ " because it's local");
+					isLocal = true;
+					break;
+				}	
+			}
+			if (isLocal) {
 				break;
 			}
 		}
