@@ -3,6 +3,8 @@ package com.growlforandroid.client;
 import com.growlforandroid.common.Database;
 import com.growlforandroid.common.GrowlApplication;
 import com.growlforandroid.common.GrowlNotification;
+import com.growlforandroid.common.GrowlRegistry;
+import com.growlforandroid.common.IGrowlRegistry;
 import com.growlforandroid.common.NotificationType;
 
 import android.app.*;
@@ -37,6 +39,7 @@ public class MainActivity extends Activity implements GrowlListenerService.Statu
 	private ListenerServiceConnection _service;
 	private Database _database;
 	private Cursor _cursor;
+	private ListAdapter _adapter;
 
 	private ListView _lsvNotifications;
 	private ToggleButton _tglServiceState;
@@ -97,9 +100,9 @@ public class MainActivity extends Activity implements GrowlListenerService.Statu
 	private void refresh() {
 		if (_cursor == null) {
 			_cursor = _database.getNotificationHistory(MAX_HISTORY_ITEMS);
-			_lsvNotifications.setAdapter(new SimpleCursorAdapter(this, R.layout.history_list_item, _cursor,
-					new String[] { Database.KEY_TITLE, Database.KEY_MESSAGE, Database.KEY_APP_NAME }, new int[] {
-							R.id.txtNotificationTitle, R.id.txtNotificationMessage, R.id.txtNotificationApp }));
+			IGrowlRegistry registry = new GrowlRegistry(_database);
+			_adapter = new NotificationListAdapter(this, getLayoutInflater(), registry, _cursor);
+			_lsvNotifications.setAdapter(_adapter);
 		} else {
 			_cursor.requery();
 		}

@@ -13,11 +13,13 @@ import android.widget.*;
 import com.growlforandroid.common.*;
 
 /***
- * Provides the list of active and available subscriptions for the Subscriptions activity
+ * Provides the list of active and available subscriptions for the Subscriptions
+ * activity
+ * 
  * @author Carey
- *
+ * 
  */
-public class SubscriptionListAdapter  extends BaseAdapter implements ListAdapter {
+public class SubscriptionListAdapter extends BaseAdapter implements ListAdapter {
 	private final LayoutInflater _inflater;
 	private List<Subscription> _subscriptions;
 
@@ -36,8 +38,8 @@ public class SubscriptionListAdapter  extends BaseAdapter implements ListAdapter
 		Subscription subscription = new Subscription(service, status);
 		if (subscription.isValid()) {
 			InetAddress[] addresses = subscription.getInetAddresses();
-			
-			boolean isUnique = true;			
+
+			boolean isUnique = true;
 			for (Subscription previouslySeen : _subscriptions) {
 				if (previouslySeen.isZeroConf() && previouslySeen.getName().equals(subscription.getName())) {
 					Log.d("SubscriptionListAdapter.addService", "Subscription to " + subscription.getName()
@@ -57,10 +59,10 @@ public class SubscriptionListAdapter  extends BaseAdapter implements ListAdapter
 			}
 		}
 	}
-	
+
 	public void removeService(ServiceInfo service) {
 		synchronized (_subscriptions) {
-			for(Subscription subscription:_subscriptions) {
+			for (Subscription subscription : _subscriptions) {
 				if (!subscription.isSubscribed() && subscription.matchesService(service)) {
 					_subscriptions.remove(subscription);
 					notifyDataSetChanged();
@@ -83,7 +85,7 @@ public class SubscriptionListAdapter  extends BaseAdapter implements ListAdapter
 			notifyDataSetChanged();
 		}
 	}
-	
+
 	public int getCount() {
 		return _subscriptions.size();
 	}

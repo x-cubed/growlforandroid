@@ -18,30 +18,32 @@ public class GrowlNotification {
 	private final static int MAX_ICON_SIZE = 100;
 	
 	private final NotificationType _type;
-	private final String _id;
+	private final String _notificationId;
 	private final String _title;
 	private final String _text;
 	private final URL _iconUrl;
 	private final String _origin;
 	private final Map<String, GrowlResource> _resources;
 	private final long _receivedAtMS;
+	private long _id = -1;
 	
-	public GrowlNotification(NotificationType type, String id, String title, String text, URL icon) {
+	public GrowlNotification(long id, NotificationType type, String title, String text, URL icon, String origin, long receivedAtMS) {
 		_id = id;
+		_notificationId = Long.toString(id);
 		_type = type;
 		_title = title;
 		_text = text;
 		_iconUrl = icon;
 		
 		_resources = new HashMap<String, GrowlResource>();
-		_origin = null;
-		_receivedAtMS = System.currentTimeMillis();
+		_origin = origin;
+		_receivedAtMS = receivedAtMS;
 	}
 	
 	public GrowlNotification(NotificationType type,	Map<String, String> headers, Map<String, GrowlResource> resources, long receivedAtMS)
 		throws MalformedURLException {
 		
-		_id = headers.get(Constants.HEADER_NOTIFICATION_ID);
+		_notificationId = headers.get(Constants.HEADER_NOTIFICATION_ID);
 		_type = type;
 		
 		String icon = headers.get(Constants.HEADER_NOTIFICATION_ICON);
@@ -66,8 +68,16 @@ public class GrowlNotification {
 		return _title;
 	}
 	
-	public String getId() {
+	public long getId() {
 		return _id;
+	}
+	
+	public void setId(long id) {
+		_id = id;
+	}
+	
+	public String getNotificationId() {
+		return _notificationId;
 	}
 	
 	public URL getIconUrl() {
