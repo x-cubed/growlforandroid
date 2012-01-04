@@ -4,11 +4,14 @@ import java.net.*;
 import java.util.Enumeration;
 
 import android.app.ListActivity;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -111,9 +114,18 @@ public final class Utility {
 		}
 	}
 
-	public static void setText(View child, int viewId, String text) {
-		TextView textView = (TextView) child.findViewById(viewId);
+	public static void setText(View parent, int viewId, String text) {
+		TextView textView = (TextView) parent.findViewById(viewId);
 		textView.setText(text);
+	}
+	
+	public static void setImage(View parent, int viewId, Bitmap bitmap) {
+		ImageView imageView = (ImageView) parent.findViewById(viewId);
+		imageView.setImageBitmap(bitmap);
+	}	
+	public static void setImage(View parent, int viewId, Drawable drawable) {
+		ImageView imageView = (ImageView) parent.findViewById(viewId);
+		imageView.setImageDrawable(drawable);
 	}
 	
 	/***

@@ -19,10 +19,11 @@ public class GntpListenerThread extends Thread {
 	private final SocketAcceptor _acceptor;
 	private final long _connectionID;
 	private final Socket _socket;
-	private final IGrowlRegistry _registry;
+	private final IGrowlService _service;
 	private final SocketChannel _channel;
 	private final EncryptedChannelReader _socketReader;
 	private final ChannelWriter _socketWriter;
+	
 	private RequestState _currentState = RequestState.Connected;
 	
 	private long _requestStartedMS;
@@ -39,14 +40,14 @@ public class GntpListenerThread extends Thread {
 	private int _resourceIndex = 0;
 	private Map<Integer, Map<String, String>> _notificationsHeaders = new HashMap<Integer, Map<String, String>>();
 	
-	public GntpListenerThread(SocketAcceptor socketAcceptor, long connectionID, IGrowlRegistry registry, SocketChannel channel) {
+	public GntpListenerThread(SocketAcceptor socketAcceptor, IGrowlService service, long connectionID, SocketChannel channel) {
 		super("GntpListenerThread");
 
 		_requestStartedMS = System.currentTimeMillis();
 		
 		_acceptor = socketAcceptor;
 		_connectionID = connectionID;
-		_registry = registry;
+		_service = service;
 		
 		_channel = channel;
 		_socketReader = new EncryptedChannelReader(_channel);
@@ -163,7 +164,7 @@ public class GntpListenerThread extends Thread {
 		
 		// Notify the SocketAcceptor that we're done
 		Log.i("GNTPListenerThread.run[" + _connectionID + "]", "Connection closed");
-		_acceptor.connectionClosed(this);
+		_service.connectionClosed(this);
 	}
 	
 	private RequestState parseRequestHeader(String inputLine) throws GntpException {
@@ -238,7 +239,7 @@ public class GntpListenerThread extends Thread {
 				"Reading " + length + " bytes of resource data");
 
 		// Read in the file data, decrypt it and save it to a temporary location
-		File cacheFolder = _registry.getCacheDir();
+		File cacheFolder = _service.getCacheDir();
 		byte[] idHash = HashAlgorithm.MD5.calculateHash(_currentResource.getIdentifier().getBytes());
 		String fileName = Utility.getHexStringFromByteArray(idHash);
 		File tempResource = _socketReader.readAndDecryptBytesToCacheFile(length, _encryptionType, _initVector, _key, cacheFolder, fileName);
@@ -247,7 +248,7 @@ public class GntpListenerThread extends Thread {
 		
 		// Link the source file to the resource, register the resource and link the resource to the notification
 		_currentResource.setSourceFile(tempResource);
-		_registry.registerResource(_currentResource);
+		_service.registerResource(_currentResource);
 		_resources.put(_currentResource.getIdentifier(), _currentResource);
 		_currentResource = null;
 		
@@ -268,7 +269,7 @@ public class GntpListenerThread extends Thread {
 	private void doNotify() throws GntpException, MalformedURLException {
 		// Find the registered application
 		String name = _requestHeaders.get(Constants.HEADER_APPLICATION_NAME);
-		GrowlApplication application = _registry.getApplication(name);
+		GrowlApplication application = _service.getApplication(name);
 		if (application == null)
 			throw new GntpException(GntpError.UnknownApplication);
 		
@@ -280,7 +281,7 @@ public class GntpListenerThread extends Thread {
 		
 		// Display the notification
 		GrowlNotification notification = new GrowlNotification(type, _requestHeaders, _resources, _requestStartedMS);
-		_registry.displayNotification(notification);
+		_service.displayNotification(notification);
 	}
 
 	// Register an application and its notification types
@@ -288,7 +289,7 @@ public class GntpListenerThread extends Thread {
 		String name = _requestHeaders.get(Constants.HEADER_APPLICATION_NAME);
 		String icon = _requestHeaders.get(Constants.HEADER_APPLICATION_ICON);
 		URL iconUrl = (icon != null) ? new URL(icon) : null;
-		GrowlApplication application = _registry.registerApplication(name, iconUrl);
+		GrowlApplication application = _service.registerApplication(name, iconUrl);
 		
 		for(int i=0; i<_notificationsCount; i++) {
 			// Register notification types
@@ -359,7 +360,7 @@ public class GntpListenerThread extends Thread {
 			String salt = hashDotSalt.substring(dot + 1);
 			
 			// Validate the hash
-			_key = _registry.getMatchingKey(algorithm, hash, salt);
+			_key = _service.getMatchingKey(algorithm, hash, salt);
 			if (_key == null) {
 				// We couldn't find a key that matches, ignore this notification
 				Log.i("GntpListenerThread.parseRequestLine[" + _connectionID + "]",
@@ -369,7 +370,7 @@ public class GntpListenerThread extends Thread {
 				Log.i("GntpListenerThread.parseRequestLine[" + _connectionID + "]",
 						"Encryption Key:  " + Utility.getHexStringFromByteArray(_key));
 			}
-		} else if (_registry.requiresPassword()) {
+		} else if (_service.requiresPassword()) {
 			// The application didn't supply a password hash, but the registry requires one
 			Log.w("GntpListenerThread.parseRequestLine[" + _connectionID + "]",
 					"Passwords are required, but this notification did not have one. Ignoring");

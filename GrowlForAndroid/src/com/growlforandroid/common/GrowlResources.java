@@ -20,6 +20,11 @@ public class GrowlResources implements URLStreamHandlerFactory {
 		return _resources.get(identifier);
 	}
 	
+	public InputStream get(URL url) throws IOException {
+		ResourceURLConnection connection = new ResourceURLConnection(url);
+		return connection.getInputStream();
+	}
+	
 	public void put(GrowlResource resource) {
 		String identifier = resource.getIdentifier();
 		Log.i("GrowlResources.put", "Adding resource " + identifier);

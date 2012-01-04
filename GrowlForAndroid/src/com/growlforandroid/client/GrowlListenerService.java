@@ -17,13 +17,13 @@ import android.os.*;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-public class GrowlListenerService extends Service implements IGrowlRegistry {
+public class GrowlListenerService extends Service implements IGrowlService {
 
 	private static final int SERVICE_NOTIFICATION = 0xDEADBEEF;
 	private static final String PLATFORM_NAME = "Google Android";
 
 	private static Database _database;
-	private static GrowlResources _resources;
+	private static IGrowlRegistry _registry;
 
 	private final Set<WeakReference<StatusChangedHandler>> _statusChangedHandlers = Collections
 			.synchronizedSet(new HashSet<WeakReference<StatusChangedHandler>>());
@@ -43,22 +43,11 @@ public class GrowlListenerService extends Service implements IGrowlRegistry {
 		}
 	}
 
-	static {
-		_resources = new GrowlResources();
-
-		// Register a protocol handler for x-growl-resource:// URLs
-		try {
-			Log.d("GrowlListenerService", "Registering protocol handler");
-			URL.setURLStreamHandlerFactory(_resources);
-		} catch (Throwable t) {
-			Log.e("GrowlListenerService", "Failed to register protocol handler: " + t);
-		}
-	}
-
 	@Override
 	public void onCreate() {
 		if (_database == null) {
 			_database = new Database(this.getApplicationContext());
+			_registry = new GrowlRegistry(_database);
 		}
 
 		initializeCommonHeaders();
@@ -307,74 +296,6 @@ public class GrowlListenerService extends Service implements IGrowlRegistry {
 		return result;
 	}
 
-	public Drawable getIcon(URL icon) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public void registerResource(GrowlResource resource) {
-		_resources.put(resource);
-	}
-
-	public GrowlApplication getApplication(String name) {
-		Cursor cursor = _database.getApplication(name);
-		return getApplication(cursor);
-	}
-
-	public GrowlApplication getApplication(long id) {
-		Cursor cursor = _database.getApplication(id);
-		return getApplication(cursor);
-	}
-
-	private GrowlApplication getApplication(Cursor cursor) {
-		GrowlApplication application = null;
-		if (cursor.moveToFirst()) {
-			try {
-				int id = cursor.getInt(cursor.getColumnIndex(Database.KEY_ROWID));
-				String name = cursor.getString(cursor.getColumnIndex(Database.KEY_NAME));
-				boolean enabled = cursor.getInt(cursor.getColumnIndex(Database.KEY_ENABLED)) != 0;
-				String icon = cursor.getString(cursor.getColumnIndex(Database.KEY_ICON_URL));
-				URL iconUrl = icon == null ? null : new URL(icon);
-
-				int displayColumn = cursor.getColumnIndex(Database.KEY_DISPLAY_ID);
-				Integer displayId = null;
-				if (!cursor.isNull(displayColumn))
-					displayId = new Integer(cursor.getInt(displayColumn));
-
-				application = new GrowlApplication(this, id, name, enabled, iconUrl, displayId);
-
-				Log.i("GrowlListenerService.loadApplication", "Loaded application \"" + name + "\" with ID = " + id);
-			} catch (MalformedURLException x) {
-				Log.e("GrowlListenerService.getApplication", x.toString());
-			}
-		}
-		cursor.close();
-		return application;
-	}
-
-	public GrowlApplication registerApplication(String name, URL iconUrl) {
-		// Create a new Application and store application in a dictionary
-		GrowlApplication oldApp = getApplication(name);
-		GrowlApplication result = oldApp;
-		if (oldApp != null) {
-			long id = oldApp.ID;
-			Log.i("GrowlListenerService.registerApplication", "Re-registering application \"" + name + "\" with ID = "
-					+ id);
-			_database.setApplicationIcon(id, iconUrl);
-			result = getApplication(id);
-		} else {
-			Boolean enabled = true;
-			int id = _database.insertApplication(name, enabled, iconUrl);
-			GrowlApplication newApp = new GrowlApplication(this, id, name, enabled, iconUrl, null);
-			Log.i("GrowlListenerService.registerApplication", "Registered new application \"" + name + "\" with ID = "
-					+ newApp.ID);
-			result = newApp;
-		}
-
-		onApplicationRegistered(result);
-		return result;
-	}
-
 	public void displayNotification(GrowlNotification notification) {
 		NotificationType type = notification.getType();
 		GrowlApplication app = type.Application;
@@ -407,7 +328,8 @@ public class GrowlListenerService extends Service implements IGrowlRegistry {
 
 		if (displayProfile.shouldLog()) {
 			// Log the message in the history
-			_database.insertNotificationHistory(type.ID, title, message, iconUrl, origin, receivedAtMS);
+			int databaseId = _database.insertNotificationHistory(type.ID, title, message, iconUrl, origin, receivedAtMS);
+			notification.setId(databaseId);
 		}
 
 		// Display the notification based on the preferences of the profile,
@@ -417,105 +339,7 @@ public class GrowlListenerService extends Service implements IGrowlRegistry {
 		// Notify the status changed handlers
 		onDisplayNotification(notification);
 	}
-
-	public NotificationType getNotificationType(GrowlApplication application, String typeName) {
-		NotificationType type = null;
-		Cursor cursor = _database.getNotificationType(application.ID, typeName);
-		if (cursor.moveToFirst()) {
-			int id = cursor.getInt(cursor.getColumnIndex(Database.KEY_ROWID));
-			String displayName = cursor.getString(cursor.getColumnIndex(Database.KEY_DISPLAY_NAME));
-			boolean enabled = cursor.getInt(cursor.getColumnIndex(Database.KEY_ENABLED)) != 0;
-			String icon = cursor.getString(cursor.getColumnIndex(Database.KEY_ICON_URL));
-			URL iconUrl = null;
-			try {
-				iconUrl = icon == null ? null : new URL(icon);
-			} catch (Exception x) {
-				x.printStackTrace();
-			}
-
-			int displayColumn = cursor.getColumnIndex(Database.KEY_DISPLAY_ID);
-			Integer displayId = null;
-			if (!cursor.isNull(displayColumn))
-				displayId = new Integer(cursor.getInt(displayColumn));
-
-			type = new NotificationType(id, application, typeName, displayName, enabled, iconUrl, displayId);
-		}
-		cursor.close();
-		return type;
-	}
-
-	public NotificationType registerNotificationType(GrowlApplication application, String typeName, String displayName,
-			boolean enabled, URL iconUrl) {
-		if (displayName == null)
-			displayName = typeName;
-		int id = _database.insertNotificationType(application.ID, typeName, displayName, enabled, iconUrl);
-		NotificationType type = new NotificationType(id, application, typeName, displayName, enabled, iconUrl, null);
-		onNotificationTypeRegistered(type);
-		return type;
-	}
-
-	public boolean requiresPassword() {
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-		return Preferences.getPasswordsRequired(prefs);
-	}
-
-	public byte[] getMatchingKey(HashAlgorithm algorithm, String hash, String salt) {
-		byte[] hashBytes = Utility.hexStringToByteArray(hash);
-		byte[] saltBytes = Utility.hexStringToByteArray(salt);
-		return getMatchingKey(algorithm, hashBytes, saltBytes);
-	}
-
-	public byte[] getMatchingKey(HashAlgorithm algorithm, byte[] hash, byte[] salt) {
-		byte[] matchingKey = null;
-		Cursor cursor = _database.getAllPasswordsAndNames(_subscriber.getId().toString());
-		if (cursor.moveToFirst()) {
-			final int nameColumn = cursor.getColumnIndex(Database.KEY_NAME);
-			final int passwordColumn = cursor.getColumnIndex(Database.KEY_PASSWORD);
-			do {
-				String name = cursor.getString(nameColumn);
-				String password = cursor.getString(passwordColumn);
-				byte[] key = algorithm.calculateKey(password, salt);
-				byte[] validHash = algorithm.calculateHash(key);
-				boolean isValid = Utility.compareArrays(validHash, hash);
-				if (isValid) {
-					Log.i("GrowlListenerService.getMatchingKey", "Found key match: " + name);
-					matchingKey = key;
-					break;
-				}
-			} while (cursor.moveToNext());
-		}
-		cursor.close();
-		return matchingKey;
-	}
-
-	public void addStatusChangedHandler(StatusChangedHandler h) {
-		WeakReference<StatusChangedHandler> reference = new WeakReference<StatusChangedHandler>(h);
-		_statusChangedHandlers.add(reference);
-	}
-
-	public void removeStatusChangedHandler(StatusChangedHandler h) {
-		for (WeakReference<StatusChangedHandler> reference : _statusChangedHandlers) {
-			StatusChangedHandler handler = reference.get();
-			if ((handler == null) || (handler == h)) {
-				_statusChangedHandlers.remove(reference);
-				break;
-			}
-		}
-	}
-
-	private void onApplicationRegistered(GrowlApplication application) {
-		Log.i("GrowlListenerService.onApplicationRegistered", application.getName() + " has been registered");
-		for (WeakReference<StatusChangedHandler> reference : _statusChangedHandlers) {
-			StatusChangedHandler handler = reference.get();
-			if (handler != null) {
-				handler.onApplicationRegistered(application);
-			} else {
-				// This reference has expired
-				_statusChangedHandlers.remove(reference);
-			}
-		}
-	}
-
+	
 	private void onDisplayNotification(GrowlNotification notification) {
 		Log.i("GrowlListenerService.onDisplayNotification", "Message: \"" + notification.getMessage() + "\"");
 		for (WeakReference<StatusChangedHandler> reference : _statusChangedHandlers) {
@@ -528,20 +352,7 @@ public class GrowlListenerService extends Service implements IGrowlRegistry {
 			}
 		}
 	}
-
-	private void onNotificationTypeRegistered(NotificationType type) {
-		Log.i("GrowlListenerService.onNotificationTypeRegistered", type.getDisplayName() + " has been registered");
-		for (WeakReference<StatusChangedHandler> reference : _statusChangedHandlers) {
-			StatusChangedHandler handler = reference.get();
-			if (handler != null) {
-				handler.onNotificationTypeRegistered(type);
-			} else {
-				// This reference has expired
-				_statusChangedHandlers.remove(reference);
-			}
-		}
-	}
-
+	
 	private void onSubscriptionStatusChanged(long id, String status) {
 		for (WeakReference<StatusChangedHandler> reference : _statusChangedHandlers) {
 			StatusChangedHandler handler = reference.get();
@@ -554,15 +365,82 @@ public class GrowlListenerService extends Service implements IGrowlRegistry {
 		}
 	}
 
-	public interface StatusChangedHandler {
+	public void registerResource(GrowlResource resource) {
+		_registry.registerResource(resource);
+	}
+
+	public boolean requiresPassword() {
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		return Preferences.getPasswordsRequired(prefs);
+	}
+	
+	public void addStatusChangedHandler(StatusChangedHandler handler) {
+		WeakReference<StatusChangedHandler> reference = new WeakReference<StatusChangedHandler>(handler);
+		_statusChangedHandlers.add(reference);
+		_registry.addEventHandler(handler);
+	}
+	
+	public void removeStatusChangedHandler(StatusChangedHandler h) {
+		_registry.removeEventHandler(h);
+		for (WeakReference<StatusChangedHandler> reference : _statusChangedHandlers) {
+			StatusChangedHandler handler = reference.get();
+			if ((handler == null) || (handler == h)) {
+				_statusChangedHandlers.remove(reference);
+				break;
+			}
+		}
+	}
+	
+	public interface StatusChangedHandler extends GrowlRegistry.EventHandler {
 		void onIsRunningChanged(boolean isRunning);
-
-		void onNotificationTypeRegistered(NotificationType type);
-
-		void onApplicationRegistered(GrowlApplication app);
-
 		void onDisplayNotification(GrowlNotification notification);
-
 		void onSubscriptionStatusChanged(long id, String status);
+	}
+
+	public Drawable getIcon(URL icon) {
+		return _registry.getIcon(icon);
+	}
+	
+	public GrowlApplication registerApplication(String name, URL icon) {
+		return _registry.registerApplication(name, icon);
+	}
+
+	public GrowlApplication getApplication(String name) {
+		return _registry.getApplication(name);
+	}
+
+	public NotificationType getNotificationType(int id) {
+		return _registry.getNotificationType(id);
+	}
+
+	public NotificationType getNotificationType(GrowlApplication application, String typeName) {
+		return _registry.getNotificationType(application, typeName);
+	}
+
+	public NotificationType registerNotificationType(GrowlApplication application, String typeName, String displayName,
+			boolean enabled, URL iconUrl) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public byte[] getMatchingKey(HashAlgorithm algorithm, String hash, String salt) {
+		String subscriberId = _subscriber.getId().toString();
+		return getMatchingKey(subscriberId, algorithm, hash, salt);
+	}
+	
+	public byte[] getMatchingKey(String subscriberId, HashAlgorithm algorithm, String hash, String salt) {
+		return _registry.getMatchingKey(subscriberId, algorithm, hash, salt);
+	}
+
+	public void addEventHandler(EventHandler handler) {
+		_registry.addEventHandler(handler);
+	}
+
+	public void removeEventHandler(EventHandler handler) {
+		_registry.removeEventHandler(handler);
+	}
+
+	public void connectionClosed(Thread thread) {
+		_socketAcceptor.connectionClosed(thread);
 	}
 }
