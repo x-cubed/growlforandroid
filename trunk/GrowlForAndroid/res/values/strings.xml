@@ -60,7 +60,7 @@
 	<string name="preferences_general_auto_start">Listen automatically</string>
 	<string name="preferences_general_auto_start_summary">Start/stop based on network availability</string>
 	<string name="preferences_listen_title">Listen for notifications from</string>
-	<string name="preferences_listen_gntp">Growl for Windows</string>
+	<string name="preferences_listen_gntp">Growl for Windows / Growl for Lion</string>
 	<string name="preferences_listen_gntp_summary">GNTP</string>
 	<string name="preferences_listen_growl_udp">Growl UDP</string>
 	<string name="preferences_listen_growl_udp_summary">UDP</string>
