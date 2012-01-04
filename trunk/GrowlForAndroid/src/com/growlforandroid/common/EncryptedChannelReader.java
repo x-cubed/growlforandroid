@@ -132,7 +132,7 @@ public class EncryptedChannelReader extends ChannelReader {
 		return decrypt(encrypted, type, iv, key);
 	}
 
-	public File readAndDecryptBytesToCacheFile(int length, EncryptionType type, byte[] iv, byte[] key, File folder,
+	public File readAndDecryptBytesToCacheFile(long length, EncryptionType type, byte[] iv, byte[] key, File folder,
 			String fileName) throws IOException, DecryptionException {
 
 		File cacheFile = null;
@@ -146,11 +146,11 @@ public class EncryptedChannelReader extends ChannelReader {
 			boolean isFinalBlock = false;
 			int blockLength = BUFFER_SIZE;
 			Cipher decryptor = type.createDecryptor(iv, key);
-			for (int offset = 0; offset < length; offset += BUFFER_SIZE) {
-				int remaining = length - offset;
+			for (long offset = 0; offset < length; offset += BUFFER_SIZE) {
+				long remaining = length - offset;
 				if (remaining <= BUFFER_SIZE) {
 					isFinalBlock = true;
-					blockLength = remaining;
+					blockLength = (int)remaining;
 				}
 				byte[] raw = readBytes(blockLength);
 				if (decryptor == null) {
