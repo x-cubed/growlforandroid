@@ -1,6 +1,5 @@
 package com.growlforandroid.common;
 
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
@@ -8,15 +7,11 @@ import java.util.*;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
-import android.util.Log;
 
 import com.growlforandroid.client.R;
 import com.growlforandroid.gntp.Constants;
 
 public class GrowlNotification {
-	private final static int MAX_ICON_SIZE = 100;
-	
 	private final NotificationType _type;
 	private final String _notificationId;
 	private final String _title;
@@ -97,36 +92,14 @@ public class GrowlNotification {
 	}
 	
 	public Bitmap getIcon(Context context) {
-		URL source = (_iconUrl != null) ? _iconUrl : _type.getIconUrl();
-		
-		String name = source.toExternalForm();
-		InputStream stream = null;
-		Bitmap icon;
-		try {
-			Log.d("GrowlNotification.getIcon", "Loading icon from: " + name);
-			stream = source.openStream();
-			icon = new BitmapDrawable(stream).getBitmap();
-			
-			// Ensure that the icon isn't too big to display
-			int width = icon.getWidth();
-			int height = icon.getHeight();			
-			Log.d("GrowlNotification.getIcon", "Size: " + width + " x " + height);
-			if ((width > MAX_ICON_SIZE) || (height > MAX_ICON_SIZE)) {
-				// Reduce the size of the icon to something reasonable
-				Bitmap scaledIcon = Bitmap.createScaledBitmap(icon, MAX_ICON_SIZE, MAX_ICON_SIZE, true);
-				icon = scaledIcon;
-				Log.d("GrowlNotification.getIcon", "Scaled to: " + icon.getWidth() + " x " + icon.getHeight());
-			}
-			
-		} catch (Exception x) {
-			Log.e("GrowlNotification.getIcon", "Unable to load source: " + name + "\n" + x.toString());
-			icon = BitmapFactory.decodeResource(context.getResources(), R.drawable.launcher);
+		IGrowlRegistry registry = _type.Application.getRegistry();
+		Bitmap icon = registry.getIcon(_iconUrl);
+		if (icon == null) {
+			icon = _type.getIcon();
 		}
-		if (stream != null) {
-			try {
-				stream.close();
-			} catch (Exception x) {
-			}
+		if (icon == null) {
+			// Default icon
+			icon = BitmapFactory.decodeResource(context.getResources(), R.drawable.launcher);
 		}
 		return icon;
 	}

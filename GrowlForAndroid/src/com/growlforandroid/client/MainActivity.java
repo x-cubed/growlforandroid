@@ -100,7 +100,7 @@ public class MainActivity extends Activity implements GrowlListenerService.Statu
 	private void refresh() {
 		if (_cursor == null) {
 			_cursor = _database.getNotificationHistory(MAX_HISTORY_ITEMS);
-			IGrowlRegistry registry = new GrowlRegistry(_database);
+			IGrowlRegistry registry = new GrowlRegistry(_database, getCacheDir());
 			_adapter = new NotificationListAdapter(this, getLayoutInflater(), registry, _cursor);
 			_lsvNotifications.setAdapter(_adapter);
 		} else {

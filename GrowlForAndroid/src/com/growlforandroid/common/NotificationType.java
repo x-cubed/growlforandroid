@@ -2,6 +2,8 @@ package com.growlforandroid.common;
 
 import java.net.URL;
 
+import android.graphics.Bitmap;
+
 
 public class NotificationType {
 	public final int ID;
@@ -52,5 +54,14 @@ public class NotificationType {
 	
 	public void setIconUrl(URL iconUrl) {
 		_iconUrl = iconUrl;
+	}
+
+	public Bitmap getIcon() {
+		IGrowlRegistry registry = Application.getRegistry();
+		Bitmap icon = registry.getIcon(_iconUrl);
+		if (icon == null) {
+			icon = Application.getIcon();
+		}
+		return icon;
 	}
 }

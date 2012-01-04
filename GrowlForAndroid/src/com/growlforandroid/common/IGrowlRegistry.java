@@ -5,7 +5,7 @@ import java.net.URL;
 
 import com.growlforandroid.gntp.HashAlgorithm;
 
-import android.graphics.drawable.Drawable;
+import android.graphics.Bitmap;
 
 /**
  * A repository of known Growl applications
@@ -15,7 +15,7 @@ public interface IGrowlRegistry {
 
 	GrowlApplication getApplication(String name);
 
-	Drawable getIcon(URL icon);
+	Bitmap getIcon(URL icon);
 
 	void registerResource(GrowlResource resource);
 

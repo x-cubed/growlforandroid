@@ -12,7 +12,7 @@ import com.growlforandroid.gntp.*;
 import android.app.*;
 import android.content.*;
 import android.database.Cursor;
-import android.graphics.drawable.Drawable;
+import android.graphics.Bitmap;
 import android.os.*;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -47,7 +47,7 @@ public class GrowlListenerService extends Service implements IGrowlService {
 	public void onCreate() {
 		if (_database == null) {
 			_database = new Database(this.getApplicationContext());
-			_registry = new GrowlRegistry(_database);
+			_registry = new GrowlRegistry(_database, getCacheDir());
 		}
 
 		initializeCommonHeaders();
@@ -397,7 +397,7 @@ public class GrowlListenerService extends Service implements IGrowlService {
 		void onSubscriptionStatusChanged(long id, String status);
 	}
 
-	public Drawable getIcon(URL icon) {
+	public Bitmap getIcon(URL icon) {
 		return _registry.getIcon(icon);
 	}
 	

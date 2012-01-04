@@ -15,8 +15,13 @@ public class GrowlResource {
 	public GrowlResource() {
 	}
 	
-	public int getLength() {
-		return Integer.parseInt(Headers.get(Constants.HEADER_RESOURCE_LENGTH));
+	public GrowlResource(String identifier, long length) {
+		Headers.put(Constants.HEADER_RESOURCE_IDENTIFIER, identifier);
+		Headers.put(Constants.HEADER_RESOURCE_LENGTH, Long.toString(length));
+	}
+	
+	public long getLength() {
+		return Long.parseLong(Headers.get(Constants.HEADER_RESOURCE_LENGTH));
 	}
 	
 	public String getIdentifier() {

@@ -1,7 +1,8 @@
 package com.growlforandroid.common;
 
 import java.net.URL;
-import android.graphics.drawable.Drawable;
+
+import android.graphics.Bitmap;
 import android.util.Log;
 
 /**
@@ -32,7 +33,7 @@ public class GrowlApplication {
 		return _enabled;
 	}
 	
-	public Drawable getIconUrl() {
+	public Bitmap getIcon() {
 		return _registry.getIcon(_iconUrl);
 	}
 	
@@ -42,6 +43,10 @@ public class GrowlApplication {
 	
 	public String getName() {
 		return _name;
+	}
+	
+	public IGrowlRegistry getRegistry() {
+		return _registry;
 	}
 	
 	// Registers a new notification type, or updates an existing one with the same type name

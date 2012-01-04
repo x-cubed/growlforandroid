@@ -1,6 +1,7 @@
 package com.growlforandroid.common;
 
 import java.io.File;
+import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -9,7 +10,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import android.database.Cursor;
-import android.graphics.drawable.Drawable;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.util.Log;
 
 import com.growlforandroid.gntp.HashAlgorithm;
@@ -18,24 +20,18 @@ public class GrowlRegistry implements IGrowlRegistry {
 	private static GrowlResources _resources;
 	
 	private final Database _database;
+	private final File _cacheDir;
 
 	private final Set<WeakReference<EventHandler>> _eventHandlers = Collections
 			.synchronizedSet(new HashSet<WeakReference<EventHandler>>());
-
-	static {
-		_resources = new GrowlResources();
-
-		// Register a protocol handler for x-growl-resource:// URLs
-		try {
-			Log.d("GrowlRegistry", "Registering protocol handler");
-			URL.setURLStreamHandlerFactory(_resources);
-		} catch (Throwable t) {
-			Log.e("GrowlRegistry", "Failed to register protocol handler: " + t);
-		}
-	}
 	
-	public GrowlRegistry(Database database) {
+	public GrowlRegistry(Database database, File cacheDir) {
 		_database = database;
+		_cacheDir = cacheDir;
+		
+		if (_resources == null) {
+			_resources = new GrowlResources(_cacheDir);
+		}
 	}
 
 	public GrowlApplication registerApplication(String name, URL iconUrl) {
@@ -101,9 +97,44 @@ public class GrowlRegistry implements IGrowlRegistry {
 		_resources.put(resource);
 	}
 	
-	public Drawable getIcon(URL icon) {
-		// TODO Auto-generated method stub
-		return null;
+	public Bitmap getIcon(URL source) {
+		if (source == null) {
+			return null;
+		}
+		
+		String name = source.toExternalForm();
+		InputStream stream = null;
+		Bitmap icon = null;
+		try {
+			Log.d("GrowlNotification.getIcon", "Loading icon from: " + name);
+			stream = source.openStream();
+			if (stream != null) {
+				// Resource was found
+				icon = new BitmapDrawable(stream).getBitmap();
+				
+				// Ensure that the icon isn't too big to display
+				int width = icon.getWidth();
+				int height = icon.getHeight();			
+				Log.d("GrowlNotification.getIcon", "Size: " + width + " x " + height);
+				if ((width > GrowlResources.MAX_ICON_SIZE) || (height > GrowlResources.MAX_ICON_SIZE)) {
+					// Reduce the size of the icon to something reasonable
+					Bitmap scaledIcon = Bitmap.createScaledBitmap(icon, GrowlResources.MAX_ICON_SIZE, GrowlResources.MAX_ICON_SIZE, true);
+					icon = scaledIcon;
+					Log.d("GrowlNotification.getIcon", "Scaled to: " + icon.getWidth() + " x " + icon.getHeight());
+				}
+			}
+			
+		} catch (Exception x) {
+			Log.e("GrowlNotification.getIcon", "Unable to load source: " + name + "\n" + x.toString());
+		}
+		if (stream != null) {
+			try {
+				stream.close();
+			} catch (Exception x) {
+			}
+		}
+		return icon;
+	
 	}
 
 	public NotificationType getNotificationType(GrowlApplication application, String typeName) {
@@ -202,8 +233,7 @@ public class GrowlRegistry implements IGrowlRegistry {
 	}
 
 	public File getCacheDir() {
-		// TODO Auto-generated method stub
-		return null;
+		return _cacheDir;
 	}
 
 	public void addEventHandler(EventHandler h) {
