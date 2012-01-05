@@ -4,8 +4,6 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-import android.util.Log;
-
 import com.growlforandroid.gntp.Constants;
 
 public class GrowlResource {
@@ -34,17 +32,5 @@ public class GrowlResource {
 	
 	public File getSourceFile() {
 		return _sourceFile;
-	}
-	
-	public void deleteSourceFile() {
-		Log.i("GrowlResource.finalize", "Deleting source file " + _sourceFile.getAbsolutePath());
-		_sourceFile.delete();
-		_sourceFile = null;
-	}
-	
-	protected void finalize() {
-		if (_sourceFile != null) {
-			deleteSourceFile();
-		}
 	}
 }
