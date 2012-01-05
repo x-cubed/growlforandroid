@@ -101,7 +101,8 @@ public class GntpListenerThread extends Thread {
 						_currentState = parseNotificationHeader(inputLine);
 						break;
 					}
-					Log.i("GNTPListenerThread.run[" + _connectionID + "]", "Current state is now: " + _currentState.name());
+					Log.i("GNTPListenerThread.run[" + _connectionID + "]",
+							"Current state is now: " + _currentState.name());
 
 					// Are we ready to reply?
 					if (_currentState == RequestState.EndOfRequest) {
@@ -208,8 +209,8 @@ public class GntpListenerThread extends Thread {
 			} else {
 				if (_resources.size() > 0) {
 					// We're expecting some embedded resources
-					Log.i("GntpListenerThread.parseNotificationHeader[" + _connectionID + "]", "Reading " + _resources.size()
-							+ " resources...");
+					Log.i("GntpListenerThread.parseNotificationHeader[" + _connectionID + "]",
+							"Reading " + _resources.size() + " resources...");
 					return RequestState.ReadingResourceHeaders;
 				} else {
 					return RequestState.EndOfRequest;
@@ -229,10 +230,11 @@ public class GntpListenerThread extends Thread {
 	private RequestState parseResourceHeader(String inputLine) throws GntpException, IOException {
 		if (inputLine.equals("")) {
 			if ((_currentResource == null) || (_currentResource.Headers.size() == 0)) {
-				Log.w("GntpListenerThread.parseResourceHeader[" + _connectionID + "]", "Blank line before end of resource headers");
+				Log.w("GntpListenerThread.parseResourceHeader[" + _connectionID + "]",
+						"Blank line before end of resource headers");
 			} else {
-				Log.i("GntpListenerThread.parseResourceHeader[" + _connectionID + "]", "End of resource " + _resourceIndex
-						+ " headers");
+				Log.i("GntpListenerThread.parseResourceHeader[" + _connectionID + "]", "End of resource "
+						+ _resourceIndex + " headers");
 				return RequestState.ReadingResourceData;
 			}
 
@@ -250,7 +252,6 @@ public class GntpListenerThread extends Thread {
 	private RequestState readResourceData() throws IOException, DecryptionException {
 		// Read the bytes directly from the stream
 		long length = _currentResource.getLength();
-
 		Log.i("GntpListenerThread.readResourceData[" + _connectionID + "]", "Reading " + length
 				+ " bytes of resource data");
 
@@ -258,11 +259,11 @@ public class GntpListenerThread extends Thread {
 		File resourcesFolder = _service.getResourcesDir();
 		byte[] idHash = HashAlgorithm.MD5.calculateHash(_currentResource.getIdentifier().getBytes());
 		String fileName = Utility.getHexStringFromByteArray(idHash);
-		File tempResource = _socketReader.readAndDecryptBytesToCacheFile(
-				length, _encryptionType, _initVector, _key,	resourcesFolder, fileName);
+		File tempResource = _socketReader.readAndDecryptBytesToCacheFile(length, _encryptionType, _initVector, _key,
+				resourcesFolder, fileName);
 		Log.i("GntpListenerThread.readResourceData[" + _connectionID + "]", "Created " + tempResource.getAbsolutePath()
 				+ " as resource (" + tempResource.length() + ")");
-		
+
 		// Each resource is followed by a blank line
 		String blankLine = _socketReader.readLine().trim();
 		if (!blankLine.equals("")) {
@@ -281,8 +282,7 @@ public class GntpListenerThread extends Thread {
 			Log.i("GntpListenerThread.readResourceData[" + _connectionID + "]", "End of resources");
 			return RequestState.EndOfRequest;
 		}
-		
-		
+
 		return RequestState.ReadingResourceHeaders;
 	}
 
@@ -295,14 +295,16 @@ public class GntpListenerThread extends Thread {
 		// Find the registered application
 		String name = _requestHeaders.get(Constants.HEADER_APPLICATION_NAME);
 		GrowlApplication application = _service.getApplication(name);
-		if (application == null)
+		if (application == null) {
 			throw new GntpException(GntpError.UnknownApplication);
+		}
 
 		// Find the registered notification type
 		String typeName = _requestHeaders.get(Constants.HEADER_NOTIFICATION_NAME);
 		NotificationType type = application.getNotificationType(typeName);
-		if (type == null)
+		if (type == null) {
 			throw new GntpException(GntpError.UnknownNotification);
+		}
 
 		// Display the notification
 		GrowlNotification notification = new GrowlNotification(type, _requestHeaders, _resources, _requestStartedMS);
@@ -333,32 +335,38 @@ public class GntpListenerThread extends Thread {
 		// Line can end with extraneous whitespace
 		String requestLine = inputLine.trim();
 
-		// GNTP/<version> <messagetype> <encryptionAlgorithmID>[:<ivValue>][
+		// GNTP/<version> <messageType> <encryptionAlgorithmID>[:<ivValue>][
 		// <keyHashAlgorithmID>:<keyHash>.<salt>]
 		String[] component = requestLine.split(Constants.FIELD_DELIMITER);
-		if ((component.length < 3) || (component.length > 4))
+		if ((component.length < 3) || (component.length > 4)) {
 			throw new GntpException(GntpError.InvalidRequest, "Expected 3 or 4 fields, found " + component.length
 					+ " fields");
+		}
 
 		// Verify protocol and version are supported
 		String[] protocolAndVersion = component[0].split("/");
-		if (protocolAndVersion.length != 2)
+		if (protocolAndVersion.length != 2) {
 			throw new GntpException(GntpError.InvalidRequest, "Expected GNTP/1.0 protocol header");
-		if (!protocolAndVersion[0].equals(Constants.SUPPORTED_PROTOCOL))
+		}
+		if (!protocolAndVersion[0].equals(Constants.SUPPORTED_PROTOCOL)) {
 			throw new GntpException(GntpError.UnknownProtocol);
-		if (!protocolAndVersion[1].equals(Constants.SUPPORTED_PROTOCOL_VERSION))
+		}
+		if (!protocolAndVersion[1].equals(Constants.SUPPORTED_PROTOCOL_VERSION)) {
 			throw new GntpException(GntpError.UnknownProtocolVersion);
+		}
 
 		// Message type
 		_requestType = RequestType.fromString(component[1]);
-		if (_requestType == null)
+		if (_requestType == null) {
 			throw new GntpException(GntpError.InvalidRequest, "Unknown message type: " + component[1]);
+		}
 
 		// Encryption settings
 		String[] encryptionTypeAndIV = component[2].split(":", 2);
 		_encryptionType = EncryptionType.fromString(encryptionTypeAndIV[0]);
-		if (_encryptionType == null)
+		if (_encryptionType == null) {
 			throw new GntpException(GntpError.InvalidRequest, "Unsupported encryption type: " + _encryptionType);
+		}
 		Log.i("GntpListenerThread.parseRequestLine[" + _connectionID + "]", "Encryption Type: " + _encryptionType);
 		String ivHex = (encryptionTypeAndIV.length == 2) ? encryptionTypeAndIV[1] : "";
 		_initVector = Utility.hexStringToByteArray(ivHex);
@@ -368,18 +376,21 @@ public class GntpListenerThread extends Thread {
 		// Authentication hash
 		if (component.length == 4) {
 			String[] algoAndHash = component[3].split(":");
-			if (algoAndHash.length != 2)
+			if (algoAndHash.length != 2) {
 				throw new GntpException(GntpError.NotAuthorized, "Unable to parse hash");
+			}
 
 			String algorithmName = algoAndHash[0];
 			HashAlgorithm algorithm = HashAlgorithm.fromString(algorithmName);
-			if (algorithm == null)
+			if (algorithm == null) {
 				throw new GntpException(GntpError.InvalidRequest, "Unsupported hash type: " + algoAndHash[0]);
+			}
 
 			String hashDotSalt = algoAndHash[1];
 			int dot = hashDotSalt.indexOf('.');
-			if ((dot < 1) || (dot == hashDotSalt.length() - 1))
+			if ((dot < 1) || (dot == hashDotSalt.length() - 1)) {
 				throw new GntpException(GntpError.NotAuthorized, "Unable to parse hash");
+			}
 			String hash = hashDotSalt.substring(0, dot);
 			String salt = hashDotSalt.substring(dot + 1);
 
@@ -408,8 +419,9 @@ public class GntpListenerThread extends Thread {
 
 	private String parseHeader(String inputLine, Map<String, String> headers) throws GntpException {
 		String[] keyAndValue = inputLine.split(":", 2);
-		if (keyAndValue.length != 2)
+		if (keyAndValue.length != 2) {
 			throw new GntpException(GntpError.InvalidRequest, "Unable to parse header: " + inputLine);
+		}
 
 		String key = keyAndValue[0];
 		String value = keyAndValue[1].trim();
