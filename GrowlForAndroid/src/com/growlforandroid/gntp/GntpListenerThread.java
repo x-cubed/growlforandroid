@@ -71,7 +71,7 @@ public class GntpListenerThread extends Thread {
 			while ((_currentState != RequestState.ResponseSent) && ((inputLine = _socketReader.readLine()) != null)) {
 
 				// Parse the input
-				Log.i("GNTPListenerThread.run[" + _connectionID + "]", "Read line \"" + inputLine + "\"");
+				//Log.i("GNTPListenerThread.run[" + _connectionID + "]", "Read line \"" + inputLine + "\"");
 				try {
 					// Parse the input
 					switch (_currentState) {
@@ -101,8 +101,6 @@ public class GntpListenerThread extends Thread {
 						_currentState = parseNotificationHeader(inputLine);
 						break;
 					}
-					Log.i("GNTPListenerThread.run[" + _connectionID + "]",
-							"Current state is now: " + _currentState.name());
 
 					// Are we ready to reply?
 					if (_currentState == RequestState.EndOfRequest) {
@@ -183,8 +181,6 @@ public class GntpListenerThread extends Thread {
 				return RequestState.ReadingNotificationHeaders;
 			} else if (_resources.size() > 0) {
 				// This request has one or more resources remaining
-				Log.i("GntpListenerThread.parseRequestHeader[" + _connectionID + "]", "Reading " + _resources.size()
-						+ " resources...");
 				return RequestState.ReadingResourceHeaders;
 			} else {
 				// We're done
@@ -204,13 +200,9 @@ public class GntpListenerThread extends Thread {
 			if (_notificationIndex < (_notificationsCount - 1)) {
 				// There are more notifications to go
 				_notificationIndex++;
-				Log.i("GntpListenerThread.parseNotificationHeader[" + _connectionID + "]",
-						"Preparing to read notification type " + _notificationIndex);
 			} else {
 				if (_resources.size() > 0) {
 					// We're expecting some embedded resources
-					Log.i("GntpListenerThread.parseNotificationHeader[" + _connectionID + "]",
-							"Reading " + _resources.size() + " resources...");
 					return RequestState.ReadingResourceHeaders;
 				} else {
 					return RequestState.EndOfRequest;
@@ -230,19 +222,20 @@ public class GntpListenerThread extends Thread {
 	private RequestState parseResourceHeader(String inputLine) throws GntpException, IOException {
 		if (inputLine.equals("")) {
 			if ((_currentResource == null) || (_currentResource.Headers.size() == 0)) {
-				Log.w("GntpListenerThread.parseResourceHeader[" + _connectionID + "]",
-						"Blank line before end of resource headers");
+				/* Unexpected blank line, but no current resource, so we'll gracefully ignore it.
+				 * Seems to happen after resource data, but GNTP specification says data should be
+				 * followed by a single blank line, not two. Single blank line is consumed in
+				 * readResourceData() */
 			} else {
-				Log.i("GntpListenerThread.parseResourceHeader[" + _connectionID + "]", "End of resource "
-						+ _resourceIndex + " headers");
+				// End of resource headers, start of data
 				return RequestState.ReadingResourceData;
 			}
 
 		} else {
+			// Still reading headers
 			if (_currentResource == null) {
+				// Start of a new resource
 				_currentResource = new GrowlResource();
-				Log.i("GntpListenerThread.parseResourceHeader[" + _connectionID + "]", "Start of resource "
-						+ _resourceIndex);
 			}
 			parseHeader(inputLine, _currentResource.Headers);
 		}
@@ -252,8 +245,6 @@ public class GntpListenerThread extends Thread {
 	private RequestState readResourceData() throws IOException, DecryptionException {
 		// Read the bytes directly from the stream
 		long length = _currentResource.getLength();
-		Log.i("GntpListenerThread.readResourceData[" + _connectionID + "]", "Reading " + length
-				+ " bytes of resource data");
 
 		// Read in the file data, decrypt it and save it to a temporary location
 		File resourcesFolder = _service.getResourcesDir();
@@ -279,7 +270,6 @@ public class GntpListenerThread extends Thread {
 
 		_resourceIndex++;
 		if (_resourceIndex >= _resources.size()) {
-			Log.i("GntpListenerThread.readResourceData[" + _connectionID + "]", "End of resources");
 			return RequestState.EndOfRequest;
 		}
 
@@ -367,11 +357,8 @@ public class GntpListenerThread extends Thread {
 		if (_encryptionType == null) {
 			throw new GntpException(GntpError.InvalidRequest, "Unsupported encryption type: " + _encryptionType);
 		}
-		Log.i("GntpListenerThread.parseRequestLine[" + _connectionID + "]", "Encryption Type: " + _encryptionType);
 		String ivHex = (encryptionTypeAndIV.length == 2) ? encryptionTypeAndIV[1] : "";
 		_initVector = Utility.hexStringToByteArray(ivHex);
-		Log.i("GntpListenerThread.parseRequestLine[" + _connectionID + "]", "Encryption IV:   "
-				+ ((encryptionTypeAndIV.length == 2) ? ivHex : "(none)"));
 
 		// Authentication hash
 		if (component.length == 4) {
@@ -397,12 +384,8 @@ public class GntpListenerThread extends Thread {
 			// Validate the hash
 			_key = _service.getMatchingKey(algorithm, hash, salt);
 			if (_key == null) {
-				// We couldn't find a key that matches, ignore this notification
-				Log.i("GntpListenerThread.parseRequestLine[" + _connectionID + "]", "Encryption Key:  (none)");
+				// We couldn't find a key that matches
 				throw new GntpException(GntpError.NotAuthorized);
-			} else {
-				Log.i("GntpListenerThread.parseRequestLine[" + _connectionID + "]",
-						"Encryption Key:  " + Utility.getHexStringFromByteArray(_key));
 			}
 		} else if (_service.requiresPassword()) {
 			// The application didn't supply a password hash, but the registry
