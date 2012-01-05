@@ -33,7 +33,7 @@ public class GrowlResources implements URLStreamHandlerFactory {
 	private static File getOrCreateResourcesDir(Context context) {
 		File resourcesDir = context.getCacheDir();
 		Log.i("GrowlResources.getOrCreateResourcesDir", "Using resource directory: " + resourcesDir);
-		
+
 		// Create a marker to suggest to media scanners that they should ignore these files
 		File noMedia = new File(resourcesDir, NO_MEDIA);
 		if (!noMedia.exists()) {
@@ -42,14 +42,14 @@ public class GrowlResources implements URLStreamHandlerFactory {
 			} catch (Exception x) {
 			}
 		}
-		
+
 		return resourcesDir;
 	}
-	
+
 	public File getResourcesDir() {
 		return _resourcesDir;
 	}
-	
+
 	public URLStreamHandler createURLStreamHandler(String protocol) {
 		return (PROTOCOL.equals(protocol)) ? _handler : null;
 	}
@@ -113,7 +113,7 @@ public class GrowlResources implements URLStreamHandlerFactory {
 			if (_resource == null) {
 				return null;
 			}
-			
+
 			try {
 				File source = _resource.getSourceFile();
 				FileInputStream inputStream = new FileInputStream(source);
