@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
@@ -20,17 +21,15 @@ public class GrowlRegistry implements IGrowlRegistry {
 	private static GrowlResources _resources;
 	
 	private final Database _database;
-	private final File _cacheDir;
 
 	private final Set<WeakReference<EventHandler>> _eventHandlers = Collections
 			.synchronizedSet(new HashSet<WeakReference<EventHandler>>());
 	
-	public GrowlRegistry(Database database, File cacheDir) {
+	public GrowlRegistry(Context context, Database database) {
 		_database = database;
-		_cacheDir = cacheDir;
 		
 		if (_resources == null) {
-			_resources = new GrowlResources(_cacheDir);
+			_resources = new GrowlResources(context);
 		}
 	}
 
@@ -102,11 +101,11 @@ public class GrowlRegistry implements IGrowlRegistry {
 			return null;
 		}
 		
+		final int maxIconSize = GrowlResources.MAX_ICON_SIZE;
 		String name = source.toExternalForm();
 		InputStream stream = null;
 		Bitmap icon = null;
 		try {
-			Log.d("GrowlNotification.getIcon", "Loading icon from: " + name);
 			stream = source.openStream();
 			if (stream != null) {
 				// Resource was found
@@ -115,17 +114,15 @@ public class GrowlRegistry implements IGrowlRegistry {
 				// Ensure that the icon isn't too big to display
 				int width = icon.getWidth();
 				int height = icon.getHeight();			
-				Log.d("GrowlNotification.getIcon", "Size: " + width + " x " + height);
-				if ((width > GrowlResources.MAX_ICON_SIZE) || (height > GrowlResources.MAX_ICON_SIZE)) {
+				if ((width > maxIconSize) || (height > maxIconSize)) {
 					// Reduce the size of the icon to something reasonable
-					Bitmap scaledIcon = Bitmap.createScaledBitmap(icon, GrowlResources.MAX_ICON_SIZE, GrowlResources.MAX_ICON_SIZE, true);
+					Bitmap scaledIcon = Bitmap.createScaledBitmap(icon, maxIconSize, maxIconSize, true);
 					icon = scaledIcon;
-					Log.d("GrowlNotification.getIcon", "Scaled to: " + icon.getWidth() + " x " + icon.getHeight());
 				}
 			}
 			
 		} catch (Exception x) {
-			Log.e("GrowlNotification.getIcon", "Unable to load source: " + name + "\n" + x.toString());
+			Log.e("GrowlRegistry.getIcon", "Unable to load source: " + name + "\n" + x.toString());
 		}
 		if (stream != null) {
 			try {
@@ -232,8 +229,8 @@ public class GrowlRegistry implements IGrowlRegistry {
 		return matchingKey;
 	}
 
-	public File getCacheDir() {
-		return _cacheDir;
+	public File getResourcesDir() {
+		return _resources.getResourcesDir();
 	}
 
 	public void addEventHandler(EventHandler h) {

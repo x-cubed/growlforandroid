@@ -1,5 +1,6 @@
 package com.growlforandroid.client;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.*;
@@ -47,7 +48,7 @@ public class GrowlListenerService extends Service implements IGrowlService {
 	public void onCreate() {
 		if (_database == null) {
 			_database = new Database(this.getApplicationContext());
-			_registry = new GrowlRegistry(_database, getCacheDir());
+			_registry = new GrowlRegistry(this, _database);
 		}
 
 		initializeCommonHeaders();
@@ -399,6 +400,10 @@ public class GrowlListenerService extends Service implements IGrowlService {
 
 	public Bitmap getIcon(URL icon) {
 		return _registry.getIcon(icon);
+	}
+	
+	public File getResourcesDir() {
+		return _registry.getResourcesDir();
 	}
 	
 	public GrowlApplication registerApplication(String name, URL icon) {
