@@ -101,6 +101,7 @@ public class GntpListenerThread extends Thread {
 						_currentState = parseNotificationHeader(inputLine);
 						break;
 					}
+					Log.i("GNTPListenerThread.run[" + _connectionID + "]", "Current state is now: " + _currentState.name());
 
 					// Are we ready to reply?
 					if (_currentState == RequestState.EndOfRequest) {
@@ -205,7 +206,14 @@ public class GntpListenerThread extends Thread {
 				Log.i("GntpListenerThread.parseNotificationHeader[" + _connectionID + "]",
 						"Preparing to read notification type " + _notificationIndex);
 			} else {
-				return RequestState.EndOfRequest;
+				if (_resources.size() > 0) {
+					// We're expecting some embedded resources
+					Log.i("GntpListenerThread.parseNotificationHeader[" + _connectionID + "]", "Reading " + _resources.size()
+							+ " resources...");
+					return RequestState.ReadingResourceHeaders;
+				} else {
+					return RequestState.EndOfRequest;
+				}
 			}
 		} else {
 			Map<String, String> notificationHeaders = _notificationsHeaders.get(_notificationIndex);
@@ -220,9 +228,13 @@ public class GntpListenerThread extends Thread {
 
 	private RequestState parseResourceHeader(String inputLine) throws GntpException, IOException {
 		if (inputLine.equals("")) {
-			Log.i("GntpListenerThread.parseResourceHeader[" + _connectionID + "]", "End of resource " + _resourceIndex
-					+ " headers");
-			return RequestState.ReadingResourceData;
+			if ((_currentResource == null) || (_currentResource.Headers.size() == 0)) {
+				Log.w("GntpListenerThread.parseResourceHeader[" + _connectionID + "]", "Blank line before end of resource headers");
+			} else {
+				Log.i("GntpListenerThread.parseResourceHeader[" + _connectionID + "]", "End of resource " + _resourceIndex
+						+ " headers");
+				return RequestState.ReadingResourceData;
+			}
 
 		} else {
 			if (_currentResource == null) {
@@ -243,13 +255,19 @@ public class GntpListenerThread extends Thread {
 				+ " bytes of resource data");
 
 		// Read in the file data, decrypt it and save it to a temporary location
-		File cacheFolder = _service.getCacheDir();
+		File resourcesFolder = _service.getResourcesDir();
 		byte[] idHash = HashAlgorithm.MD5.calculateHash(_currentResource.getIdentifier().getBytes());
 		String fileName = Utility.getHexStringFromByteArray(idHash);
-		File tempResource = _socketReader.readAndDecryptBytesToCacheFile(length, _encryptionType, _initVector, _key,
-				cacheFolder, fileName);
+		File tempResource = _socketReader.readAndDecryptBytesToCacheFile(
+				length, _encryptionType, _initVector, _key,	resourcesFolder, fileName);
 		Log.i("GntpListenerThread.readResourceData[" + _connectionID + "]", "Created " + tempResource.getAbsolutePath()
 				+ " as resource (" + tempResource.length() + ")");
+		
+		// Each resource is followed by a blank line
+		String blankLine = _socketReader.readLine().trim();
+		if (!blankLine.equals("")) {
+			throw new IOException("Expected blank line, not: " + blankLine);
+		}
 
 		// Link the source file to the resource, register the resource and link
 		// the resource to the notification
@@ -263,7 +281,8 @@ public class GntpListenerThread extends Thread {
 			Log.i("GntpListenerThread.readResourceData[" + _connectionID + "]", "End of resources");
 			return RequestState.EndOfRequest;
 		}
-
+		
+		
 		return RequestState.ReadingResourceHeaders;
 	}
 

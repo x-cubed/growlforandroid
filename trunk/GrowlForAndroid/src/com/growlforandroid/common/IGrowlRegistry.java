@@ -30,7 +30,7 @@ public interface IGrowlRegistry {
 
 	byte[] getMatchingKey(String subscriberId, HashAlgorithm algorithm, String hash, String salt);
 
-	File getCacheDir();
+	File getResourcesDir();
 
 	void addEventHandler(EventHandler handler);
 	
