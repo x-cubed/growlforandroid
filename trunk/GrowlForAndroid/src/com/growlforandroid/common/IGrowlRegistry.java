@@ -14,6 +14,8 @@ import android.graphics.Bitmap;
 public interface IGrowlRegistry {
 	GrowlApplication registerApplication(String name, URL icon);
 
+	GrowlApplication getApplication(long id);
+	
 	GrowlApplication getApplication(String name);
 
 	List<GrowlApplication> getApplications();

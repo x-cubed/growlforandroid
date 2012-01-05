@@ -1,17 +1,23 @@
 package com.growlforandroid.client;
 
 import com.growlforandroid.common.Database;
+import com.growlforandroid.common.GrowlApplication;
+import com.growlforandroid.common.GrowlRegistry;
+import com.growlforandroid.common.IGrowlRegistry;
 
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.CompoundButton;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
@@ -27,6 +33,7 @@ public class Application
 	
 	private Database _database;
 	private Cursor _cursor;
+	private IGrowlRegistry _registry;
 	private long _typeId;
 	
     @Override
@@ -38,6 +45,7 @@ public class Application
 
         _appId = this.getIntent().getLongExtra("ID", -1);
         _database = new Database(this);
+        _registry = new GrowlRegistry(this, _database);
         refresh();
         
         // Use an existing ListAdapter that will map an array
@@ -62,36 +70,44 @@ public class Application
     }
 
     private void refresh() {
-    	Cursor appCursor = _database.getApplication(_appId);
-    	if (appCursor.moveToFirst()) {
-    		String appName = appCursor.getString(appCursor.getColumnIndexOrThrow(Database.KEY_NAME));
-    		boolean enabled = appCursor.getInt(appCursor.getColumnIndexOrThrow(Database.KEY_ENABLED)) != 0;
-    		int displayId = appCursor.getInt(appCursor.getColumnIndexOrThrow(Database.KEY_DISPLAY_ID));
-    		String displayName = _database.getDisplayProfileName(displayId);
-    		if (displayName == null) {
-    			displayName = getText(R.string.application_option_display_default).toString();
-    		}
-    		
-    		TextView txtTitle = (TextView)findViewById(R.id.txtAppName);
-    		txtTitle.setText(appName);
-    		
-    		PreferenceCheckBoxView chkEnabled = (PreferenceCheckBoxView)findViewById(R.id.chkEnabled);
-    		chkEnabled.setChecked(enabled);
-    		chkEnabled.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-				public void onCheckedChanged(CompoundButton buttonView,	boolean isChecked) {
-					_database.setApplicationEnabled(_appId, isChecked);
-				}
-    		});
-    		
-    		PreferenceDropDownView drpDisplay = (PreferenceDropDownView)findViewById(R.id.drpDisplayProfile);
-    		drpDisplay.setSummary(displayName);
-    		drpDisplay.setOnClickListener(new OnClickListener() {
-				public void onClick(View v) {
-					showDialog(DIALOG_CHOOSE_DISPLAY);
-				}
-    		});
+    	GrowlApplication application = _registry.getApplication(_appId);
+    	if (application == null) {
+    		Log.e("Application.refresh", "Unknown application: " + _appId);
+    		return;
     	}
-    	appCursor.close();
+    	
+    	String displayName = _database.getDisplayProfileName(application.getDisplayId());
+		if (displayName == null) {
+			displayName = getText(R.string.application_option_display_default).toString();
+		}
+		
+		ImageView imgAppIcon = (ImageView)findViewById(R.id.imgAppIcon);
+		Bitmap icon = application.getIcon();
+		if (icon == null) {
+			// Default icon
+			icon = BitmapFactory.decodeResource(getResources(), R.drawable.launcher);
+		}
+		imgAppIcon.setImageBitmap(icon);
+		
+		TextView txtTitle = (TextView)findViewById(R.id.txtAppName);
+		txtTitle.setText(application.getName());
+		
+		PreferenceCheckBoxView chkEnabled = (PreferenceCheckBoxView)findViewById(R.id.chkEnabled);
+		chkEnabled.setChecked(application.isEnabled());
+		chkEnabled.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+			public void onCheckedChanged(CompoundButton buttonView,	boolean isChecked) {
+				_database.setApplicationEnabled(_appId, isChecked);
+			}
+		});
+		
+		PreferenceDropDownView drpDisplay = (PreferenceDropDownView)findViewById(R.id.drpDisplayProfile);
+		drpDisplay.setSummary(displayName);
+		drpDisplay.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				showDialog(DIALOG_CHOOSE_DISPLAY);
+			}
+		});
+	
     	
     	if (_cursor == null) {
     		_cursor = _database.getNotificationTypes(_appId);

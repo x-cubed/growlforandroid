@@ -1,4 +1,5 @@
-<!-- Copyright (C) 2009 The Android Open Source Project
+<!--
+ Copyright (C) 2009 The Android Open Source Project
  
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -11,44 +12,79 @@
      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
      See the License for the specific language governing permissions and
      limitations under the License.
---> 
- 
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+-->
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res/com.growlforandroid.client"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent">
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+	android:orientation="vertical"
+	android:paddingRight="5dip" >
+
 	<LinearLayout
+		android:id="@+id/layTitle"
 		android:layout_width="fill_parent"
-    	android:layout_height="wrap_content"
-	    android:orientation="vertical"
-	    android:paddingRight="5dip">
-	    
-		<LinearLayout android:id="@+id/layTitle" android:layout_height="wrap_content"
-			android:orientation="horizontal" android:layout_width="fill_parent" android:padding="5dp">
-			<ImageView android:id="@+id/imgAppIcon" android:layout_width="wrap_content"
-				android:layout_height="wrap_content" android:src="@drawable/launcher" android:layout_marginRight="10dp"></ImageView>
-			<TextView android:text="App Name" android:id="@+id/txtAppName" android:textAppearance="?android:attr/textAppearanceLarge"
-				android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center_vertical"></TextView>
-		</LinearLayout>
-		<TextView android:id="@+id/lblOptions" android:layout_height="wrap_content" android:layout_width="fill_parent"
-				style="?android:attr/listSeparatorTextViewStyle" android:paddingLeft="10dip" android:text="@string/application_options_title"/>	
-		
-		<com.growlforandroid.client.PreferenceCheckBoxView android:id="@+id/chkEnabled"
-			app:title="@string/application_option_enabled" app:summary="@string/application_option_enabled_summary"
-			android:minHeight="?android:attr/listPreferredItemHeight"
-		    android:gravity="center_vertical"
-		    android:paddingRight="?android:attr/scrollbarSize"
-			android:layout_height="wrap_content" android:layout_width="fill_parent" />
-		<com.growlforandroid.client.PreferenceDropDownView android:id="@+id/drpDisplayProfile"
-			app:title="@string/application_option_display_title"
-			android:minHeight="?android:attr/listPreferredItemHeight"
-		    android:gravity="center_vertical"
-		    android:paddingRight="?android:attr/scrollbarSize"
-			android:layout_height="wrap_content" android:layout_width="fill_parent" />
-		
-		<TextView android:id="@+id/lblNotificationTypes" android:layout_height="wrap_content" android:layout_width="fill_parent"
-				style="?android:attr/listSeparatorTextViewStyle" android:paddingLeft="10dip" android:text="@string/application_types_title"/>	
-		
-		<ListView android:id="@+id/lsvNotificationTypes" android:layout_width="fill_parent" android:layout_height="wrap_content"></ListView>
+		android:layout_height="wrap_content"
+		android:orientation="horizontal"
+		android:padding="5dp" >
+
+		<ImageView
+			android:id="@+id/imgAppIcon"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginRight="10dp"
+			android:src="@drawable/launcher" >
+		</ImageView>
+
+		<TextView
+			android:id="@+id/txtAppName"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_gravity="center_vertical"
+			android:text="App Name"
+			android:textAppearance="?android:attr/textAppearanceLarge" >
+		</TextView>
 	</LinearLayout>
-</ScrollView> 
+
+	<TextView
+		android:id="@+id/lblOptions"
+		style="?android:attr/listSeparatorTextViewStyle"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:paddingLeft="10dip"
+		android:text="@string/application_options_title" />
+
+	<com.growlforandroid.client.PreferenceCheckBoxView
+		android:id="@+id/chkEnabled"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:gravity="center_vertical"
+		android:minHeight="?android:attr/listPreferredItemHeight"
+		android:paddingRight="?android:attr/scrollbarSize"
+		app:summary="@string/application_option_enabled_summary"
+		app:title="@string/application_option_enabled" />
+
+	<com.growlforandroid.client.PreferenceDropDownView
+		android:id="@+id/drpDisplayProfile"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:gravity="center_vertical"
+		android:minHeight="?android:attr/listPreferredItemHeight"
+		android:paddingRight="?android:attr/scrollbarSize"
+		app:title="@string/application_option_display_title" />
+
+	<TextView
+		android:id="@+id/lblNotificationTypes"
+		style="?android:attr/listSeparatorTextViewStyle"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:paddingLeft="10dip"
+		android:text="@string/application_types_title" />
+
+	<ListView
+		android:id="@+id/lsvNotificationTypes"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content" >
+	</ListView>
+
+</LinearLayout>

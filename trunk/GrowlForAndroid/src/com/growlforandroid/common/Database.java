@@ -216,7 +216,11 @@ public class Database {
 				}, KEY_ROWID + "=" + profile, null, null, null, null);
 	}
 	
-	public String getDisplayProfileName(int profile) {
+	public String getDisplayProfileName(Integer profile) {
+		if (profile == null) {
+			return null;
+		}
+		
 		String result = null;
 		Cursor cursor = getDisplayProfile(profile);
 		if (cursor.moveToFirst()) {
