@@ -6,6 +6,7 @@ import java.util.List;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.database.DataSetObserver;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +19,11 @@ import com.growlforandroid.common.IGrowlRegistry;
 import com.growlforandroid.common.NotificationType;
 import com.growlforandroid.common.Utility;
 
+/***
+ * Create notification views from a cursor of notification history.
+ * @author Carey
+ *
+ */
 public class NotificationListAdapter extends BaseAdapter implements ListAdapter {
 	private final Context _context;
 	private final LayoutInflater _inflater;
@@ -29,14 +35,25 @@ public class NotificationListAdapter extends BaseAdapter implements ListAdapter 
 		_context = context;
 		_inflater = inflater;
 		_registry = registry;
+		
 		_cursor = cursor;
-
+		_cursor.registerDataSetObserver(new DataSetObserver() {
+			public void onChanged() {
+				loadFromCursor();
+			}
+			
+			public void onInvalidated() {
+				_cursor.unregisterDataSetObserver(this);
+				unload();
+			}
+		});
+		
 		_notifications = new ArrayList<GrowlNotification>();
 
 		loadFromCursor();
 	}
 
-	public void loadFromCursor() {
+	private void loadFromCursor() {
 		synchronized (_notifications) {
 			_notifications.clear();
 			if (!_cursor.moveToFirst()) {
@@ -47,6 +64,14 @@ public class NotificationListAdapter extends BaseAdapter implements ListAdapter 
 				_notifications.add(notification);
 			} while (_cursor.moveToNext());
 		}
+		notifyDataSetChanged();
+	}
+	
+	private void unload() {
+		synchronized (_notifications) {
+			_notifications.clear();
+		}
+		notifyDataSetInvalidated();
 	}
 
 	private GrowlNotification fromCursor(Cursor cursor) {
