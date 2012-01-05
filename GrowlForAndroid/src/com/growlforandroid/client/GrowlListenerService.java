@@ -410,6 +410,10 @@ public class GrowlListenerService extends Service implements IGrowlService {
 		return _registry.registerApplication(name, icon);
 	}
 
+	public GrowlApplication getApplication(long id) {
+		return _registry.getApplication(id);
+	}
+	
 	public GrowlApplication getApplication(String name) {
 		return _registry.getApplication(name);
 	}
