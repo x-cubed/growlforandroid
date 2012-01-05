@@ -12,16 +12,16 @@ import android.util.Log;
  *
  */
 public class GrowlApplication {
-	public final int ID;
+	private final int _id;
 	private final IGrowlRegistry _registry;
-	
 	private final String _name;
+	
 	private Boolean _enabled;
 	private URL _iconUrl;
 	private Integer _displayId;
 	
 	public GrowlApplication(IGrowlRegistry registry, int id, String name, Boolean enabled, URL icon, Integer displayId) {
-		ID = id;
+		_id = id;
 		_registry = registry; 
 		_name = name;
 		_enabled = enabled;
@@ -35,6 +35,10 @@ public class GrowlApplication {
 	
 	public Bitmap getIcon() {
 		return _registry.getIcon(_iconUrl);
+	}
+	
+	public int getId() {
+		return _id;
 	}
 	
 	public Integer getDisplayId() {

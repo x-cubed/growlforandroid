@@ -1,5 +1,6 @@
 package com.growlforandroid.client;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -7,6 +8,8 @@ import java.util.List;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.DataSetObserver;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -94,7 +97,7 @@ public class NotificationListAdapter extends BaseAdapter implements ListAdapter 
 		URL iconUrl = null;
 		try {
 			iconUrl = icon == null ? null : new URL(icon);
-		} catch (Exception x) {
+		} catch (MalformedURLException x) {
 			x.printStackTrace();
 		}
 
@@ -124,7 +127,13 @@ public class NotificationListAdapter extends BaseAdapter implements ListAdapter 
 
 		GrowlNotification notification = _notifications.get(position);
 
-		Utility.setImage(child, R.id.imgNotificationIcon, notification.getIcon(_context));
+		Bitmap icon = notification.getIcon();
+		if (icon == null) {
+			// Default icon
+			icon = BitmapFactory.decodeResource(_context.getResources(), R.drawable.launcher);
+		}
+		
+		Utility.setImage(child, R.id.imgNotificationIcon, icon);
 		Utility.setText(child, R.id.txtNotificationTitle, notification.getTitle());
 		Utility.setText(child, R.id.txtNotificationMessage, notification.getMessage());
 		Utility.setText(child, R.id.txtNotificationApp, notification.getType().Application.getName());

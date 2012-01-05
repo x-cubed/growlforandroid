@@ -413,6 +413,10 @@ public class GrowlListenerService extends Service implements IGrowlService {
 	public GrowlApplication getApplication(String name) {
 		return _registry.getApplication(name);
 	}
+	
+	public List<GrowlApplication> getApplications() {
+		return _registry.getApplications();
+	}
 
 	public NotificationType getNotificationType(int id) {
 		return _registry.getNotificationType(id);
@@ -421,11 +425,14 @@ public class GrowlListenerService extends Service implements IGrowlService {
 	public NotificationType getNotificationType(GrowlApplication application, String typeName) {
 		return _registry.getNotificationType(application, typeName);
 	}
+	
+	public List<NotificationType> getNotificationTypes(GrowlApplication application) {
+		return _registry.getNotificationTypes(application);
+	}
 
 	public NotificationType registerNotificationType(GrowlApplication application, String typeName, String displayName,
 			boolean enabled, URL iconUrl) {
-		// TODO Auto-generated method stub
-		return null;
+		return _registry.registerNotificationType(application, typeName, displayName, enabled, iconUrl);
 	}
 
 	public byte[] getMatchingKey(HashAlgorithm algorithm, String hash, String salt) {
