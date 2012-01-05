@@ -9,8 +9,6 @@ import java.security.*;
 
 import javax.crypto.*;
 
-import android.util.Log;
-
 import com.growlforandroid.gntp.*;
 
 public class EncryptedChannelReader extends ChannelReader {
@@ -38,7 +36,7 @@ public class EncryptedChannelReader extends ChannelReader {
 	 * @param type
 	 *            The encryption algorithm to use
 	 * @param iv
-	 *            The initialisation vector
+	 *            The initialization vector
 	 * @param key
 	 *            The decryption key
 	 * @throws IOException
@@ -65,28 +63,17 @@ public class EncryptedChannelReader extends ChannelReader {
 		// the end of the data
 		ByteBuffer encryptedBuffer = readBytesUntil(END_OF_BLOCK);
 		int encryptedLength = encryptedBuffer.position() - END_OF_BLOCK.length;
-		Log.i("EncryptedChannelReader.decryptNextBlock", "Encrypted data (" + encryptedLength + " bytes)");
 		encryptedBuffer.rewind();
 		byte[] encrypted = new byte[encryptedLength];
 		encryptedBuffer.get(encrypted, 0, encrypted.length);
-		// Utility.logByteArrayAsHex("EncryptedChannelReader.decryptNextBlock",
-		// encrypted);
 
 		// Do the actual decryption
 		byte[] decrypted = decrypt(encrypted, type, iv, key);
-		// Log.i("EncryptedChannelReader.decryptNextBlock", "Decrypted data:");
-		// Utility.logByteArrayAsHex("EncryptedChannelReader.decryptNextBlock",
-		// decrypted);
 
 		// Grab any remaining data out of the buffer
-		Log.i("EncryptedChannelReader.decryptNextBlock", "Old available bytes: " + _availableBytes);
 		byte[] buffered = new byte[_availableBytes];
 		if (_availableBytes != 0) {
 			_buffer.get(buffered, 0, buffered.length);
-			// Log.i("EncryptedChannelReader.decryptNextBlock",
-			// "Buffered data:");
-			// Utility.logByteArrayAsHex("EncryptedChannelReader.decryptNextBlock",
-			// buffered);
 		}
 
 		// Create a new buffer containing the decrypted data followed by what
@@ -102,7 +89,6 @@ public class EncryptedChannelReader extends ChannelReader {
 		// methods work seamlessly
 		_buffer = newBuffer;
 		_availableBytes = newBufferSize;
-		Log.i("EncryptedChannelReader.decryptNextBlock", "New available bytes: " + _availableBytes);
 	}
 
 	/**
@@ -140,7 +126,6 @@ public class EncryptedChannelReader extends ChannelReader {
 		try {
 			// Create a new file and marker it for deletion when we exit
 			cacheFile = new File(folder, fileName);
-			Log.d("EncryptedChannelReader.readAndDecryptBytesToCacheFile", "Saving to " + cacheFile.getPath());
 			output = new FileOutputStream(cacheFile);
 
 			boolean isFinalBlock = false;

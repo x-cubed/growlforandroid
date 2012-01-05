@@ -107,8 +107,6 @@ public class GrowlRegistry implements IGrowlRegistry {
 		}
 
 		GrowlApplication application = new GrowlApplication(this, id, name, enabled, iconUrl, displayId);
-		Log.i("GrowlRegistry.loadApplication", "Loaded application \"" + name + "\" with ID = " + id);
-
 		return application;
 	}
 
@@ -275,7 +273,6 @@ public class GrowlRegistry implements IGrowlRegistry {
 	}
 
 	private void onApplicationRegistered(GrowlApplication application) {
-		Log.i("GrowlRegistry.onApplicationRegistered", application.getName() + " has been registered");
 		for (WeakReference<EventHandler> reference : _eventHandlers) {
 			EventHandler handler = reference.get();
 			if (handler != null) {
@@ -288,7 +285,6 @@ public class GrowlRegistry implements IGrowlRegistry {
 	}
 
 	private void onNotificationTypeRegistered(NotificationType type) {
-		Log.i("GrowlRegistry.onNotificationTypeRegistered", type.getDisplayName() + " has been registered");
 		for (WeakReference<EventHandler> reference : _eventHandlers) {
 			EventHandler handler = reference.get();
 			if (handler != null) {
