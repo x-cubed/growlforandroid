@@ -4,6 +4,8 @@ import java.net.URL;
 
 import android.app.*;
 import android.content.*;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.util.Log;
 import android.widget.*;
@@ -132,14 +134,20 @@ public class GrowlDisplayProfile {
         // Send the notification to the status bar
         GrowlApplication app = notification.getType().Application;
         NotificationManager notifyMgr = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
-        notifyMgr.notify(app.ID, statusBarPanel);
+        notifyMgr.notify(app.getId(), statusBarPanel);
 	}
 
 	private RemoteViews createNotificationView(Context context, GrowlNotification notification) {
 		GrowlApplication app = notification.getType().Application;
 		
+		Bitmap icon = notification.getIcon();
+		if (icon == null) {
+			// Default icon
+			icon = BitmapFactory.decodeResource(context.getResources(), R.drawable.launcher);
+		}
+		
 		RemoteViews contentView = new RemoteViews(context.getPackageName(), R.layout.notification_list_item);
-        contentView.setImageViewBitmap(R.id.imgNotificationIcon, notification.getIcon(context));
+        contentView.setImageViewBitmap(R.id.imgNotificationIcon, icon);
         
         // Title
         contentView.setTextViewText(R.id.txtNotificationTitle, notification.getTitle());

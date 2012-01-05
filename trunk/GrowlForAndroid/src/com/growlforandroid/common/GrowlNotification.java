@@ -4,11 +4,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
-import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 
-import com.growlforandroid.client.R;
 import com.growlforandroid.gntp.Constants;
 
 public class GrowlNotification {
@@ -91,15 +88,11 @@ public class GrowlNotification {
 		_resources.put(resource.getIdentifier(), resource);
 	}
 	
-	public Bitmap getIcon(Context context) {
+	public Bitmap getIcon() {
 		IGrowlRegistry registry = _type.Application.getRegistry();
 		Bitmap icon = registry.getIcon(_iconUrl);
 		if (icon == null) {
 			icon = _type.getIcon();
-		}
-		if (icon == null) {
-			// Default icon
-			icon = BitmapFactory.decodeResource(context.getResources(), R.drawable.launcher);
 		}
 		return icon;
 	}

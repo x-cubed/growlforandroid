@@ -4,6 +4,8 @@ import com.growlforandroid.client.GrowlListenerService.StatusChangedHandler;
 import com.growlforandroid.common.Database;
 import com.growlforandroid.common.GrowlApplication;
 import com.growlforandroid.common.GrowlNotification;
+import com.growlforandroid.common.GrowlRegistry;
+import com.growlforandroid.common.IGrowlRegistry;
 import com.growlforandroid.common.NotificationType;
 import com.growlforandroid.common.Utility;
 
@@ -17,7 +19,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.ListView;
-import android.widget.SimpleCursorAdapter;
 
 public class Applications
 	extends ListActivity
@@ -32,7 +33,8 @@ public class Applications
 	private ListenerServiceConnection _service;
 
 	private Database _database;
-	private Cursor _cursor;
+	private IGrowlRegistry _registry;
+	private ApplicationListAdapter _adapter;
 	private long _appId;
 	
     @Override
@@ -44,14 +46,10 @@ public class Applications
 
         _service = new ListenerServiceConnection(this, this);
         _database = new Database(this);
-        refresh();
+        _registry = new GrowlRegistry(this, _database);      
+        _adapter = new ApplicationListAdapter(this, getLayoutInflater(), _registry);
         
-        // Use an existing ListAdapter that will map an array
-        // of strings to TextViews
-        setListAdapter(new SimpleCursorAdapter(this, R.layout.history_list_item,
-                _cursor,
-                new String[] { Database.KEY_NAME, Database.KEY_TYPE_LIST },
-                new int[] { R.id.txtNotificationTitle, R.id.txtNotificationMessage }));
+        setListAdapter(_adapter);
         getListView().setTextFilterEnabled(true);
     }
     
@@ -69,11 +67,7 @@ public class Applications
 
     private void refresh() {
     	Log.i("Applications.refresh", "Updating...");
-    	if (_cursor == null) {
-    		_cursor = _database.getAllApplicationsAndTypes();
-    	} else {
-    		_cursor.requery();
-    	}
+    	_adapter.refresh();
     }
     
     private void refreshOnUiThread() {
@@ -151,11 +145,6 @@ public class Applications
     	if (_service != null) {
     		_service.unbind();
     		_service = null;
-    	}
-    	
-    	if (_cursor != null) {
-    		_cursor.close();
-    		_cursor = null;
     	}
     	
     	if (_database != null) {

@@ -9,5 +9,7 @@ public interface IGrowlService extends IGrowlRegistry {
 
 	byte[] getMatchingKey(HashAlgorithm algorithm, String hash, String salt);
 
+	boolean requiresPassword();
+
 	void displayNotification(GrowlNotification notification);
 }
