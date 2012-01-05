@@ -4,6 +4,13 @@
 	android:versionCode="2"
 	android:versionName="@string/app_version" >
 
+	<supports-screens
+		android:anyDensity="true"
+		android:largeScreens="true"
+		android:normalScreens="true"
+		android:resizeable="true"
+		android:smallScreens="true" />
+
 	<application
 		android:debuggable="true"
 		android:description="@string/app_description"
@@ -39,8 +46,6 @@
 
 		<receiver android:name="DeviceEventReceiver" >
 			<intent-filter>
-				<action android:name="android.intent.action.BOOT_COMPLETED" >
-				</action>
 				<action android:name="android.net.conn.CONNECTIVITY_CHANGE" >
 				</action>
 				<action android:name="android.net.wifi.STATE_CHANGE" >

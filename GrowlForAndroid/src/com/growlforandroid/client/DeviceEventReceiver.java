@@ -18,10 +18,7 @@ public class DeviceEventReceiver
 		String action = intent.getAction();
 		try {
 			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-			if (Intent.ACTION_BOOT_COMPLETED.equals(action)) {
-				onBootCompleted(context, intent, prefs);
-				
-			} else if (ConnectivityManager.CONNECTIVITY_ACTION.equals(action)) {
+			if (ConnectivityManager.CONNECTIVITY_ACTION.equals(action)) {
 				onConnectivityChanged(context, intent, prefs);
 				
 			} else if (WifiManager.NETWORK_STATE_CHANGED_ACTION.equals(action)) {
@@ -33,11 +30,6 @@ public class DeviceEventReceiver
 		} catch (Exception x) {
 			Log.e("DeviceEventReceiver.onReceive", "Exception while processing action " + action + ": " + x.toString());
 		}
-	}
-
-	private void onBootCompleted(Context context, Intent intent, SharedPreferences prefs) throws Exception {
-		Log.i("DeviceEventReceiver.onBootCompleted", "Boot completed");
-		// startServiceIfAutoStartOn(context, prefs);
 	}
 	
 	private void onConnectivityChanged(Context context, Intent intent, SharedPreferences prefs) throws Exception {
@@ -65,14 +57,13 @@ public class DeviceEventReceiver
 		String bssid = intent.getStringExtra(WifiManager.EXTRA_BSSID);
 		if (!info.isConnected()) {
 			Log.i("DeviceEventReceiver.onWifiNetworkStateChanged", "Disconnected");
-			// stopService(context);
+			stopService(context);
 		} else {
 			Log.i("DeviceEventReceiver.onWifiNetworkStateChanged", "Connected to " + bssid);
-			// startServiceIfWasRunning(context, prefs);
+			startServiceIfWasRunning(context, prefs);
 		}
 	}
 	
-	@SuppressWarnings("unused")
 	private void startServiceIfWasRunning(Context context, SharedPreferences prefs) throws Exception {
 		boolean wasRunning = prefs.getBoolean(Preferences.WAS_RUNNING, false);
 		if (wasRunning) {
