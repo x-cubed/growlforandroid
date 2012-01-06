@@ -34,7 +34,7 @@ public class GntpListenerThread extends Thread {
 
 	private Map<String, String> _requestHeaders = new HashMap<String, String>();
 	private Map<String, GrowlResource> _resources = new HashMap<String, GrowlResource>();
-	private GrowlResource _currentResource;
+	private Map<String, String> _resourceHeaders = new HashMap<String, String>();
 	private int _notificationsCount = 0;
 	private int _notificationIndex = 0;
 	private int _resourceIndex = 0;
@@ -71,7 +71,8 @@ public class GntpListenerThread extends Thread {
 			while ((_currentState != RequestState.ResponseSent) && ((inputLine = _socketReader.readLine()) != null)) {
 
 				// Parse the input
-				//Log.i("GNTPListenerThread.run[" + _connectionID + "]", "Read line \"" + inputLine + "\"");
+				// Log.i("GNTPListenerThread.run[" + _connectionID + "]",
+				// "Read line \"" + inputLine + "\"");
 				try {
 					// Parse the input
 					switch (_currentState) {
@@ -221,11 +222,14 @@ public class GntpListenerThread extends Thread {
 
 	private RequestState parseResourceHeader(String inputLine) throws GntpException, IOException {
 		if (inputLine.equals("")) {
-			if ((_currentResource == null) || (_currentResource.Headers.size() == 0)) {
-				/* Unexpected blank line, but no current resource, so we'll gracefully ignore it.
-				 * Seems to happen after resource data, but GNTP specification says data should be
-				 * followed by a single blank line, not two. Single blank line is consumed in
-				 * readResourceData() */
+			if (_resourceHeaders.size() == 0) {
+				/*
+				 * Unexpected blank line, but no current resource, so we'll
+				 * gracefully ignore it. Seems to happen after resource data,
+				 * but GNTP specification says data should be followed by a
+				 * single blank line, not two. Single blank line is consumed in
+				 * readResourceData()
+				 */
 			} else {
 				// End of resource headers, start of data
 				return RequestState.ReadingResourceData;
@@ -233,27 +237,30 @@ public class GntpListenerThread extends Thread {
 
 		} else {
 			// Still reading headers
-			if (_currentResource == null) {
-				// Start of a new resource
-				_currentResource = new GrowlResource();
-			}
-			parseHeader(inputLine, _currentResource.Headers);
+			parseHeader(inputLine, _resourceHeaders);
 		}
 		return RequestState.ReadingResourceHeaders;
 	}
 
 	private RequestState readResourceData() throws IOException, DecryptionException {
-		// Read the bytes directly from the stream
-		long length = _currentResource.getLength();
+		GrowlResource resource = _service.getRegistry().registerResource(_resourceHeaders);
+		_resourceHeaders.clear();
 
 		// Read in the file data, decrypt it and save it to a temporary location
-		File resourcesFolder = _service.getRegistry().getResourcesDir();
-		byte[] idHash = HashAlgorithm.MD5.calculateHash(_currentResource.getIdentifier().getBytes());
-		String fileName = Utility.getHexStringFromByteArray(idHash);
-		File tempResource = _socketReader.readAndDecryptBytesToCacheFile(length, _encryptionType, _initVector, _key,
-				resourcesFolder, fileName);
-		Log.i("GntpListenerThread.readResourceData[" + _connectionID + "]", "Created " + tempResource.getAbsolutePath()
-				+ " as resource (" + tempResource.length() + ")");
+		long length = resource.getLength();
+		File cacheFile = resource.getCacheFile();
+		if (!cacheFile.exists()) {
+			// Read the bytes and save them to a file
+			_socketReader.readAndDecryptBytesToCacheFile(length, _encryptionType, _initVector, _key, cacheFile);
+			Log.i("GntpListenerThread.readResourceData[" + _connectionID + "]",
+					"Created " + cacheFile.getAbsolutePath() + " as resource (" + cacheFile.length() + " bytes)");
+			resource.tryResizeBitmap();
+		} else {
+			// Read the bytes but doen't save them anywhere
+			_socketReader.readAndDecryptBytesToCacheFile(length, _encryptionType, _initVector, _key, null);
+			Log.i("GntpListenerThread.readResourceData[" + _connectionID + "]",
+					"Skipping duplicate resource ("	+ cacheFile.length() + " bytes)");
+		}
 
 		// Each resource is followed by a blank line
 		String blankLine = _socketReader.readLine().trim();
@@ -263,10 +270,7 @@ public class GntpListenerThread extends Thread {
 
 		// Link the source file to the resource, register the resource and link
 		// the resource to the notification
-		_currentResource.setSourceFile(tempResource);
-		_service.getRegistry().registerResource(_currentResource);
-		_resources.put(_currentResource.getIdentifier(), _currentResource);
-		_currentResource = null;
+		_resources.put(resource.getIdentifier(), resource);
 
 		_resourceIndex++;
 		if (_resourceIndex >= _resources.size()) {

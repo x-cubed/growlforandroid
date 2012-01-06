@@ -1,6 +1,5 @@
 package com.growlforandroid.common;
 
-import java.io.File;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
@@ -9,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import android.content.Context;
@@ -113,47 +113,23 @@ public class GrowlRegistry implements IGrowlRegistry {
 	public String getDisplayProfileName(Integer profileId) {
 		return _database.getDisplayProfileName(profileId);
 	}
-	
-	public void registerResource(GrowlResource resource) {
-		_resources.put(resource);
-	}
 
 	public Bitmap getIcon(URL source) {
 		if (source == null) {
 			return null;
 		}
 
-		final int maxIconSize = GrowlResources.MAX_ICON_SIZE;
-		String name = source.toExternalForm();
-		InputStream stream = null;
 		Bitmap icon = null;
 		try {
-			stream = source.openStream();
-			if (stream != null) {
-				// Resource was found
-				icon = new BitmapDrawable(stream).getBitmap();
-
-				// Ensure that the icon isn't too big to display
-				int width = icon.getWidth();
-				int height = icon.getHeight();
-				if ((width > maxIconSize) || (height > maxIconSize)) {
-					// Reduce the size of the icon to something reasonable
-					Bitmap scaledIcon = Bitmap.createScaledBitmap(icon, maxIconSize, maxIconSize, true);
-					icon = scaledIcon;
-				}
+			InputStream stream = source.openStream();
+			if (stream == null) {
+				return null;
 			}
-
+			icon = new BitmapDrawable(stream).getBitmap();
+			stream.close();
 		} catch (Exception x) {
-			Log.e("GrowlRegistry.getIcon", "Unable to load source: " + name + "\n" + x.toString());
-		}
-		if (stream != null) {
-			try {
-				stream.close();
-			} catch (Exception x) {
-			}
 		}
 		return icon;
-
 	}
 
 	public NotificationType getNotificationType(GrowlApplication application, String typeName) {
@@ -177,7 +153,7 @@ public class GrowlRegistry implements IGrowlRegistry {
 		}
 		return type;
 	}
-	
+
 	public List<NotificationType> getNotificationTypes(GrowlApplication application) {
 		ArrayList<NotificationType> types = new ArrayList<NotificationType>();
 		Cursor cursor = _database.getNotificationTypes(application.getId());
@@ -257,8 +233,8 @@ public class GrowlRegistry implements IGrowlRegistry {
 		return matchingKey;
 	}
 
-	public File getResourcesDir() {
-		return _resources.getResourcesDir();
+	public GrowlResource registerResource(Map<String, String> headers) {
+		return _resources.registerResource(headers);
 	}
 
 	public void addEventHandler(EventHandler h) {

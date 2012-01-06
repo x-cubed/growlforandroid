@@ -118,15 +118,12 @@ public class EncryptedChannelReader extends ChannelReader {
 		return decrypt(encrypted, type, iv, key);
 	}
 
-	public File readAndDecryptBytesToCacheFile(long length, EncryptionType type, byte[] iv, byte[] key, File folder,
-			String fileName) throws IOException, DecryptionException {
-
-		File cacheFile = null;
+	public File readAndDecryptBytesToCacheFile(long length, EncryptionType type, byte[] iv, byte[] key, File cacheFile) throws IOException, DecryptionException {
 		FileOutputStream output = null;
 		try {
-			// Create a new file and marker it for deletion when we exit
-			cacheFile = new File(folder, fileName);
-			output = new FileOutputStream(cacheFile);
+			if (cacheFile != null) {
+				output = new FileOutputStream(cacheFile);
+			}
 
 			boolean isFinalBlock = false;
 			int blockLength = BUFFER_SIZE;
@@ -138,7 +135,9 @@ public class EncryptedChannelReader extends ChannelReader {
 					blockLength = (int)remaining;
 				}
 				byte[] raw = readBytes(blockLength);
-				if (decryptor == null) {
+				if (output == null) {
+					// Skip the bytes, we have nowhere to save them
+				} else if (decryptor == null) {
 					// Source is not encrypted, just save it
 					output.write(raw);
 				} else {
