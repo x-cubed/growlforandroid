@@ -1,54 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen
-  xmlns:android="http://schemas.android.com/apk/res/android">
-  	<PreferenceCategory
-	       android:title="@string/preferences_general_title">	
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+	<PreferenceCategory android:title="@string/preferences_general_title" >
 		<CheckBoxPreference
-		        android:key="start_automatically"
-		        android:title="@string/preferences_general_auto_start"
-		        android:summary="@string/preferences_general_auto_start_summary" android:defaultValue="true"/>
-		<CheckBoxPreference android:key="announce_using_zeroconf" android:title="@string/preferences_general_announce_using_zeroconf" android:summary="@string/preferences_general_announce_using_zeroconf_summary" android:defaultValue="true"></CheckBoxPreference>
+			android:defaultValue="true"
+			android:key="start_automatically"
+			android:summary="@string/preferences_general_auto_start_summary"
+			android:title="@string/preferences_general_auto_start" />
+		<CheckBoxPreference
+			android:defaultValue="true"
+			android:key="announce_using_zeroconf"
+			android:summary="@string/preferences_general_announce_using_zeroconf_summary"
+			android:title="@string/preferences_general_announce_using_zeroconf" >
+		</CheckBoxPreference>
+
+		<EditTextPreference
+			android:key="device_name"
+			android:summary="@string/preferences_general_device_name_summary"
+			android:title="@string/preferences_general_device_name" />
 	</PreferenceCategory>
-  
-	<PreferenceCategory
-	       android:title="@string/preferences_listen_title">	
+	<PreferenceCategory android:title="@string/preferences_listen_title" >
 		<CheckBoxPreference
-		        android:key="listen_gntp"
-		        android:title="@string/preferences_listen_gntp"
-		        android:summary="@string/preferences_listen_gntp_summary"
-		        android:enabled="false" 
-		        android:defaultValue="true" />
+			android:defaultValue="true"
+			android:enabled="false"
+			android:key="listen_gntp"
+			android:summary="@string/preferences_listen_gntp_summary"
+			android:title="@string/preferences_listen_gntp" />
+
 		<PreferenceScreen
-				android:layout="?android:attr/preferenceLayoutChild"
-	            android:title="@string/preferences_listen_subscriptions"
-                android:summary="@string/preferences_listen_subscriptions_summary">
-		        
-			<intent android:action="android.intent.action.MAIN"
-					android:targetPackage="com.growlforandroid.client"
-					android:targetClass="com.growlforandroid.client.Subscriptions" />
+			android:layout="?android:attr/preferenceLayoutChild"
+			android:summary="@string/preferences_listen_subscriptions_summary"
+			android:title="@string/preferences_listen_subscriptions" >
+			<intent
+				android:action="android.intent.action.MAIN"
+				android:targetClass="com.growlforandroid.client.Subscriptions"
+				android:targetPackage="com.growlforandroid.client" />
 		</PreferenceScreen>
-		        
-		<!-- CheckBoxPreference
+
+		<!--
+             CheckBoxPreference
 		        android:key="listen_growl_udp"
 		        android:title="@string/preferences_listen_growl_udp"
 			    android:summary="@string/preferences_listen_growl_udp_summary"
-			    android:enabled="false" / -->
+			    android:enabled="false" /
+		-->
 	</PreferenceCategory>
-	
-	<PreferenceCategory
-	       android:title="@string/preferences_security_title">
-	    <CheckBoxPreference
-		        android:key="security_require_passwords"
-		        android:title="@string/preferences_security_require_passwords"
-			    android:summary="@string/preferences_security_require_passwords_summary"
-			    android:defaultValue="true" />
+	<PreferenceCategory android:title="@string/preferences_security_title" >
+		<CheckBoxPreference
+			android:defaultValue="true"
+			android:key="security_require_passwords"
+			android:summary="@string/preferences_security_require_passwords_summary"
+			android:title="@string/preferences_security_require_passwords" />
+
 		<PreferenceScreen
-                android:title="@string/preferences_security_passwords"
-                android:summary="@string/preferences_security_passwords_summary">
-		        
-			<intent android:action="android.intent.action.MAIN"
-					android:targetPackage="com.growlforandroid.client"
-					android:targetClass="com.growlforandroid.client.Passwords" />
-        </PreferenceScreen>
-    </PreferenceCategory>  
+			android:summary="@string/preferences_security_passwords_summary"
+			android:title="@string/preferences_security_passwords" >
+			<intent
+				android:action="android.intent.action.MAIN"
+				android:targetClass="com.growlforandroid.client.Passwords"
+				android:targetPackage="com.growlforandroid.client" />
+		</PreferenceScreen>
+	</PreferenceCategory>
+
 </PreferenceScreen>

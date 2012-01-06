@@ -60,6 +60,10 @@
 	<string name="preferences_general_title">General</string>
 	<string name="preferences_general_auto_start">Listen automatically</string>
 	<string name="preferences_general_auto_start_summary">Start/stop based on network availability</string>
+	<string name="preferences_general_announce_using_zeroconf">Announce to other devices</string>
+	<string name="preferences_general_announce_using_zeroconf_summary">Enables use of Bonjour/ZeroConf to simplify setup</string>
+	<string name="preferences_general_device_name">Device name</string>
+	<string name="preferences_general_device_name_summary">The name of this device as announced to the network</string>
 	<string name="preferences_listen_title">Listen for notifications from</string>
 	<string name="preferences_listen_gntp">Growl for Windows / Growl for Lion</string>
 	<string name="preferences_listen_gntp_summary">GNTP</string>
@@ -106,7 +110,5 @@
 	<string name="display_profile_vibrate">Vibrate</string>
 	<string name="display_profile_growl">Growl</string>
 	<string name="display_profile_growl_vibrate">Growl &amp; Vibrate</string>
-	<string name="preferences_general_announce_using_zeroconf">Announce to other devices</string>
-	<string name="preferences_general_announce_using_zeroconf_summary">Enables use of Bonjour/ZeroConf to simplify setup</string>
 
 </resources>
