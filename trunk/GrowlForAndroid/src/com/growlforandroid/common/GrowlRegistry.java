@@ -110,6 +110,10 @@ public class GrowlRegistry implements IGrowlRegistry {
 		return application;
 	}
 
+	public String getDisplayProfileName(Integer profileId) {
+		return _database.getDisplayProfileName(profileId);
+	}
+	
 	public void registerResource(GrowlResource resource) {
 		_resources.put(resource);
 	}

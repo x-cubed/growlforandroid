@@ -6,10 +6,10 @@ import android.graphics.Bitmap;
 
 
 public class NotificationType {
-	public final int ID;
 	public final GrowlApplication Application;
 	public final String TypeName;
-	private String _displayName;
+	private final int _id;
+	private String _displayName;	
 	private boolean _enabled;
 	private URL _iconUrl;
 	private Integer _displayId;
@@ -17,13 +17,17 @@ public class NotificationType {
 	public NotificationType(int id, GrowlApplication application, String typeName, String displayName,
 			boolean enabled, URL iconUrl, Integer displayId) {
 		
-		ID = id;
+		_id = id;
 		Application = application;
 		TypeName = typeName;
 		_displayName = displayName;
 		_enabled = enabled;
 		_iconUrl = iconUrl;
 		_displayId = displayId;
+	}
+	
+	public int getId() {
+		return _id;
 	}
 	
 	public String getDisplayName() {

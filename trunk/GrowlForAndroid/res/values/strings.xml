@@ -41,6 +41,7 @@
 
 	<string name="application_title">Growl - Application Preferences</string>
 	<string name="application_options_title">Options</string>
+	<string name="application_option_disabled">Disabled</string>
 	<string name="application_option_enabled">Enabled</string>
 	<string name="application_option_enabled_summary">Display notifications from this application</string>
 	<string name="application_option_display_title">Default Display</string>

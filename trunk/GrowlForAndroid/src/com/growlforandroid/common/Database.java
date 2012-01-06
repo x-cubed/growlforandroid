@@ -228,8 +228,6 @@ public class Database {
 			result = cursor.getString(nameColumn);
 		}
 		cursor.close();
-		
-		Log.i("Database.getDisplayProfileName", "Profile " + profile + " is called " + result);
 		return result;
 	}
 	
@@ -310,7 +308,7 @@ public class Database {
 	public Cursor getAllApplications() {
 		return db.query(TABLE_APPLICATIONS, new String[] {
 				KEY_ROWID, KEY_NAME, KEY_ENABLED, KEY_ICON_URL, KEY_DISPLAY_ID },
-				null, null, null, null, null);
+				null, null, null, null, KEY_NAME);
 	}
 	
 	public Cursor getAllApplicationsAndTypes() {
@@ -384,7 +382,7 @@ public class Database {
 		Cursor cursor = db.query(true, TABLE_NOTIFICATION_TYPES, new String[] {
 				KEY_ROWID, KEY_NAME, KEY_DISPLAY_NAME, KEY_ENABLED,	KEY_ICON_URL, KEY_DISPLAY_ID
 				}, KEY_APP_ID + "=" + appId,
-				null, null, null, null, null);
+				null, null, null, KEY_DISPLAY_NAME, null);
 		return cursor;
 	}
 	

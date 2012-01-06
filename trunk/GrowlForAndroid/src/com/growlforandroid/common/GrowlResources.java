@@ -65,11 +65,10 @@ public class GrowlResources implements URLStreamHandlerFactory {
 			String fileName = Utility.getHexStringFromByteArray(idHash);
 			File cacheFile = new File(_resourcesDir, fileName);
 			if (cacheFile.exists()) {
-				Log.d("GrowlResources.getOrCreate", "Creating resource from cache file " + fileName);
+				// We happen to have an existing cache file for this resource
 				resource = new GrowlResource(identifier, cacheFile.length());
 				resource.setSourceFile(cacheFile);
-			} else {
-				Log.d("GrowlResources.getOrCreate", "No such cache file " + fileName);
+				put(resource);
 			}
 		}
 		return resource;
