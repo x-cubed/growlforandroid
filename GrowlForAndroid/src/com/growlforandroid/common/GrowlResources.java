@@ -4,13 +4,13 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
+import com.growlforandroid.gntp.Constants;
 import com.growlforandroid.gntp.HashAlgorithm;
 
 import android.content.Context;
 import android.util.Log;
 
 public class GrowlResources implements URLStreamHandlerFactory {
-	public final static int MAX_ICON_SIZE = 100;
 	private final static String PROTOCOL = "x-growl-resource";
 	private final static String NO_MEDIA = ".nomedia";
 
@@ -34,7 +34,8 @@ public class GrowlResources implements URLStreamHandlerFactory {
 		File resourcesDir = context.getCacheDir();
 		Log.i("GrowlResources.getOrCreateResourcesDir", "Using resource directory: " + resourcesDir);
 
-		// Create a marker to suggest to media scanners that they should ignore these files
+		// Create a marker to suggest to media scanners that they should ignore
+		// these files
 		File noMedia = new File(resourcesDir, NO_MEDIA);
 		if (!noMedia.exists()) {
 			try {
@@ -61,13 +62,11 @@ public class GrowlResources implements URLStreamHandlerFactory {
 	public GrowlResource getOrCreate(String identifier) {
 		GrowlResource resource = get(identifier);
 		if (resource == null) {
-			byte[] idHash = HashAlgorithm.MD5.calculateHash(identifier.getBytes());
-			String fileName = Utility.getHexStringFromByteArray(idHash);
+			String fileName = getFileName(identifier);
 			File cacheFile = new File(_resourcesDir, fileName);
 			if (cacheFile.exists()) {
 				// We happen to have an existing cache file for this resource
-				resource = new GrowlResource(identifier, cacheFile.length());
-				resource.setSourceFile(cacheFile);
+				resource = new GrowlResource(identifier, cacheFile.length(), cacheFile);
 				put(resource);
 			}
 		}
@@ -84,6 +83,20 @@ public class GrowlResources implements URLStreamHandlerFactory {
 		String identifier = resource.getIdentifier();
 		Log.i("GrowlResources.put", "Adding resource " + identifier);
 		_resources.put(identifier, resource);
+	}
+
+	public static String getFileName(String identifier) {
+		byte[] idHash = HashAlgorithm.MD5.calculateHash(identifier.getBytes());
+		return Utility.getHexStringFromByteArray(idHash);
+	}
+
+	public GrowlResource registerResource(Map<String, String> headers) {
+		String identifier = headers.get(Constants.HEADER_RESOURCE_IDENTIFIER);
+		String fileName = getFileName(identifier);
+		File cacheFile = new File(_resourcesDir, fileName);
+		GrowlResource resource = new GrowlResource(headers, cacheFile);
+		put(resource);
+		return resource;
 	}
 
 	private class ResourceHandler extends URLStreamHandler {
@@ -113,10 +126,13 @@ public class GrowlResources implements URLStreamHandlerFactory {
 				return null;
 			}
 
+			File source = _resource.getCacheFile();
+			if (source == null) {
+				return null;
+			}
+
 			try {
-				File source = _resource.getSourceFile();
-				FileInputStream inputStream = new FileInputStream(source);
-				return inputStream;
+				return new FileInputStream(source);
 			} catch (Exception x) {
 				Log.e("ResourceURLConnection", "Failed to retrieve " + _identifier + "\n" + x.toString());
 				return null;

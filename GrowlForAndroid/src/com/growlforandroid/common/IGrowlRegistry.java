@@ -1,8 +1,8 @@
 package com.growlforandroid.common;
 
-import java.io.File;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 
 import com.growlforandroid.gntp.HashAlgorithm;
 
@@ -24,8 +24,8 @@ public interface IGrowlRegistry {
 	
 	Bitmap getIcon(URL icon);
 
-	void registerResource(GrowlResource resource);
-
+	GrowlResource registerResource(Map<String, String> headers);
+	
 	NotificationType getNotificationType(int id);
 
 	NotificationType getNotificationType(GrowlApplication application, String typeName);
@@ -36,8 +36,6 @@ public interface IGrowlRegistry {
 			boolean enabled, URL iconUrl);
 
 	byte[] getMatchingKey(String subscriberId, HashAlgorithm algorithm, String hash, String salt);
-
-	File getResourcesDir();
 
 	void addEventHandler(EventHandler handler);
 
