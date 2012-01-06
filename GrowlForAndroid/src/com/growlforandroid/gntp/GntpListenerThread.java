@@ -247,7 +247,7 @@ public class GntpListenerThread extends Thread {
 		long length = _currentResource.getLength();
 
 		// Read in the file data, decrypt it and save it to a temporary location
-		File resourcesFolder = _service.getResourcesDir();
+		File resourcesFolder = _service.getRegistry().getResourcesDir();
 		byte[] idHash = HashAlgorithm.MD5.calculateHash(_currentResource.getIdentifier().getBytes());
 		String fileName = Utility.getHexStringFromByteArray(idHash);
 		File tempResource = _socketReader.readAndDecryptBytesToCacheFile(length, _encryptionType, _initVector, _key,
@@ -264,7 +264,7 @@ public class GntpListenerThread extends Thread {
 		// Link the source file to the resource, register the resource and link
 		// the resource to the notification
 		_currentResource.setSourceFile(tempResource);
-		_service.registerResource(_currentResource);
+		_service.getRegistry().registerResource(_currentResource);
 		_resources.put(_currentResource.getIdentifier(), _currentResource);
 		_currentResource = null;
 
@@ -284,7 +284,7 @@ public class GntpListenerThread extends Thread {
 	private void doNotify() throws GntpException, MalformedURLException {
 		// Find the registered application
 		String name = _requestHeaders.get(Constants.HEADER_APPLICATION_NAME);
-		GrowlApplication application = _service.getApplication(name);
+		GrowlApplication application = _service.getRegistry().getApplication(name);
 		if (application == null) {
 			throw new GntpException(GntpError.UnknownApplication);
 		}
@@ -306,7 +306,7 @@ public class GntpListenerThread extends Thread {
 		String name = _requestHeaders.get(Constants.HEADER_APPLICATION_NAME);
 		String icon = _requestHeaders.get(Constants.HEADER_APPLICATION_ICON);
 		URL iconUrl = (icon != null) ? new URL(icon) : null;
-		GrowlApplication application = _service.registerApplication(name, iconUrl);
+		GrowlApplication application = _service.getRegistry().registerApplication(name, iconUrl);
 
 		for (int i = 0; i < _notificationsCount; i++) {
 			// Register notification types

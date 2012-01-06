@@ -1,6 +1,5 @@
 package com.growlforandroid.client;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.*;
@@ -13,7 +12,6 @@ import com.growlforandroid.gntp.*;
 import android.app.*;
 import android.content.*;
 import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.os.*;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -329,7 +327,7 @@ public class GrowlListenerService extends Service implements IGrowlService {
 
 		if (displayProfile.shouldLog()) {
 			// Log the message in the history
-			int databaseId = _database.insertNotificationHistory(type.ID, title, message, iconUrl, origin, receivedAtMS);
+			int databaseId = _database.insertNotificationHistory(type.getId(), title, message, iconUrl, origin, receivedAtMS);
 			notification.setId(databaseId);
 		}
 
@@ -366,10 +364,6 @@ public class GrowlListenerService extends Service implements IGrowlService {
 		}
 	}
 
-	public void registerResource(GrowlResource resource) {
-		_registry.registerResource(resource);
-	}
-
 	public boolean requiresPassword() {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		return Preferences.getPasswordsRequired(prefs);
@@ -398,64 +392,15 @@ public class GrowlListenerService extends Service implements IGrowlService {
 		void onSubscriptionStatusChanged(long id, String status);
 	}
 
-	public Bitmap getIcon(URL icon) {
-		return _registry.getIcon(icon);
+	public IGrowlRegistry getRegistry() {
+		return _registry;
 	}
 	
-	public File getResourcesDir() {
-		return _registry.getResourcesDir();
-	}
-	
-	public GrowlApplication registerApplication(String name, URL icon) {
-		return _registry.registerApplication(name, icon);
-	}
-
-	public GrowlApplication getApplication(long id) {
-		return _registry.getApplication(id);
-	}
-	
-	public GrowlApplication getApplication(String name) {
-		return _registry.getApplication(name);
-	}
-	
-	public List<GrowlApplication> getApplications() {
-		return _registry.getApplications();
-	}
-
-	public NotificationType getNotificationType(int id) {
-		return _registry.getNotificationType(id);
-	}
-
-	public NotificationType getNotificationType(GrowlApplication application, String typeName) {
-		return _registry.getNotificationType(application, typeName);
-	}
-	
-	public List<NotificationType> getNotificationTypes(GrowlApplication application) {
-		return _registry.getNotificationTypes(application);
-	}
-
-	public NotificationType registerNotificationType(GrowlApplication application, String typeName, String displayName,
-			boolean enabled, URL iconUrl) {
-		return _registry.registerNotificationType(application, typeName, displayName, enabled, iconUrl);
-	}
-
 	public byte[] getMatchingKey(HashAlgorithm algorithm, String hash, String salt) {
 		String subscriberId = _subscriber.getId().toString();
-		return getMatchingKey(subscriberId, algorithm, hash, salt);
-	}
-	
-	public byte[] getMatchingKey(String subscriberId, HashAlgorithm algorithm, String hash, String salt) {
 		return _registry.getMatchingKey(subscriberId, algorithm, hash, salt);
 	}
-
-	public void addEventHandler(EventHandler handler) {
-		_registry.addEventHandler(handler);
-	}
-
-	public void removeEventHandler(EventHandler handler) {
-		_registry.removeEventHandler(handler);
-	}
-
+	
 	public void connectionClosed(Thread thread) {
 		_socketAcceptor.connectionClosed(thread);
 	}

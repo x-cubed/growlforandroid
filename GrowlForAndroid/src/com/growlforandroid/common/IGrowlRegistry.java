@@ -19,6 +19,8 @@ public interface IGrowlRegistry {
 	GrowlApplication getApplication(String name);
 
 	List<GrowlApplication> getApplications();
+
+	String getDisplayProfileName(Integer profileId);
 	
 	Bitmap getIcon(URL icon);
 
