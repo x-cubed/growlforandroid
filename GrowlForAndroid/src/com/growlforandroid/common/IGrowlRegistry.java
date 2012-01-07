@@ -34,6 +34,10 @@ public interface IGrowlRegistry {
 
 	NotificationType registerNotificationType(GrowlApplication application, String typeName, String displayName,
 			boolean enabled, URL iconUrl);
+	
+	GrowlNotification getNotificationFromHistory(long id);
+	
+	List<GrowlNotification> getNotificationHistory(int limit);
 
 	byte[] getMatchingKey(String subscriberId, HashAlgorithm algorithm, String hash, String salt);
 

@@ -1,11 +1,17 @@
 package com.growlforandroid.common;
 
 import java.net.*;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import android.app.ListActivity;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -16,12 +22,15 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 public final class Utility {
+	private static final Pattern findLinks = Pattern.compile("(?:https?://)?(?:[\\w]+\\.)(?:\\.?[\\w]{2,})+\\b");
+
 	private static final String HEXES = "0123456789ABCDEF";
 
 	/**
 	 * Converts a hex representation of a byte array into a byte array.
 	 * 
-	 * Borrowed from Stack Overflow: {@link http://stackoverflow.com/questions/140131/convert-a-string-representation-of-a-hex-dump-to-a-byte-array-using-java}
+	 * Borrowed from Stack Overflow: {@link http
+	 * ://stackoverflow.com/questions/140131/convert-a-string-representation-of-a-hex-dump-to-a-byte-array-using-java}
 	 * 
 	 * @param s
 	 * @return
@@ -118,16 +127,17 @@ public final class Utility {
 		TextView textView = (TextView) parent.findViewById(viewId);
 		textView.setText(text);
 	}
-	
+
 	public static void setImage(View parent, int viewId, Bitmap bitmap) {
 		ImageView imageView = (ImageView) parent.findViewById(viewId);
 		imageView.setImageBitmap(bitmap);
-	}	
+	}
+
 	public static void setImage(View parent, int viewId, Drawable drawable) {
 		ImageView imageView = (ImageView) parent.findViewById(viewId);
 		imageView.setImageDrawable(drawable);
 	}
-	
+
 	/***
 	 * Displays a label when a ListActivity is empty
 	 * 
@@ -145,5 +155,41 @@ public final class Utility {
 		ListView listView = activity.getListView();
 		((ViewGroup) listView.getParent()).addView(emptyLabel);
 		listView.setEmptyView(emptyLabel);
+	}
+
+	public static URL tryParseURL(String url) {
+		if ((url == null) || url.equals("")) {
+			return null;
+		}
+
+		try {
+			return new URL(url);
+		} catch (MalformedURLException x) {
+			Log.e("Utility.tryParseURL", "Invalid url: " + url);
+			return null;
+		}
+	}
+
+	public static Intent createLaunchBrowserIntent(URL url) {
+		return createLaunchBrowserIntent(url.toExternalForm());
+	}
+
+	public static Intent createLaunchBrowserIntent(String url) {
+		Intent launchBrowser = new Intent(Intent.ACTION_VIEW);
+		launchBrowser.setData(Uri.parse(url));
+		return launchBrowser;
+	}
+
+	public static List<URL> findUrls(String message) {
+		ArrayList<URL> links = new ArrayList<URL>();
+		Matcher matcher = findLinks.matcher(message);
+		while (matcher.find()) {
+			String linkText = matcher.group();
+			URL link = Utility.tryParseURL(linkText);
+			if (link != null) {
+				links.add(link);
+			}
+		}
+		return links;
 	}
 }

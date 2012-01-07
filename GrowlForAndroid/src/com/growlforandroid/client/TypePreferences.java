@@ -1,9 +1,12 @@
 package com.growlforandroid.client;
 
 import com.growlforandroid.common.Database;
+import com.growlforandroid.common.NotificationType;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.util.Log;
@@ -15,9 +18,10 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 
 public class TypePreferences
 	extends Activity {
+	private static final String EXTRA_ID = "ID";
 	private static final int DIALOG_CHOOSE_DISPLAY = 0;
 
-	private long _typeId = -1;
+	private int _typeId = -1;
 	
 	private Database _database;
 	
@@ -28,7 +32,7 @@ public class TypePreferences
         setTitle(R.string.type_title);
         setContentView(R.layout.type_dialog);
 
-        _typeId = this.getIntent().getLongExtra("ID", -1);
+        _typeId = this.getIntent().getIntExtra(EXTRA_ID, -1);
         _database = new Database(this);
         refresh();
     }
@@ -100,4 +104,13 @@ public class TypePreferences
     	super.finalize();
     }
 
+    public static Intent createIntent(Context context, NotificationType type) {
+    	return createIntent(context, type.getId());
+    }
+    
+    public static Intent createIntent(Context context, int typeId) {
+		Intent intent = new Intent(context, TypePreferences.class);
+		intent.putExtra(EXTRA_ID, typeId);
+		return intent;
+	}
 }
