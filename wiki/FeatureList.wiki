@@ -4,16 +4,17 @@
 == Current Features ==
  * Runs on Android 2.0 or above.
  * Support for receiving notifications using GNTP, with authentication and encryption.
- * Embedded resources (icons, sounds, etc) are read in and cached, but not consumed yet.
+ * Supports Bonjour/ZeroConf announcement and service discovery.
+ * Displays embedded images beside notifications.
+ * Supports callback URLs.
  * Displays notifications in the status bar.
  * Keeps a log on the main screen of all recent notifications.
+ * A choice of notification options for each application, such as sounds, vibrations and displays.
 
 == Planned Features ==
- * Full support for the [http://growl.info/documentation/developer/protocol.php GrowlTalk protocol].
  * Full support for the [http://www.growlforwindows.com/gfw/help/gntp.aspx Growl Notification Transport Protocol (GNTP) 1.0].
  * Full support for [http://notify.io Notify.io].
  * Support for forwarding phone, messaging and hardware events to other Growl instances.
- * A choice of notification options for each application, such as sounds, vibrations and displays.
 
 == Possibilities ==
- * Support for intercepting and forwarding all notifications that appear in the Android status bar.
+ * Support for intercepting and forwarding all notifications that appear in the Android status bar (would require root access).
