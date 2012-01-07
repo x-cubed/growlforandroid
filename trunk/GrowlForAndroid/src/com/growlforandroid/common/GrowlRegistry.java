@@ -204,6 +204,52 @@ public class GrowlRegistry implements IGrowlRegistry {
 		return type;
 	}
 
+	public List<GrowlNotification> getNotificationHistory(int limit) {
+		ArrayList<GrowlNotification> notifications = new ArrayList<GrowlNotification>();
+		Cursor cursor = _database.getNotificationHistory(limit);
+		while (cursor.moveToNext()) {
+			GrowlNotification notification = loadNotification(cursor);
+			notifications.add(notification);
+		}
+		cursor.close();
+		return notifications;
+	}
+	
+	public GrowlNotification getNotificationFromHistory(long id) {
+		GrowlNotification notification = null;
+		Cursor cursor = _database.getNotificationFromHistory(id);
+		if (cursor.moveToFirst()) {
+			notification = loadNotification(cursor);
+		}
+		cursor.close();
+		return notification;
+	}
+	
+
+	private GrowlNotification loadNotification(Cursor cursor) {
+		final int ID_COLUMN = cursor.getColumnIndex(Database.KEY_ROWID);
+		final int TYPE_ID_COLUMN = cursor.getColumnIndex(Database.KEY_TYPE_ID);
+		final int TITLE_COLUMN = cursor.getColumnIndex(Database.KEY_TITLE);
+		final int MESSAGE_COLUMN = cursor.getColumnIndex(Database.KEY_MESSAGE);
+		final int ICON_URL_COLUMN = cursor.getColumnIndex(Database.KEY_ICON_URL);
+		final int CALLBACK_URL_COLUMN = cursor.getColumnIndex(Database.KEY_CALLBACK_URL);
+		final int ORIGIN_COLUMN = cursor.getColumnIndex(Database.KEY_ORIGIN);
+		final int RECEIVED_AT_COLUMN = cursor.getColumnIndex(Database.KEY_RECEIVED_AT);
+
+		int id = cursor.getInt(ID_COLUMN);
+		int typeId = cursor.getInt(TYPE_ID_COLUMN);
+		String title = cursor.getString(TITLE_COLUMN);
+		String message = cursor.getString(MESSAGE_COLUMN);
+		String origin = cursor.getString(ORIGIN_COLUMN);
+		long receivedAtMS = cursor.getLong(RECEIVED_AT_COLUMN);
+
+		URL iconUrl = Utility.tryParseURL(cursor.getString(ICON_URL_COLUMN));
+		URL callbackUrl = Utility.tryParseURL(cursor.getString(CALLBACK_URL_COLUMN));
+		
+		NotificationType type = getNotificationType(typeId);
+		return new GrowlNotification(id, type, title, message, iconUrl, callbackUrl, origin, receivedAtMS);
+	}
+	
 	public byte[] getMatchingKey(String subscriberId, HashAlgorithm algorithm, String hash, String salt) {
 		byte[] hashBytes = Utility.hexStringToByteArray(hash);
 		byte[] saltBytes = Utility.hexStringToByteArray(salt);

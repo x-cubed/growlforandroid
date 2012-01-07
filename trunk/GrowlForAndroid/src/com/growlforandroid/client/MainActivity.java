@@ -1,17 +1,23 @@
 package com.growlforandroid.client;
 
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.growlforandroid.common.Database;
 import com.growlforandroid.common.GrowlApplication;
 import com.growlforandroid.common.GrowlNotification;
 import com.growlforandroid.common.GrowlRegistry;
 import com.growlforandroid.common.IGrowlRegistry;
 import com.growlforandroid.common.NotificationType;
+import com.growlforandroid.common.Utility;
 
 import android.app.*;
 import android.content.*;
-import android.database.Cursor;
+import android.content.res.Resources;
 import android.os.*;
 import android.preference.PreferenceManager;
+import android.text.ClipboardManager;
 import android.text.SpannableString;
 import android.text.method.LinkMovementMethod;
 import android.text.util.Linkify;
@@ -22,24 +28,19 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.*;
+import android.widget.AdapterView.OnItemClickListener;
 
 public class MainActivity extends Activity implements GrowlListenerService.StatusChangedHandler {
 
-	private static final int MAX_HISTORY_ITEMS = 20;
+	private static final int MAX_HISTORY_ITEMS = 50;
 
-	// private static final int DIALOG_ITEM_MENU = 1;
 	private static final int DIALOG_DELETE_PROMPT = 2;
 	private static final int DIALOG_ABOUT = 3;
 
-	/*
-	 * private static final int ITEM_MENU_PREFERENCES = 0; private static final
-	 * int ITEM_MENU_DELETE = 1;
-	 */
-
 	private ListenerServiceConnection _service;
 	private Database _database;
-	private Cursor _cursor;
-	private ListAdapter _adapter;
+	private IGrowlRegistry _registry;
+	private NotificationListAdapter _adapter;
 
 	private ListView _lsvNotifications;
 	private ToggleButton _tglServiceState;
@@ -56,6 +57,7 @@ public class MainActivity extends Activity implements GrowlListenerService.Statu
 		super.onCreate(savedInstanceState);
 		_service = new ListenerServiceConnection(this, this);
 		_database = new Database(this);
+		_registry = new GrowlRegistry(this, _database);
 
 		// Load the default preferences
 		PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
@@ -65,6 +67,13 @@ public class MainActivity extends Activity implements GrowlListenerService.Statu
 
 		// List the recent notifications
 		_lsvNotifications = (ListView) findViewById(R.id.lsvNotifications);
+		_lsvNotifications.setOnItemClickListener(new OnItemClickListener() {
+			public void onItemClick(AdapterView<?> adapter, View item, int position, long id) {
+				GrowlNotification notification = _registry.getNotificationFromHistory(id);
+				Dialog dialog = createNotificationMenu(notification);
+				dialog.show();
+			}
+		});
 
 		// Watch for button clicks
 		_tglServiceState = (ToggleButton) findViewById(R.id.tglServiceState);
@@ -98,13 +107,12 @@ public class MainActivity extends Activity implements GrowlListenerService.Statu
 	}
 
 	private void refresh() {
-		if (_cursor == null) {
-			_cursor = _database.getNotificationHistory(MAX_HISTORY_ITEMS);
+		if (_adapter == null) {
 			IGrowlRegistry registry = new GrowlRegistry(this, _database);
-			_adapter = new NotificationListAdapter(this, getLayoutInflater(), registry, _cursor);
+			_adapter = new NotificationListAdapter(this, getLayoutInflater(), registry, MAX_HISTORY_ITEMS);
 			_lsvNotifications.setAdapter(_adapter);
 		} else {
-			_cursor.requery();
+			_adapter.refresh();
 		}
 	}
 
@@ -113,11 +121,6 @@ public class MainActivity extends Activity implements GrowlListenerService.Statu
 		if (_service != null) {
 			_service.unbind();
 			_service = null;
-		}
-
-		if (_cursor != null) {
-			_cursor.close();
-			_cursor = null;
 		}
 
 		if (_database != null) {
@@ -175,23 +178,7 @@ public class MainActivity extends Activity implements GrowlListenerService.Statu
 
 	@Override
 	public Dialog onCreateDialog(int id) {
-		// final MainActivity apps = this;
 		switch (id) {
-		/*
-		 * case DIALOG_ITEM_MENU: return new AlertDialog.Builder(this)
-		 * .setTitle(appName) .setItems(R.array.notification_item_menu, new
-		 * DialogInterface.OnClickListener() { public void
-		 * onClick(DialogInterface dialog, int which) { switch (which) { case
-		 * ITEM_MENU_PREFERENCES: Intent appPrefs = new Intent(apps,
-		 * Application.class); appPrefs.putExtra("ID", _appId);
-		 * startActivity(appPrefs); break;
-		 * 
-		 * case ITEM_MENU_DELETE: showDialog(DIALOG_DELETE_PROMPT); break;
-		 * 
-		 * default: Log.e("Applications.ItemMenu.onClick", "Unknown menu item "
-		 * + which); } } }) .create();
-		 */
-
 		case DIALOG_DELETE_PROMPT:
 			return new AlertDialog.Builder(this).setTitle(R.string.history_title)
 					.setMessage(R.string.history_delete_prompt)
@@ -224,6 +211,83 @@ public class MainActivity extends Activity implements GrowlListenerService.Statu
 		return null;
 	}
 
+	private Dialog createNotificationMenu(final GrowlNotification notification) {
+		if (notification == null) {
+			return null;
+		}
+		
+		final NotificationType type = notification.getType();
+		final GrowlApplication app = type.Application;
+		final Context context = this;
+		
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle(app.getName());
+		
+		// Menu items
+		Resources resources = getResources();
+		ArrayList<String> items = new ArrayList<String>();
+		String appPrefs = resources.getString(R.string.notification_menu_app_preferences);
+		items.add(appPrefs.replace("%s", app.getName()));
+		
+		String typePrefs = resources.getString(R.string.notification_menu_type_preferences);
+		items.add(typePrefs.replace("%s", type.getDisplayName()));
+		
+		items.add(resources.getString(R.string.notification_menu_copy_message));
+		items.add(resources.getString(R.string.notification_menu_delete));
+		
+		// The callback URL, if specified
+		URL callbackUrl = notification.getCallbackUrl();
+		if (callbackUrl != null) {
+			items.add(callbackUrl.toExternalForm());
+		}
+		
+		// Any other links in the message
+		List<URL> links = Utility.findUrls(notification.getMessage());
+		for(URL link:links) {
+			items.add(link.toExternalForm());
+		}
+
+		// Create the menu and add item click handlers
+		final String[] menuItems = items.toArray(new String[items.size()]);
+		builder.setItems(menuItems, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int which) {
+				switch (which) {
+					case 0:
+						// Application preferences
+						Intent appPrefs = Application.createIntent(context, app);
+						startActivity(appPrefs);
+						break;
+
+					case 1:
+						// Notification type preferences
+						Intent typePrefs = TypePreferences.createIntent(context, type);
+						startActivity(typePrefs);
+						break;
+
+					case 2:
+						// Copy message
+						ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE); 
+						clipboard.setText(notification.getMessage());
+						break;
+						
+					case 3:
+						// Delete notification from history
+						_database.deleteNotificationFromHistory(notification.getId());
+						refresh();
+						break;
+						
+					default:
+						// A link
+						String url = menuItems[which];
+						Intent intent = Utility.createLaunchBrowserIntent(url);
+						startActivity(intent);
+						break;
+				}
+			}
+		});
+		return builder.create();
+	}
+	
 	protected void updateServiceState() {
 		onIsRunningChanged(_service.isRunning());
 	}

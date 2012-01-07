@@ -7,6 +7,7 @@ import com.growlforandroid.common.IGrowlRegistry;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -23,7 +24,7 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 
 public class Application extends Activity {
-
+	private static final String EXTRA_ID = "ID";
 	private static final int DIALOG_CHOOSE_DISPLAY = 0;
 
 	private Database _database;
@@ -31,7 +32,7 @@ public class Application extends Activity {
 	private IGrowlRegistry _registry;
 	private GrowlApplication _application;
 	private TypeListAdapter _adapter;
-	private long _typeId;
+	private int _typeId;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -43,7 +44,7 @@ public class Application extends Activity {
 		_database = new Database(this);
 		_registry = new GrowlRegistry(this, _database);
 
-		final long APP_ID = getIntent().getLongExtra("ID", -1);
+		final long APP_ID = getIntent().getIntExtra(EXTRA_ID, -1);
 		_application = _registry.getApplication(APP_ID);
 		if (_application == null) {
 			return;
@@ -57,10 +58,8 @@ public class Application extends Activity {
 		final Application app = this;
 		lsvNotificationTypes.setOnItemClickListener(new OnItemClickListener() {
 			public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-				_typeId = id;
-
-				Intent typePrefs = new Intent(app, TypePreferences.class);
-				typePrefs.putExtra("ID", _typeId);
+				_typeId = (int)id;
+				Intent typePrefs = TypePreferences.createIntent(app, _typeId);
 				startActivity(typePrefs);
 			}
 		});
@@ -141,5 +140,15 @@ public class Application extends Activity {
 	protected void finalize() throws Throwable {
 		onDestroy();
 		super.finalize();
+	}
+	
+	public static Intent createIntent(Context context, GrowlApplication application) {
+		return createIntent(context, application.getId());
+	}
+	
+	public static Intent createIntent(Context context, int appId) {
+		Intent intent = new Intent(context, Application.class);
+		intent.putExtra(EXTRA_ID, appId);
+		return intent;
 	}
 }

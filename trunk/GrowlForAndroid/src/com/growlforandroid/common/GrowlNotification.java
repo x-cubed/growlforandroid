@@ -14,32 +14,38 @@ public class GrowlNotification {
 	private final String _title;
 	private final String _text;
 	private final URL _iconUrl;
+	private final URL _callbackUrl;
 	private final String _origin;
 	private final Map<String, GrowlResource> _resources;
 	private final long _receivedAtMS;
 	private long _id = -1;
 	
-	public GrowlNotification(long id, NotificationType type, String title, String text, URL icon, String origin, long receivedAtMS) {
+	public GrowlNotification(long id, NotificationType type, String title, String text,
+			URL icon, URL callback, String origin, long receivedAtMS) {
 		_id = id;
 		_notificationId = Long.toString(id);
 		_type = type;
 		_title = title;
 		_text = text;
 		_iconUrl = icon;
+		_callbackUrl = callback;
 		
 		_resources = new HashMap<String, GrowlResource>();
 		_origin = origin;
 		_receivedAtMS = receivedAtMS;
 	}
 	
-	public GrowlNotification(NotificationType type,	Map<String, String> headers, Map<String, GrowlResource> resources, long receivedAtMS)
-		throws MalformedURLException {
+	public GrowlNotification(NotificationType type,	Map<String, String> headers, Map<String, GrowlResource> resources,
+		long receivedAtMS) throws MalformedURLException {
 		
 		_notificationId = headers.get(Constants.HEADER_NOTIFICATION_ID);
 		_type = type;
 		
 		String icon = headers.get(Constants.HEADER_NOTIFICATION_ICON);
 		_iconUrl = (icon != null) ? new URL(icon) : null;
+		
+		String callback = headers.get(Constants.HEADER_NOTIFICATION_CALLBACK_TARGET);
+		_callbackUrl = (callback != null) ? new URL(callback) : null;
 		
 		_title = headers.get(Constants.HEADER_NOTIFICATION_TITLE);
 		_text = headers.get(Constants.HEADER_NOTIFICATION_TEXT);
@@ -76,6 +82,10 @@ public class GrowlNotification {
 		return _iconUrl;
 	}
 	
+	public URL getCallbackUrl() {
+		return _callbackUrl;
+	}
+		
 	public long getReceivedAtMS() {
 		return _receivedAtMS;
 	}

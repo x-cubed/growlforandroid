@@ -18,6 +18,10 @@
 	<string name="service_label">Growl for Android Listener</string>
 	<string name="service_started">Growl for Android started</string>
 	<string name="service_stopped">Growl for Android stopped</string>
+	<string name="notification_menu_app_preferences">App: %s</string>
+	<string name="notification_menu_type_preferences">Type: %s</string>
+	<string name="notification_menu_copy_message">Copy message</string>
+	<string name="notification_menu_delete">Delete notification</string>
 	<string name="menu_applications">Applications</string>
 	<string name="menu_preferences">Preferences</string>
 	<string name="menu_clear_history">Clear History</string>

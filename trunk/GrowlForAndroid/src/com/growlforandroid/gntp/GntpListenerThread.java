@@ -308,8 +308,7 @@ public class GntpListenerThread extends Thread {
 	// Register an application and its notification types
 	private void doRegister() throws GntpException, MalformedURLException {
 		String name = _requestHeaders.get(Constants.HEADER_APPLICATION_NAME);
-		String icon = _requestHeaders.get(Constants.HEADER_APPLICATION_ICON);
-		URL iconUrl = (icon != null) ? new URL(icon) : null;
+		URL iconUrl = Utility.tryParseURL(_requestHeaders.get(Constants.HEADER_APPLICATION_ICON));
 		GrowlApplication application = _service.getRegistry().registerApplication(name, iconUrl);
 
 		for (int i = 0; i < _notificationsCount; i++) {
@@ -318,8 +317,7 @@ public class GntpListenerThread extends Thread {
 			String typeName = notificationHeaders.get(Constants.HEADER_NOTIFICATION_NAME);
 			String displayName = notificationHeaders.get(Constants.HEADER_NOTIFICATION_DISPLAY_NAME);
 			boolean enabled = Boolean.valueOf(notificationHeaders.get(Constants.HEADER_NOTIFICATION_ENABLED));
-			String typeIcon = notificationHeaders.get(Constants.HEADER_NOTIFICATION_ICON);
-			URL typeIconUrl = (typeIcon != null) ? new URL(typeIcon) : null;
+			URL typeIconUrl = Utility.tryParseURL(notificationHeaders.get(Constants.HEADER_NOTIFICATION_ICON));
 
 			application.registerNotificationType(typeName, displayName, enabled, typeIconUrl);
 		}

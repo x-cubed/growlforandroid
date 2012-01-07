@@ -1,13 +1,8 @@
 package com.growlforandroid.client;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 
 import android.content.Context;
-import android.database.Cursor;
-import android.database.DataSetObserver;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.view.LayoutInflater;
@@ -16,10 +11,8 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ListAdapter;
 
-import com.growlforandroid.common.Database;
 import com.growlforandroid.common.GrowlNotification;
 import com.growlforandroid.common.IGrowlRegistry;
-import com.growlforandroid.common.NotificationType;
 import com.growlforandroid.common.Utility;
 
 /***
@@ -31,78 +24,21 @@ public class NotificationListAdapter extends BaseAdapter implements ListAdapter 
 	private final Context _context;
 	private final LayoutInflater _inflater;
 	private final IGrowlRegistry _registry;
-	private final Cursor _cursor;
+	private final int _limit;
 	private List<GrowlNotification> _notifications;
 
-	public NotificationListAdapter(Context context, LayoutInflater inflater, IGrowlRegistry registry, Cursor cursor) {
+	public NotificationListAdapter(Context context, LayoutInflater inflater, IGrowlRegistry registry, int limit) {
 		_context = context;
 		_inflater = inflater;
 		_registry = registry;
+		_limit = limit;
 		
-		_cursor = cursor;
-		_cursor.registerDataSetObserver(new DataSetObserver() {
-			public void onChanged() {
-				loadFromCursor();
-			}
-			
-			public void onInvalidated() {
-				_cursor.unregisterDataSetObserver(this);
-				unload();
-			}
-		});
-		
-		_notifications = new ArrayList<GrowlNotification>();
-
-		loadFromCursor();
+		refresh();
 	}
 
-	private void loadFromCursor() {
-		synchronized (_notifications) {
-			_notifications.clear();
-			if (!_cursor.moveToFirst()) {
-				return;
-			}
-			do {
-				GrowlNotification notification = fromCursor(_cursor);
-				_notifications.add(notification);
-			} while (_cursor.moveToNext());
-		}
+	public void refresh() {
+		_notifications = _registry.getNotificationHistory(_limit);
 		notifyDataSetChanged();
-	}
-	
-	private void unload() {
-		synchronized (_notifications) {
-			_notifications.clear();
-		}
-		notifyDataSetInvalidated();
-	}
-
-	private GrowlNotification fromCursor(Cursor cursor) {
-		final int ID_COLUMN = cursor.getColumnIndex(Database.KEY_ROWID);
-		final int TYPE_ID_COLUMN = cursor.getColumnIndex(Database.KEY_TYPE_ID);
-		final int TITLE_COLUMN = cursor.getColumnIndex(Database.KEY_TITLE);
-		final int MESSAGE_COLUMN = cursor.getColumnIndex(Database.KEY_MESSAGE);
-		final int ICON_URL_COLUMN = cursor.getColumnIndex(Database.KEY_ICON_URL);
-		final int ORIGIN_COLUMN = cursor.getColumnIndex(Database.KEY_ORIGIN);
-		final int RECEIVED_AT_COLUMN = cursor.getColumnIndex(Database.KEY_RECEIVED_AT);
-
-		int id = cursor.getInt(ID_COLUMN);
-		int typeId = cursor.getInt(TYPE_ID_COLUMN);
-		String title = cursor.getString(TITLE_COLUMN);
-		String message = cursor.getString(MESSAGE_COLUMN);
-		String origin = cursor.getString(ORIGIN_COLUMN);
-		long receivedAtMS = cursor.getLong(RECEIVED_AT_COLUMN);
-
-		String icon = cursor.getString(ICON_URL_COLUMN);
-		URL iconUrl = null;
-		try {
-			iconUrl = icon == null ? null : new URL(icon);
-		} catch (MalformedURLException x) {
-			x.printStackTrace();
-		}
-
-		NotificationType type = _registry.getNotificationType(typeId);
-		return new GrowlNotification(id, type, title, message, iconUrl, origin, receivedAtMS);
 	}
 
 	public int getCount() {

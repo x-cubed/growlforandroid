@@ -26,7 +26,7 @@ public class Applications extends ListActivity implements StatusChangedHandler {
 	private Database _database;
 	private IGrowlRegistry _registry;
 	private ApplicationListAdapter _adapter;
-	private long _appId;
+	private int _appId;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -70,7 +70,7 @@ public class Applications extends ListActivity implements StatusChangedHandler {
 
 	@Override
 	protected void onListItemClick(ListView l, View v, int position, long id) {
-		_appId = id;
+		_appId = (int)id;
 		showDialog(DIALOG_ITEM_MENU);
 	}
 
@@ -95,8 +95,7 @@ public class Applications extends ListActivity implements StatusChangedHandler {
 						public void onClick(DialogInterface dialog, int which) {
 							switch (which) {
 							case ITEM_MENU_PREFERENCES:
-								Intent appPrefs = new Intent(apps, Application.class);
-								appPrefs.putExtra("ID", _appId);
+								Intent appPrefs = Application.createIntent(apps, _appId);
 								startActivity(appPrefs);
 								break;
 

@@ -24,6 +24,7 @@ public class Database {
 	public static final String KEY_DISPLAY_NAME = "display_name";
 	public static final String KEY_ENABLED = "enabled";
 	public static final String KEY_ICON_URL = "icon_url";
+	public static final String KEY_CALLBACK_URL = "callback_url";
 	public static final String KEY_PASSWORD = "password";
 	public static final String KEY_RECEIVED_AT = "received_at";
 	public static final String KEY_TITLE = "title";
@@ -53,7 +54,7 @@ public class Database {
 	public static final String PREFERENCE_DEFAULT_DISPLAY_ID = "display_default_id";
 	
 	private static final String DATABASE_NAME = "growl";
-	private static final int DATABASE_VERSION = 3;
+	private static final int DATABASE_VERSION = 4;
 	
 	private final Context _context;
 
@@ -126,6 +127,7 @@ public class Database {
 					+ "title TEXT NOT NULL, "
 					+ "message TEXT NOT NULL, "
 					+ "icon_url TEXT, "
+					+ "callback_url TEXT, "
 					+ "origin TEXT, "
 					+ "FOREIGN KEY(type_id) REFERENCES notification_types(id));");
 		}
@@ -141,6 +143,11 @@ public class Database {
 			if (oldVersion <= 2) {
 				Log.i("Database.onUpgrade", "Upgrading subscriptions from version 2");
 				updateSubscriptionsFrom2To3(db);
+			}
+			
+			if (oldVersion <= 3)  {
+				Log.i("Database.onUpgrade", "Upgrading notification_history from version 3");
+				updateNotificationHistoryFrom3to4(db);
 			}
 		}
 
@@ -159,6 +166,11 @@ public class Database {
 		private void updateSubscriptionsFrom2To3(SQLiteDatabase db) {
 			db.execSQL("ALTER TABLE " + TABLE_SUBSCRIPTIONS + " " +
 					"ADD COLUMN " + KEY_ZERO_CONF + " INTEGER NOT NULL DEFAULT 0;");
+		}
+		
+		private void updateNotificationHistoryFrom3to4(SQLiteDatabase db) {
+			db.execSQL("ALTER TABLE " + TABLE_NOTIFICATION_HISTORY + " " +
+					"ADD COLUMN " + KEY_CALLBACK_URL + " TEXT;");
 		}
 	}
 
@@ -418,40 +430,45 @@ public class Database {
 		return history && type;
 	}
 
-	public int insertNotificationHistory(long typeID, String title, String message, URL iconUrl, String origin, long receivedAt) {
+	public int insertNotificationHistory(long typeID, String title, String message,
+			URL icon, URL callback, String origin, long receivedAt) {
+		
 		ContentValues initialValues = new ContentValues();
 		initialValues.put(KEY_TYPE_ID, typeID);
 		initialValues.put(KEY_RECEIVED_AT, receivedAt);
 		initialValues.put(KEY_TITLE, title);
 		initialValues.put(KEY_MESSAGE, message);
 
-		String url = iconUrl == null ? null : iconUrl.toString();
-		initialValues.put(KEY_ICON_URL, url);
+		String iconUrl = (icon== null) ? null : icon.toString();
+		initialValues.put(KEY_ICON_URL, iconUrl);
 		
+		String callbackUrl = (callback == null) ? null : callback.toString();
+		initialValues.put(KEY_CALLBACK_URL, callbackUrl);
+				
 		initialValues.put(KEY_ORIGIN, origin);
 		return (int) db.insert(TABLE_NOTIFICATION_HISTORY, null, initialValues);
 	}
 	
-	/**
-	 * Returns all columns and rows from the notification_history table, as well as the notification type name and the application type name
-	 * @return
-	 */
 	public Cursor getNotificationHistory(int limit) {
-		return db.rawQuery(
-				"SELECT " + TABLE_NOTIFICATION_HISTORY + ".*, " +
-					TABLE_NOTIFICATION_TYPES + "." + KEY_DISPLAY_NAME + " AS " + KEY_TYPE_DISPLAY_NAME + ", " +
-					TABLE_APPLICATIONS + "." + KEY_NAME + " AS " + KEY_APP_NAME + " " +
-				"FROM " + TABLE_NOTIFICATION_HISTORY + " " +
-					"INNER JOIN " + TABLE_NOTIFICATION_TYPES + " " +
-						"ON " + TABLE_NOTIFICATION_TYPES + "." + KEY_ROWID + " = " + TABLE_NOTIFICATION_HISTORY + "." + KEY_TYPE_ID + " " +
-					"INNER JOIN " + TABLE_APPLICATIONS + " " +
-						"ON " + TABLE_APPLICATIONS + "." + KEY_ROWID + " = " + TABLE_NOTIFICATION_TYPES + "." + KEY_APP_ID + " " +
-				"ORDER BY " + KEY_RECEIVED_AT + " DESC " +
-				"LIMIT ?", new String[] { Integer.toString(limit) });
+		return db.query(TABLE_NOTIFICATION_HISTORY, new String[] {
+				KEY_ROWID, KEY_RECEIVED_AT, KEY_TYPE_ID, KEY_TITLE, KEY_MESSAGE, KEY_TITLE,
+				KEY_MESSAGE, KEY_ICON_URL, KEY_CALLBACK_URL, KEY_ORIGIN
+		}, null, null, null, null, KEY_RECEIVED_AT + " DESC", Integer.toString(limit));
 	}
 
+	public Cursor getNotificationFromHistory(long id) {
+		return db.query(TABLE_NOTIFICATION_HISTORY, new String[] {
+				KEY_ROWID, KEY_RECEIVED_AT, KEY_TYPE_ID, KEY_TITLE, KEY_MESSAGE, KEY_TITLE,
+				KEY_MESSAGE, KEY_ICON_URL, KEY_CALLBACK_URL, KEY_ORIGIN
+		}, KEY_ROWID + "=?", new String[] { Long.toString(id) }, null, null, null);
+	}
+	
 	public void deleteNotificationHistory() {
 		db.delete(TABLE_NOTIFICATION_HISTORY, null, null);
+	}
+	
+	public void deleteNotificationFromHistory(long id) {
+		db.delete(TABLE_NOTIFICATION_HISTORY, KEY_ROWID + "=?", new String[] { Long.toString(id) });
 	}
 	
 	public long insertSubscription(String name, String address, String password, boolean isZeroConf, String status) {

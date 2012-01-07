@@ -279,16 +279,7 @@ public class GrowlListenerService extends Service implements IGrowlService {
 				toastFlags = cursor.getInt(toastColumn);
 			}
 
-			String alert = cursor.getString(alertColumn);
-			URL alertUrl = null;
-			if (alert != null) {
-				try {
-					alertUrl = new URL(alert);
-				} catch (MalformedURLException mue) {
-					Log.e("GrowlListenerService.getDisplayProfile", "Failed to parse alert URL:" + alert, mue);
-				}
-			}
-
+			URL alertUrl = Utility.tryParseURL(cursor.getString(alertColumn)); 
 			result = new GrowlDisplayProfile(id, name, shouldLog, sbDefaults, sbFlags, toastFlags, alertUrl);
 		}
 		cursor.close();
@@ -313,6 +304,7 @@ public class GrowlListenerService extends Service implements IGrowlService {
 		String title = notification.getTitle();
 		String message = notification.getMessage();
 		URL iconUrl = notification.getIconUrl();
+		URL callbackUrl = notification.getCallbackUrl();
 		String origin = notification.getOrigin();
 		long receivedAtMS = notification.getReceivedAtMS();
 
@@ -327,13 +319,14 @@ public class GrowlListenerService extends Service implements IGrowlService {
 
 		if (displayProfile.shouldLog()) {
 			// Log the message in the history
-			int databaseId = _database.insertNotificationHistory(type.getId(), title, message, iconUrl, origin, receivedAtMS);
+			int databaseId = _database.insertNotificationHistory(
+					type.getId(), title, message, iconUrl, callbackUrl, origin, receivedAtMS);
 			notification.setId(databaseId);
 		}
 
-		// Display the notification based on the preferences of the profile,
-		// launching MainActivity if it is clicked
-		displayProfile.displayNotification(this, notification, new Intent(this, MainActivity.class));
+		// Display the notification based on the preferences of the profile, launching MainActivity if it is clicked
+		final Intent defaultIntent = new Intent(this, MainActivity.class);
+		displayProfile.displayNotification(this, notification, defaultIntent);
 
 		// Notify the status changed handlers
 		onDisplayNotification(notification);
