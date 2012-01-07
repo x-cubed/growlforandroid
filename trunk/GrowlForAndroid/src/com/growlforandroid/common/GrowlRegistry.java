@@ -151,6 +151,7 @@ public class GrowlRegistry implements IGrowlRegistry {
 			GrowlApplication application = getApplication(appId);
 			type = loadNotificationType(application, cursor);
 		}
+		cursor.close();
 		return type;
 	}
 
