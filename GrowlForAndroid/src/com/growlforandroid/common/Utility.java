@@ -22,7 +22,8 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 public final class Utility {
-	private static final Pattern findLinks = Pattern.compile("(?:https?://)?(?:[\\w]+\\.)(?:\\.?[\\w]{2,})+\\b");
+	private static final Pattern findLinks = Pattern.compile(
+			"\\b(?:(?:https?|ftp)://|www\\.|ftp\\.)[-A-Z0-9+&@#/%=~_|$?!:,.]*[A-Z0-9+&@#/%=~_|$]", Pattern.CASE_INSENSITIVE);
 
 	private static final String HEXES = "0123456789ABCDEF";
 
