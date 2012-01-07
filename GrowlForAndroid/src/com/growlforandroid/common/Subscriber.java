@@ -143,6 +143,9 @@ public class Subscriber implements ZeroConf.Listener {
 	}
 	
 	private void subscribeToZeroConfServices() {
+		if (_zeroConf == null) {
+			return;
+		}
 		ServiceInfo[] services = _zeroConf.findServices(Constants.GNTP_ZEROCONF_SERVICE_TYPE, ZERO_CONF_TIMEOUT_MS);
 		for(ServiceInfo service:services) {
 			subscribeToService(service);
