@@ -100,11 +100,13 @@ public class Subscriptions extends ListActivity implements SubscriptionDialog.Li
 		activity.setProgressBarIndeterminateVisibility(true);
 
 		// Spawn a background thread to look for GNTP services on the network
+		final Context context = this;
 		new Thread(new Runnable() {
 			public void run() {
 				// Query the available services using ZeroConf
+				ZeroConf zeroConf = ZeroConf.getInstance(context);
 				Log.i("Subscriptions.findZeroConfServices", "Querying available GNTP services...");
-				final ServiceInfo[] services = _zeroConf.findServices(Constants.GNTP_ZEROCONF_SERVICE_TYPE,
+				final ServiceInfo[] services = zeroConf.findServices(Constants.GNTP_ZEROCONF_SERVICE_TYPE,
 						ZEROCONF_TIMEOUT_MS);
 				Log.i("Subscriptions.findZeroConfServices", "Found " + services.length + " available GNTP services");
 
@@ -132,6 +134,7 @@ public class Subscriptions extends ListActivity implements SubscriptionDialog.Li
 		super.onResume();
 
 		_service.bind();
+		_zeroConf = ZeroConf.getInstance(this);
 		_zeroConf.addServiceListener(Constants.GNTP_ZEROCONF_SERVICE_TYPE, this);
 		_adapter.notifyDataSetChanged();
 
@@ -141,6 +144,7 @@ public class Subscriptions extends ListActivity implements SubscriptionDialog.Li
 	@Override
 	public void onPause() {
 		_zeroConf.removeServiceListener(Constants.GNTP_ZEROCONF_SERVICE_TYPE, this);
+		_zeroConf = null;
 		_service.unbind();
 		super.onPause();
 	}
