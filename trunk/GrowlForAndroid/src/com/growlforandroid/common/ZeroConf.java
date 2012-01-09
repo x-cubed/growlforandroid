@@ -106,10 +106,10 @@ public class ZeroConf {
 
 	public ServiceInfo[] findServices(String type, int timeoutMS) {
 		ServiceInfo[] services = _jmDNS.list(type, timeoutMS);
-		
+
 		ArrayList<ServiceInfo> nonLocalServices = new ArrayList<ServiceInfo>();
 		for (ServiceInfo service : services) {
-			if (!isLocalService(service)) {
+			if ((service != null) && !isLocalService(service)) {
 				nonLocalServices.add(service);
 			}
 		}
@@ -123,7 +123,7 @@ public class ZeroConf {
 		ArrayList<InetAddress> allAddresses = new ArrayList<InetAddress>();
 		try {
 			Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-			while(interfaces.hasMoreElements()) {
+			while (interfaces.hasMoreElements()) {
 				NetworkInterface iface = interfaces.nextElement();
 				Enumeration<InetAddress> addresses = iface.getInetAddresses();
 				while (addresses.hasMoreElements()) {
@@ -136,18 +136,17 @@ public class ZeroConf {
 		}
 		return allAddresses;
 	}
-	
-	private boolean isLocalService(ServiceInfo service) {	
+
+	private boolean isLocalService(ServiceInfo service) {
 		boolean isLocal = false;
 		List<InetAddress> localAddresses = getLocalAddresses();
-		for(InetAddress serviceAddress:service.getInetAddresses()) {
-			for(InetAddress localAddress:localAddresses) {
+		for (InetAddress serviceAddress : service.getInetAddresses()) {
+			for (InetAddress localAddress : localAddresses) {
 				if (serviceAddress.equals(localAddress)) {
-					Log.d("ZeroConf.findServices", "Ignoring service " + service.getName()
-							+ " because it's local");
+					Log.d("ZeroConf.findServices", "Ignoring service " + service.getName() + " because it's local");
 					isLocal = true;
 					break;
-				}	
+				}
 			}
 			if (isLocal) {
 				break;
@@ -156,19 +155,18 @@ public class ZeroConf {
 		return isLocal;
 	}
 
-
 	public void addServiceListener(String type, final Listener listener) {
 		ListenerWrapper wrapper = new ListenerWrapper(type, listener);
 		_wrappers.add(wrapper);
 		_jmDNS.addServiceListener(type, wrapper);
 	}
-	
+
 	public boolean removeServiceListener(String type, Listener listener) {
 		if (_jmDNS == null) {
 			return false;
 		}
-		
-		for(ListenerWrapper wrapper:_wrappers) {
+
+		for (ListenerWrapper wrapper : _wrappers) {
 			if (wrapper.getType().equals(type) && (wrapper.getListener() == listener)) {
 				_wrappers.remove(wrapper);
 				_jmDNS.removeServiceListener(type, wrapper);
@@ -182,40 +180,42 @@ public class ZeroConf {
 	public ServiceInfo getServiceInfo(String type, String name) {
 		return _jmDNS.getServiceInfo(type, name);
 	}
-	
+
 	private class ListenerWrapper implements ServiceListener {
 		private final String _type;
 		private final Listener _listener;
-		
+
 		public ListenerWrapper(String type, Listener listener) {
 			_type = type;
 			_listener = listener;
 		}
-		
+
 		public String getType() {
 			return _type;
 		}
-		
+
 		public Listener getListener() {
 			return _listener;
 		}
-		
+
 		public void serviceAdded(ServiceEvent event) {
 			ServiceInfo service = getServiceInfo(event.getType(), event.getName());
-			if (!isLocalService(service)) {
+			if ((service != null) && !isLocalService(service)) {
 				_listener.serviceAdded(service, event);
 			}
 		}
 
 		public void serviceRemoved(ServiceEvent event) {
 			ServiceInfo service = getServiceInfo(event.getType(), event.getName());
-			_listener.serviceRemoved(service, event);
+			if (service != null) {
+				_listener.serviceRemoved(service, event);
+			}
 		}
 
 		public void serviceResolved(ServiceEvent event) {
 		}
 	}
-	
+
 	public interface Listener {
 		public void serviceAdded(ServiceInfo service, ServiceEvent event);
 		public void serviceRemoved(ServiceInfo service, ServiceEvent event);
