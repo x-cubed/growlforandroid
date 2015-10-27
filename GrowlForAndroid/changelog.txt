@@ -1,3 +1,7 @@
+VERSION 1.1
+- Bug Fix: Null references in ZeroConf.findServices and Subscription.findZeroConfServices
+- Bug Fix: Sqlite cursor leak
+
 VERSION 1.0
 - Feature: Announce local Growl service via ZeroConf
 - Feature: Subscribe to remote Growl services via ZeroConf
