@@ -73,8 +73,12 @@ public class SubscriberThread extends Thread {
 		
 		int colon = address.indexOf(':');
 		if (colon >= 0) {
-			port = Integer.parseInt(address.substring(colon));
-			host = address.substring(0, colon);
+			try {
+				port = Integer.parseInt(address.substring(colon + 1));
+				host = address.substring(0, colon);
+			} catch (Exception e) {
+				// Ignore invalid port number, use default
+			}
 		}
 		return new SubscriberThread(subscriber, id, host, null, port, password);
 	}
