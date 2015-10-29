@@ -105,6 +105,11 @@ public class ZeroConf {
 	}
 
 	public ServiceInfo[] findServices(String type, int timeoutMS) {
+		if (_jmDNS == null) {
+			// No multicast DNS available, no services can be found
+			return new ServiceInfo[0];
+		}
+
 		ServiceInfo[] services = _jmDNS.list(type, timeoutMS);
 
 		ArrayList<ServiceInfo> nonLocalServices = new ArrayList<ServiceInfo>();
