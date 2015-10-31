@@ -57,6 +57,6 @@ public class ChooseDisplayDialog {
 	}
 	
 	public void onDisplayChosen(Integer displayId) {
-		Log.e("ChooseDisplay.onDisplayChosen", "No handler attached (displayId = " + displayId + ")");
+		Log.e("ChooseDisplay.onDisplay", "No handler attached (displayId = " + displayId + ")");
 	}
 }

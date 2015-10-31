@@ -81,7 +81,7 @@ public class TypePreferences
 	    	case DIALOG_CHOOSE_DISPLAY:
 	    		return (new ChooseDisplayDialog(this, _database, true) {
 	    			public void onDisplayChosen(Integer displayId) {
-	    				Log.i("TypePreferences.onDisplayChosen", "Type: " + _typeId + ", Display Id: " + displayId);
+	    				Log.i("TypePreferences.onDispl", "Type: " + _typeId + ", Display Id: " + displayId);
 	    				_database.setNotificationTypeDisplay(_typeId, displayId);
 	    				refresh();
 	    			}

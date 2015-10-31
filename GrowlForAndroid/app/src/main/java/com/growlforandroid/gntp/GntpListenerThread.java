@@ -64,7 +64,7 @@ public class GntpListenerThread extends Thread {
 	public void run() {
 		try {
 			int remotePort = _socket.getPort();
-			Log.i("GNTPListenerThread.run[" + _connectionID + "]", "Connected to client on port " + remotePort);
+			Log.i("GLT:" + _connectionID, "Connected to client on port " + remotePort);
 
 			// Read lines from the socket until we've sent a response back
 			String inputLine;
@@ -121,8 +121,7 @@ public class GntpListenerThread extends Thread {
 						case Ignore:
 							// Notification hash is invalid, silently ignore
 							// this notification
-							Log.w("GntpListenerThread.run[" + _connectionID + "]",
-									"Ignoring notification with invalid hash");
+							Log.w("GLT:" + _connectionID, "Ignoring notification with invalid hash");
 							break;
 
 						default:
@@ -147,8 +146,7 @@ public class GntpListenerThread extends Thread {
 
 				} catch (Exception x) {
 					// Parsing error or something unexpected
-					Log.e("GntpListenerThread.run[" + _connectionID + "]",
-							"Unexpected error while reading from socket", x);
+					Log.e("GLT:" + _connectionID, "Unexpected error while reading from socket", x);
 
 					// Send the error response
 					GntpError error = GntpError.getErrorFrom(x);
@@ -160,17 +158,16 @@ public class GntpListenerThread extends Thread {
 				}
 			}
 
-			Log.i("GNTPListenerThread.run[" + _connectionID + "]",
-					"No more input data, closing client connection from port " + remotePort);
+			Log.i("GLT:" + _connectionID, "No more input data, closing client connection from port " + remotePort);
 			_channel.close();
 			_socket.close();
 
 		} catch (Exception x) {
-			Log.e("GNTPListenerThread.run[" + _connectionID + "]", "Unexpected exception while reading from socket", x);
+			Log.e("GLT:" + _connectionID, "Unexpected exception while reading from socket", x);
 		}
 
 		// Notify the SocketAcceptor that we're done
-		Log.i("GNTPListenerThread.run[" + _connectionID + "]", "Connection closed");
+		Log.i("GLT:" + _connectionID, "Connection closed");
 		_service.connectionClosed(this);
 	}
 
@@ -252,14 +249,12 @@ public class GntpListenerThread extends Thread {
 		if (!cacheFile.exists()) {
 			// Read the bytes and save them to a file
 			_socketReader.readAndDecryptBytesToCacheFile(length, _encryptionType, _initVector, _key, cacheFile);
-			Log.i("GntpListenerThread.readResourceData[" + _connectionID + "]",
-					"Created " + cacheFile.getAbsolutePath() + " as resource (" + cacheFile.length() + " bytes)");
+			Log.i("GLT:" + _connectionID, "Created " + cacheFile.getAbsolutePath() + " as resource (" + cacheFile.length() + " bytes)");
 			resource.tryResizeBitmap();
 		} else {
 			// Read the bytes but doen't save them anywhere
 			_socketReader.readAndDecryptBytesToCacheFile(length, _encryptionType, _initVector, _key, null);
-			Log.i("GntpListenerThread.readResourceData[" + _connectionID + "]",
-					"Skipping duplicate resource ("	+ cacheFile.length() + " bytes)");
+			Log.i("GLT:" + _connectionID, "Skipping duplicate resource (" + cacheFile.length() + " bytes)");
 		}
 
 		// Each resource is followed by a blank line
@@ -392,8 +387,7 @@ public class GntpListenerThread extends Thread {
 		} else if (_service.requiresPassword()) {
 			// The application didn't supply a password hash, but the registry
 			// requires one
-			Log.w("GntpListenerThread.parseRequestLine[" + _connectionID + "]",
-					"Passwords are required, but this notification did not have one. Ignoring");
+			Log.w("GLT:" + _connectionID, "Passwords are required, but this notification did not have one. Ignoring");
 			throw new GntpException(GntpError.NotAuthorized);
 		}
 
@@ -414,7 +408,7 @@ public class GntpListenerThread extends Thread {
 
 		if (value.startsWith(Constants.RESOURCE_URI_PREFIX)) {
 			String identifier = value.substring(Constants.RESOURCE_URI_PREFIX.length());
-			Log.i("GntpListenerThread.parseHeader[" + _connectionID + "]", "Header " + key + " has a binary resource "
+			Log.i("GLT:" + _connectionID, "Header " + key + " has a binary resource "
 					+ identifier + " for its value");
 			_resources.put(identifier, null);
 		}

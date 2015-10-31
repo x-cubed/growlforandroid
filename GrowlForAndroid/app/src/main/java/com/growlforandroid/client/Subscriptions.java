@@ -105,10 +105,10 @@ public class Subscriptions extends ListActivity implements SubscriptionDialog.Li
 			public void run() {
 				// Query the available services using ZeroConf
 				ZeroConf zeroConf = ZeroConf.getInstance(context);
-				Log.i("Subscriptions.findZeroConfServices", "Querying available GNTP services...");
+				Log.i("Subscriptions.findZeroC", "Querying available GNTP services...");
 				final ServiceInfo[] services = zeroConf.findServices(Constants.GNTP_ZEROCONF_SERVICE_TYPE,
 						ZEROCONF_TIMEOUT_MS);
-				Log.i("Subscriptions.findZeroConfServices", "Found " + services.length + " available GNTP services");
+				Log.i("Subscriptions.findZeroC", "Found " + services.length + " available GNTP services");
 
 				// Switch back to the UI thread to update the list view
 				activity.runOnUiThread(new Runnable() {
@@ -216,14 +216,14 @@ public class Subscriptions extends ListActivity implements SubscriptionDialog.Li
 			if (selected == null) {
 				return null;
 			}
-			Log.d("Subscriptions.onCreateDialog", "Edit subscription " + selected.getId() + ": " + selected.getName());
+			Log.d("Subscriptions.onCreateD", "Edit subscription " + selected.getId() + ": " + selected.getName());
 			return SubscriptionDialog.createEditDialog(this, this, selected);
 
 		case DIALOG_ITEM_MENU:
 			if (selected == null) {
 				return null;
 			}
-			Log.d("Subscriptions.onCreateDialog", "Subscription menu " + selected.getId() + ": " + selected.getName());
+			Log.d("Subscriptions.onCreateD", "Subscription menu " + selected.getId() + ": " + selected.getName());
 			return new AlertDialog.Builder(this).setTitle(R.string.subscriptions_menu_title)
 					.setItems(R.array.subscriptions_menu, new DialogInterface.OnClickListener() {
 						public void onClick(DialogInterface dialog, int which) {
@@ -235,7 +235,7 @@ public class Subscriptions extends ListActivity implements SubscriptionDialog.Li
 								_database.deleteSubscription(selected.getId());
 								refresh();
 							} else {
-								Log.w("Subscriptions.ItemMenu.onClick", "Unknown option " + which);
+								Log.w("Subscriptions.ItemMenu", "Unknown option " + which);
 							}
 						}
 					}).create();
@@ -266,7 +266,7 @@ public class Subscriptions extends ListActivity implements SubscriptionDialog.Li
 
 	public void serviceAdded(ServiceInfo serviceInfo, ServiceEvent event) {
 		try {
-			Log.i("Subscriptions.serviceAdded", "Service added   : " + event.getName() + "." + event.getType());
+			Log.i("Subscriptions.serviceAd", "Service added   : " + event.getName() + "." + event.getType());
 			final ServiceInfo service = serviceInfo;
 			final String statusAvailable = this.getResources().getString(R.string.subscriptions_status_available);
 			runOnUiThread(new Runnable() {
@@ -275,12 +275,12 @@ public class Subscriptions extends ListActivity implements SubscriptionDialog.Li
 				}
 			});
 		} catch (Exception x) {
-			Log.e("Subscriptions.serviceAdded", x.toString());
+			Log.e("Subscriptions.serviceAd", x.toString());
 		}
 	}
 
 	public void serviceRemoved(ServiceInfo serviceInfo, ServiceEvent event) {
-		Log.i("Subscriptions.serviceRemoved", "Service removed : " + event.getName() + "." + event.getType());
+		Log.i("Subscriptions.serviceRe", "Service removed : " + event.getName() + "." + event.getType());
 		final ServiceInfo service = serviceInfo;
 		runOnUiThread(new Runnable() {
 			public void run() {

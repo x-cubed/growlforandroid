@@ -25,10 +25,10 @@ public class DeviceEventReceiver
 				onWifiNetworkStateChanged(context, intent, prefs);
 				
 			} else {
-				Log.i("DeviceEventReceiver.onReceive", "Unsupported action: " + action);
+				Log.i("DeviceEventReceiver.onR", "Unsupported action: " + action);
 			}
 		} catch (Exception x) {
-			Log.e("DeviceEventReceiver.onReceive", "Exception while processing action " + action + ": " + x.toString());
+			Log.e("DeviceEventReceiver.onR", "Exception while processing action " + action + ": " + x.toString());
 		}
 	}
 	
@@ -43,7 +43,7 @@ public class DeviceEventReceiver
 				message += " (connected)";
 		}
 		
-		Log.i("DeviceEventReceiver.onConnectivityChanged", message);
+		Log.i("DeviceEventReceiver.onC", message);
 		
 		if (!isConnected) {
 			stopServiceIfAutoStartOn(context, prefs);
@@ -56,10 +56,10 @@ public class DeviceEventReceiver
 		NetworkInfo info = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
 		String bssid = intent.getStringExtra(WifiManager.EXTRA_BSSID);
 		if (!info.isConnected()) {
-			Log.i("DeviceEventReceiver.onWifiNetworkStateChanged", "Disconnected");
+			Log.i("DeviceEventReceiver.onW", "Disconnected");
 			stopService(context);
 		} else {
-			Log.i("DeviceEventReceiver.onWifiNetworkStateChanged", "Connected to " + bssid);
+			Log.i("DeviceEventReceiver.onW", "Connected to " + bssid);
 			startServiceIfWasRunning(context, prefs);
 		}
 	}
@@ -67,17 +67,17 @@ public class DeviceEventReceiver
 	private void startServiceIfWasRunning(Context context, SharedPreferences prefs) throws Exception {
 		boolean wasRunning = prefs.getBoolean(Preferences.WAS_RUNNING, false);
 		if (wasRunning) {
-			Log.i("DeviceEventReceiver.startServiceIfWasRunning", "Restarting listener service...");
+			Log.i("DeviceEventReceiver.sta", "Restarting listener service...");
 			startService(context);
 		} else {
-			Log.i("DeviceEventReceiver.startServiceIfWasRunning", "Not starting listener service");
+			Log.i("DeviceEventReceiver.sta", "Not starting listener service");
 		}
 	}
 	
 	private void startServiceIfAutoStartOn(Context context, SharedPreferences prefs) throws Exception {
 		boolean startOnBoot = prefs.getBoolean(Preferences.START_AUTOMATICALLY, false);
 		if (startOnBoot) {
-			Log.i("DeviceEventReceiver.startServiceIfAutoStartOn", "Starting listener service...");
+			Log.i("DeviceEventReceiver.sta", "Starting listener service...");
 			startService(context);
 		}
 	}
@@ -90,7 +90,7 @@ public class DeviceEventReceiver
 	private void stopServiceIfAutoStartOn(Context context, SharedPreferences prefs) throws Exception {
 		boolean startOnBoot = prefs.getBoolean(Preferences.START_AUTOMATICALLY, false);
 		if (startOnBoot) {
-			Log.i("DeviceEventReceiver.stopServiceIfAutoStartOn", "Stopping listener service...");
+			Log.i("DeviceEventReceiver.sto", "Stopping listener service...");
 			stopService(context);
 		}
 	}

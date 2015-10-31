@@ -30,8 +30,7 @@ public final class Utility {
 	/**
 	 * Converts a hex representation of a byte array into a byte array.
 	 * 
-	 * Borrowed from Stack Overflow: {@link http
-	 * ://stackoverflow.com/questions/140131/convert-a-string-representation-of-a-hex-dump-to-a-byte-array-using-java}
+	 * Borrowed from Stack Overflow: http://stackoverflow.com/questions/140131/convert-a-string-representation-of-a-hex-dump-to-a-byte-array-using-java
 	 * 
 	 * @param s
 	 * @return
@@ -111,7 +110,7 @@ public final class Utility {
 				}
 			}
 		} catch (SocketException ex) {
-			Log.e("Utility.getLocalIpAddress", ex.toString());
+			Log.e("Utility.getLocalIpAddre", ex.toString());
 		}
 		return null;
 	}

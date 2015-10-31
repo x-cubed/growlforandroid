@@ -46,10 +46,13 @@ public class ZeroConf {
 
 	public void close() {
 		_instance = null;
-		finalize();
+		try {
+			finalize();
+		} catch (Throwable t) {
+		}
 	}
 
-	protected void finalize() {
+	protected void finalize() throws Throwable {
 		if (_jmDNS != null) {
 			try {
 				_jmDNS.close();
@@ -70,6 +73,7 @@ public class ZeroConf {
 			}
 			_mcLock = null;
 		}
+		super.finalize();
 	}
 
 	public static synchronized ZeroConf getInstance(Context context) {
@@ -87,11 +91,11 @@ public class ZeroConf {
 					if (_jmDNS != null) {
 						_jmDNS.registerService(service);
 						_registeredServices.add(service);
-						Log.i("ZeroConf.registerService", "Service \"" + service.getName()
+						Log.i("ZeroConf.registerServic", "Service \"" + service.getName()
 								+ "\" registered successfully");
 					}
 				} catch (Exception x) {
-					Log.e("ZeroConf.registerService", x.toString());
+					Log.e("ZeroConf.registerServic", x.toString());
 				}
 			}
 		}).start();
@@ -137,7 +141,7 @@ public class ZeroConf {
 				}
 			}
 		} catch (Exception x) {
-			Log.w("ZeroConf.getLocalAddresses", x.toString());
+			Log.w("ZeroConf.getLocalAddres", x.toString());
 		}
 		return allAddresses;
 	}
@@ -178,7 +182,7 @@ public class ZeroConf {
 				return true;
 			}
 		}
-		Log.w("ZeroConf.removeServiceListener", "Failed to remove listener " + listener.getClass().getName());
+		Log.w("ZeroConf.removeServiceL", "Failed to remove listener " + listener.getClass().getName());
 		return false;
 	}
 

@@ -179,7 +179,7 @@ public class Database {
 	}
 
 	private void createDisplayProfiles() {
-		Log.i("Database.createDisplayProfiles", "Creating default display profiles...");
+		Log.i("Database.createDisplayP", "Creating default display profiles...");
 		String ignore = _context.getString(R.string.display_profile_ignore);
 		String silent = _context.getString(R.string.display_profile_silent);
 		String vibrate = _context.getString(R.string.display_profile_vibrate);
@@ -497,7 +497,7 @@ public class Database {
 	}
 	
 	public boolean deleteSubscription(long rowId) {
-		Log.i("Database.deleteSubscription", "Deleting subscription " + rowId);
+		Log.i("Database.deleteSubscrip", "Deleting subscription " + rowId);
 		return db.delete(TABLE_SUBSCRIPTIONS, KEY_ROWID + "=" + rowId, null) > 0;
 	}
 

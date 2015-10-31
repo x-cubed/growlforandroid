@@ -70,11 +70,11 @@ public class GrowlDisplayProfile {
 
 	public void displayNotification(Context context, GrowlNotification notification, Intent defaultIntent) {
 		if (showInStatusBar()) {
-			Log.i("GrowlDisplayProfile.displayNotification", "Displaying in status bar");
+			Log.i("GrowlDisplayProfile.dis", "Displaying in status bar");
 			displayNotificationInStatusBar(context, notification, defaultIntent);
 		}
 		if (showAsToast()) {
-			Log.i("GrowlDisplayProfile.displayNotification", "Displaying toast");
+			Log.i("GrowlDisplayProfile.dis", "Displaying toast");
 			displayNotificationAsToast(context, notification);
 		}
 	}
@@ -105,7 +105,7 @@ public class GrowlDisplayProfile {
 				// Don't use the default sound, we've got a custom one we can
 				// use
 				String alertUrl = _alertUrl.toString();
-				Log.i("GrowlDisplayProfile.displayNotificationInStatusBar", "Alert Sound: " + alertUrl);
+				Log.i("GrowlDisplayProfile.dis", "Alert Sound: " + alertUrl);
 				statusBarPanel.sound = Uri.parse(alertUrl);
 			}
 		}
@@ -116,7 +116,7 @@ public class GrowlDisplayProfile {
 			defaults &= Notification.FLAG_SHOW_LIGHTS;
 		}
 
-		Log.i("GrowlDisplayProfile.displayNotificationInStatusBar", "Profile: " + _id + ", " + "Default Lights: "
+		Log.i("GrowlDisplayProfile.dis", "Profile: " + _id + ", " + "Default Lights: "
 				+ defaultLights + ", " + "Default Sound: " + defaultSound + ", " + "Default Vibrate: " + defaultVibrate);
 
 		statusBarPanel.ledARGB = LED_COLOUR;

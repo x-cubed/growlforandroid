@@ -42,12 +42,12 @@ public class SubscriptionListAdapter extends BaseAdapter implements ListAdapter 
 			boolean isUnique = true;
 			for (Subscription previouslySeen : _subscriptions) {
 				if (previouslySeen.isZeroConf() && previouslySeen.getName().equals(subscription.getName())) {
-					Log.d("SubscriptionListAdapter.addService", "Subscription to " + subscription.getName()
+					Log.d("SubscriptionListAdapter", "Subscription to " + subscription.getName()
 							+ " matches existing ZeroConf subscription");
 					isUnique = false;
 					break;
 				} else if (previouslySeen.matchesAny(addresses)) {
-					Log.d("SubscriptionListAdapter.addService", "Subscription to " + subscription.getName()
+					Log.d("SubscriptionListAdapter", "Subscription to " + subscription.getName()
 							+ " matches existing manual subscription");
 					isUnique = false;
 					break;

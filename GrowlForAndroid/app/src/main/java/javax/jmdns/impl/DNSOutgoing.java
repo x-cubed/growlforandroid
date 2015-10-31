@@ -100,10 +100,10 @@ public final class DNSOutgoing extends DNSMessage {
                     if (ch > 0x07FF) {
                         writeByte(0xE0 | ((ch >> 12) & 0x0F));
                         writeByte(0x80 | ((ch >> 6) & 0x3F));
-                        writeByte(0x80 | ((ch >> 0) & 0x3F));
+                        writeByte(0x80 | (ch & 0x3F));
                     } else {
                         writeByte(0xC0 | ((ch >> 6) & 0x1F));
-                        writeByte(0x80 | ((ch >> 0) & 0x3F));
+                        writeByte(0x80 | (ch & 0x3F));
                     }
                 }
             }

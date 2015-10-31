@@ -163,7 +163,7 @@ public class Subscriber implements ZeroConf.Listener {
 				onSubscriptionStatusChanged(id, STATUS_UNREGISTERED);
 				count ++;
 			} while (subscriptions.moveToNext());
-			Log.i("Subscriber.unsubscribeAll", "Unsubscribed from " + count + " sources");
+			Log.i("Subscriber.unsubscribeA", "Unsubscribed from " + count + " sources");
 		}
 		subscriptions.close();
 	}
@@ -197,7 +197,7 @@ public class Subscriber implements ZeroConf.Listener {
 			final int PASSWORD_COLUMN = cursor.getColumnIndex(Database.KEY_PASSWORD);
 			long id = cursor.getLong(ID_COLUMN);
 			String password = cursor.getString(PASSWORD_COLUMN);
-			Log.i("Subscriber.subscribeToService", "Subscribing to ZeroConf service " +
+			Log.i("Subscriber.subscribeToS", "Subscribing to ZeroConf service " +
 					"\"" + name + "\" with subscription ID " + id);
 			startSubscription(id, addresses, service.getPort(), password);
 		}
@@ -240,16 +240,16 @@ public class Subscriber implements ZeroConf.Listener {
 		String status;
 		if (error == null) {
 			status = STATUS_REGISTERED;
-			Log.i("Subscriber.onSubscriptionComplete", "Subscription " + id + " was successfully renewed");
+			Log.i("Subscriber.onSubscripti", "Subscription " + id + " was successfully renewed");
 		} else if (error instanceof UnknownHostException) {
 			status = STATUS_UNKNOWN_HOST;
-			Log.i("Subscriber.onSubscriptionComplete", "Subscription " + id + " failed due to an unknown host");
+			Log.i("Subscriber.onSubscripti", "Subscription " + id + " failed due to an unknown host");
 		} else if (errorCode == GntpError.NotAuthorized) {
 			status = STATUS_NOT_AUTHORIZED;
-			Log.i("Subscriber.onSubscriptionComplete", "Subscription " + id + " failed due to bad password");
+			Log.i("Subscriber.onSubscripti", "Subscription " + id + " failed due to bad password");
 		} else {
 			status = STATUS_UNREGISTERED;
-			Log.i("Subscriber.onSubscriptionComplete", "Subscription " + id + " failed: " + error.toString());
+			Log.i("Subscriber.onSubscripti", "Subscription " + id + " failed: " + error.toString());
 		}
 		
 		getDatabase().updateSubscription(id, status);
@@ -271,7 +271,7 @@ public class Subscriber implements ZeroConf.Listener {
 	}
 
 	public void serviceRemoved(ServiceInfo service, ServiceEvent event) {
-		Log.d("Subscriber.serviceRemoved", "Service: " + service.getName());
+		Log.d("Subscriber.serviceRemov", "Service: " + service.getName());
 		unsubscribeFromService(service);
 	}
 }

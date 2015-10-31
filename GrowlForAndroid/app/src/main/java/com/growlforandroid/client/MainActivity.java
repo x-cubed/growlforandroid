@@ -171,7 +171,7 @@ public class MainActivity extends Activity implements GrowlListenerService.Statu
 			return true;
 
 		} else {
-			Log.e("MainActivity.onOptionsItemSelected", "Unknown menu item: " + item.getTitle());
+			Log.e("MainActivity.onOptionsI", "Unknown menu item: " + item.getTitle());
 			return false;
 		}
 	}

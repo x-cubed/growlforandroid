@@ -57,7 +57,7 @@ public class ListenerServiceConnection implements ServiceConnection {
 		try {
 			start();
 		} catch (Exception x) {
-			Log.e("ListenerServiceConnection.restart", x.toString());
+			Log.e("ListenerServiceConnecti", x.toString());
 		}
 	}
 
@@ -68,7 +68,7 @@ public class ListenerServiceConnection implements ServiceConnection {
 	 */
 	public void start() throws Exception {
 		if (!bind()) {
-			Log.e("ListenerServiceConnection.start", "Unable to bind to service");
+			Log.e("ListenerServiceConnecti", "Unable to bind to service");
 			return;
 		}
 		_isBound = true;
@@ -103,7 +103,7 @@ public class ListenerServiceConnection implements ServiceConnection {
 		boolean wasStopped = false;
 		if (!_context.stopService(_growlListenerService)) {
 			// Service wasn't running
-			Log.w("ListenerServiceConnection.stop", "Service wasn't running");
+			Log.w("ListenerServiceConnecti", "Service wasn't running");
 		} else {
 			// Service stopped successfully
 			wasStopped = true;
@@ -146,7 +146,7 @@ public class ListenerServiceConnection implements ServiceConnection {
 			try {
 				_context.unbindService(this);
 			} catch (Exception x) {
-				Log.e("ListenerServiceConnection.unbind", x.toString());
+				Log.e("ListenerServiceConnecti", x.toString());
 			}
 			_isBound = false;
 			onServiceStopped();

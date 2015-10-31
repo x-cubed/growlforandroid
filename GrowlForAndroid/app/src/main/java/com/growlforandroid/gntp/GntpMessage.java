@@ -58,7 +58,7 @@ public abstract class GntpMessage {
 		try {
 			result = Integer.parseInt(value);
 		} catch (NumberFormatException nfe) {
-			Log.e("GntpMessage.getHeaderInt", "Header \"" + key + "\" has value \"" + value
+			Log.e("GntpMessage.getHeaderIn", "Header \"" + key + "\" has value \"" + value
 					+ "\" that can't be parsed as an int");
 		}
 		return result;

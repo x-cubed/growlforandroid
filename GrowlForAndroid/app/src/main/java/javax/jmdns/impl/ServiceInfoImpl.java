@@ -756,10 +756,10 @@ public class ServiceInfoImpl extends ServiceInfo implements DNSListener, DNSStat
                 if (c > 0x07FF) {
                     out.write(0xE0 | ((c >> 12) & 0x0F));
                     out.write(0x80 | ((c >> 6) & 0x3F));
-                    out.write(0x80 | ((c >> 0) & 0x3F));
+                    out.write(0x80 | (c & 0x3F));
                 } else {
                     out.write(0xC0 | ((c >> 6) & 0x1F));
-                    out.write(0x80 | ((c >> 0) & 0x3F));
+                    out.write(0x80 | (c & 0x3F));
                 }
             }
         }
@@ -942,7 +942,7 @@ public class ServiceInfoImpl extends ServiceInfo implements DNSListener, DNSStat
         // return this.getServer() != null && (this.getAddress() != null || (this.getTextBytes() != null && this.getTextBytes().length > 0));
     }
 
-    private final boolean hasInetAddress() {
+    private boolean hasInetAddress() {
         return _ipv4Addresses.size() > 0 || _ipv6Addresses.size() > 0;
     }
 

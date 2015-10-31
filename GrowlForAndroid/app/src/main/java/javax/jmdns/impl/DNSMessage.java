@@ -274,7 +274,7 @@ public abstract class DNSMessage {
                     buf.append(' ');
                 }
                 buf.append(Integer.toHexString((data[off + index] & 0xF0) >> 4));
-                buf.append(Integer.toHexString((data[off + index] & 0x0F) >> 0));
+                buf.append(Integer.toHexString(data[off + index] & 0x0F));
             }
             // for incomplete lines
             if (index < 32) {

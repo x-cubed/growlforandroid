@@ -55,7 +55,7 @@ public class GrowlResource {
 			original = new BitmapDrawable(inputStream).getBitmap();
 			inputStream.close();
 		} catch (Exception x) {
-			Log.e("GrowlResource.resizeBitmap", "Unable to load source: " + _cacheFile.getAbsolutePath() + "\n" + x.toString());
+			Log.e("GrowlResource.resizeBit", "Unable to load source: " + _cacheFile.getAbsolutePath() + "\n" + x.toString());
 			return;
 		}
 
@@ -74,7 +74,7 @@ public class GrowlResource {
 			scaledIcon.compress(CompressFormat.PNG, ICON_QUALITY, outputStream);
 			outputStream.close();
 		} catch (Exception x) {
-			Log.e("GrowlResource.resizeBitmap", "Unable to save image: " + _cacheFile.getAbsolutePath() + "\n" + x.toString());
+			Log.e("GrowlResource.resizeBit", "Unable to save image: " + _cacheFile.getAbsolutePath() + "\n" + x.toString());
 			return;
 		}
 	}

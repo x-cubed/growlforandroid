@@ -41,15 +41,14 @@ public class GrowlRegistry implements IGrowlRegistry {
 		GrowlApplication result = oldApp;
 		if (oldApp != null) {
 			long id = oldApp.getId();
-			Log.i("GrowlRegistry.registerApplication", "Re-registering application \"" + name + "\" with ID = " + id);
+			Log.i("GrowlRegistry.registerA", "Re-registering application \"" + name + "\" with ID = " + id);
 			_database.setApplicationIcon(id, iconUrl);
 			result = getApplication(id);
 		} else {
 			Boolean enabled = true;
 			int id = _database.insertApplication(name, enabled, iconUrl);
 			GrowlApplication newApp = new GrowlApplication(this, id, name, enabled, iconUrl, null);
-			Log.i("GrowlRegistry.registerApplication", "Registered new application \"" + name + "\" with ID = "
-					+ newApp.getId());
+			Log.i("GrowlRegistry.registerA", "Registered new application \"" + name + "\" with ID = " + newApp.getId());
 			result = newApp;
 		}
 
@@ -270,7 +269,7 @@ public class GrowlRegistry implements IGrowlRegistry {
 				byte[] validHash = algorithm.calculateHash(key);
 				boolean isValid = Utility.compareArrays(validHash, hash);
 				if (isValid) {
-					Log.i("GrowlRegistry.getMatchingKey", "Found key match: " + name);
+					Log.i("GrowlRegistry.getMatchi", "Found key match: " + name);
 					matchingKey = key;
 					break;
 				}

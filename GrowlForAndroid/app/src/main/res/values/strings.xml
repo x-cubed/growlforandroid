@@ -30,7 +30,7 @@
 	<string name="dialog_address">Address</string>
 	<string name="dialog_password">Password</string>
 	<string name="dialog_add">Add</string>
-	<string name="dialog_ok">Ok</string>
+	<string name="dialog_ok">OK</string>
 	<string name="dialog_cancel">Cancel</string>
 	<string name="dialog_save">Save</string>
 	<string name="add_password_dialog_title">Add Password</string>
@@ -107,7 +107,7 @@
 
 	<string name="subscriptions_add_dialog_title">Add Subscription</string>
 	<string name="subscriptions_edit_dialog_title">Edit Subscription</string>
-	<string name="gntp_zeroconf_name_format" formatted="false">%s on %s</string>
+	<string name="gntp_zeroconf_name_format">%s on %s</string>
 	<string name="display_profile_default">(Default)</string>
 	<string name="display_profile_ignore">Ignore</string>
 	<string name="display_profile_silent">Silent</string>

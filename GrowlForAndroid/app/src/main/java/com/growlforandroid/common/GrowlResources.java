@@ -32,7 +32,7 @@ public class GrowlResources implements URLStreamHandlerFactory {
 
 	private static File getOrCreateResourcesDir(Context context) {
 		File resourcesDir = context.getCacheDir();
-		Log.i("GrowlResources.getOrCreateResourcesDir", "Using resource directory: " + resourcesDir);
+		Log.i("GrowlResources.getOrCre", "Using resource directory: " + resourcesDir);
 
 		// Create a marker to suggest to media scanners that they should ignore
 		// these files

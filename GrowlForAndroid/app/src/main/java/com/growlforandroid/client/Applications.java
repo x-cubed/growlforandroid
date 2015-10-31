@@ -104,7 +104,7 @@ public class Applications extends ListActivity implements StatusChangedHandler {
 								break;
 
 							default:
-								Log.e("Applications.ItemMenu.onClick", "Unknown menu item " + which);
+								Log.e("Applications.ItemMenu.o", "Unknown menu item " + which);
 							}
 						}
 					}).create();

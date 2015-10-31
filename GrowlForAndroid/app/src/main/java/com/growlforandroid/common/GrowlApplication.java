@@ -57,13 +57,13 @@ public class GrowlApplication {
 	public NotificationType registerNotificationType(String typeName, String displayName, boolean enabled, URL iconUrl) {
 		NotificationType oldType = _registry.getNotificationType(this, typeName);
 		if (oldType != null) {
-			Log.i("Application.registerNotificationType", "Application \"" + getName() + "\" is re-registering notification type \"" + typeName + "\"");
+			Log.i("Application.registerNot", "Application \"" + getName() + "\" is re-registering notification type \"" + typeName + "\"");
 			oldType.setDisplayName(displayName);
 			// Enabled value shouldn't change, as this is a user option
 			oldType.setIconUrl(iconUrl);
 			return oldType;
 		} else {
-			Log.i("Application.registerNotificationType", "Application \"" + getName() + "\" is registering notification type \"" + typeName + "\"");
+			Log.i("Application.registerNot", "Application \"" + getName() + "\" is registering notification type \"" + typeName + "\"");
 			return _registry.registerNotificationType(this, typeName, displayName, enabled, iconUrl);
 		}
 	}

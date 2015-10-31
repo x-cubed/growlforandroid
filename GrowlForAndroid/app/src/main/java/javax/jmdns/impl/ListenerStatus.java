@@ -113,7 +113,7 @@ public class ListenerStatus<T extends EventListener> {
             }
         }
 
-        private static final boolean _sameInfo(ServiceInfo info, ServiceInfo lastInfo) {
+        private static boolean _sameInfo(ServiceInfo info, ServiceInfo lastInfo) {
             if (info == null) return false;
             if (lastInfo == null) return false;
             if (!info.equals(lastInfo)) return false;

@@ -184,7 +184,7 @@ public class GrowlListenerService extends Service implements IGrowlService {
 				_socketAcceptor = null;
 			}
 		} catch (Exception x) {
-			Log.e("GrowlListenerService.stop", x.toString());
+			Log.e("GrowlListenerService.st", x.toString());
 		}
 
 		if (_database != null) {
@@ -200,7 +200,7 @@ public class GrowlListenerService extends Service implements IGrowlService {
 				public void run() {
 					zeroConf.unregisterAllServices();
 					zeroConf.close();
-					Log.d("GrowlListenerService.stop", "ZeroConf closed");
+					Log.d("GrowlListenerService.st", "ZeroConf closed");
 				}
 			}).start();
 		}
@@ -290,12 +290,12 @@ public class GrowlListenerService extends Service implements IGrowlService {
 		NotificationType type = notification.getType();
 		GrowlApplication app = type.Application;
 		if (!type.isEnabled()) {
-			Log.i("GrowlListenerService.displayNotification", "Not displaying notification from \"" + app.getName()
+			Log.i("GrowlListenerService.di", "Not displaying notification from \"" + app.getName()
 					+ "\" " + "of type \"" + type.TypeName + "\" as notification type is disabled");
 			return;
 		}
 		if (!app.isEnabled()) {
-			Log.i("GrowlListenerService.displayNotification", "Not displaying notification from \"" + app.getName()
+			Log.i("GrowlListenerService.di", "Not displaying notification from \"" + app.getName()
 					+ "\" " + "of type \"" + type.TypeName + "\" as application is disabled");
 			return;
 		}
@@ -313,7 +313,7 @@ public class GrowlListenerService extends Service implements IGrowlService {
 		int defaultDisplayId = prefs.getInt(Database.PREFERENCE_DEFAULT_DISPLAY_ID, 0);
 		GrowlDisplayProfile displayProfile = getDisplayProfile(type.getDisplayId(), defaultDisplayId);
 
-		Log.i("GrowlListenerService.displayNotification", "Displaying notification from \"" + app.getName() + "\" "
+		Log.i("GrowlListenerService.di", "Displaying notification from \"" + app.getName() + "\" "
 				+ "of type \"" + type.TypeName + "\" with title \"" + title + "\" and message \"" + message + "\" "
 				+ "using display profile " + displayProfile.getId());
 
@@ -333,7 +333,7 @@ public class GrowlListenerService extends Service implements IGrowlService {
 	}
 	
 	private void onDisplayNotification(GrowlNotification notification) {
-		Log.i("GrowlListenerService.onDisplayNotification", "Message: \"" + notification.getMessage() + "\"");
+		Log.i("GrowlListenerService.on", "Message: \"" + notification.getMessage() + "\"");
 		for (WeakReference<StatusChangedHandler> reference : _statusChangedHandlers) {
 			StatusChangedHandler handler = reference.get();
 			if (handler != null) {

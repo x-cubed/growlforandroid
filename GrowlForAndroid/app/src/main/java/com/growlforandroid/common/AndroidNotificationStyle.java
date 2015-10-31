@@ -93,7 +93,7 @@ public class AndroidNotificationStyle {
 	        group.removeAllViews();
 	        
 	    } catch (Exception e) {
-	    	Log.e("AndroidNotificationStyle.grabNotificationStyle", e.toString());
+	    	Log.e("AndroidNotificationStyl", e.toString());
 	    	_titleTextColor = android.R.color.black;
 	    	_messageTextColor = android.R.color.black;
 	    }
