@@ -107,7 +107,7 @@
 
 	<string name="subscriptions_add_dialog_title">Add Subscription</string>
 	<string name="subscriptions_edit_dialog_title">Edit Subscription</string>
-	<string name="gntp_zeroconf_name_format">%s on %s</string>
+	<string name="gntp_zeroconf_name_format">%1$s on %2$s</string>
 	<string name="display_profile_default">(Default)</string>
 	<string name="display_profile_ignore">Ignore</string>
 	<string name="display_profile_silent">Silent</string>
