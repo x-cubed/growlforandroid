@@ -1,3 +1,9 @@
+VERSION 1.2
+- Bug Fix: Port numbers weren't being parsed correctly, if used in the Subscription address field
+- Bug Fix: Another null reference in ZeroConf.findServices
+- Improved: Resolved issues reported by the Android linter
+- Changed project to use Android Studio rather than Eclipse
+
 VERSION 1.1
 - Bug Fix: Null references in ZeroConf.findServices and Subscription.findZeroConfServices
 - Bug Fix: Sqlite cursor leak

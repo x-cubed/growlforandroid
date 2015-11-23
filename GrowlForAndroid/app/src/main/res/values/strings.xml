@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-	<string name="app_version">1.1</string>
+	<string name="app_version">1.2</string>
 	<string name="app_name">Growl for Android</string>
 	<string name="app_label">Growl</string>
 	<string name="app_description">Receive Growl notifications from other devices.\n\nFor more information see:\nhttp://www.growlforandroid.com</string>
