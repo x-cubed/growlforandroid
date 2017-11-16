@@ -1,8 +1,7 @@
 apply plugin: 'com.android.application'
-
 android {
-    compileSdkVersion 5
-    buildToolsVersion "19.1.0"
+    compileSdkVersion 26
+    buildToolsVersion '26.0.2'
 
     defaultConfig {
         applicationId "com.growlforandroid.client"
@@ -20,4 +19,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
+}
+
+dependencies {
 }
